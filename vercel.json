@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/rysk-pnl-tracker.html" }
+  ],
+  "headers": [
+    {
+      "source": "/rysk-pnl-tracker.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ],
+  "cleanUrls": true
+}

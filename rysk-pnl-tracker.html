@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="abyss">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rysk Wheel &mdash; P&L Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root { color-scheme: light dark; }
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+
+.header{border-bottom:1px solid var(--bd);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:100}
+.hl{display:flex;align-items:center;gap:14px}
+.hlogo{width:34px;height:34px;border-radius:8px;background:var(--gd);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;font-size:1rem}
+.htitle{font-size:1rem;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.hsub{font-size:.7rem;color:var(--mu);font-family:var(--mono)}
+.btn{font-family:var(--sans);font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-p{background:var(--green);color:#040d08}.btn-p:hover{background:#00ffc0}
+.btn-g{background:transparent;color:var(--mu2);border:1px solid var(--bd2)}.btn-g:hover{color:var(--text);border-color:var(--mu)}
+.btn-d{background:var(--rd);color:var(--red);border:1px solid var(--rb);font-size:.7rem;padding:4px 9px;border-radius:5px;cursor:pointer;font-family:var(--sans);font-weight:700;transition:all .15s}.btn-d:hover{background:rgba(240,80,80,.15)}
+
+.page-wrap{max-width:1440px;margin:0 auto;padding:28px 24px 80px;display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
+.content-col{display:flex;flex-direction:column;gap:24px;min-width:0}
+.top-row{display:grid;grid-template-columns:1fr 460px;gap:24px;align-items:start}
+.top-left{display:flex;flex-direction:column;gap:24px;min-width:0}
+.top-right{display:flex;flex-direction:column;min-width:0}
+.top-right .sec{height:100%}
+@media(max-width:960px){.top-row{grid-template-columns:1fr}}
+@media(max-width:720px){.page-wrap{padding:18px 12px 60px}.hbtns{display:none!important}}
+
+/* ASSET TABS */
+.asset-tabs{display:flex;gap:10px;align-items:center}
+.asset-tab{padding:7px 18px;border-radius:8px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px}
+.asset-tab:hover:not(.active){border-color:var(--mu);color:var(--text)}
+.asset-tab.btc.active{background:var(--btcd);border-color:var(--btcb);color:var(--btc)}
+.asset-tab.eth.active{background:var(--ethd);border-color:var(--ethb);color:var(--eth)}
+.asset-tab.hype.active{background:var(--hyped);border-color:var(--hypeb);color:var(--hype)}
+.asset-tab.sol.active{background:var(--sold);border-color:var(--solb);color:var(--sol)}
+.asset-tab.all.active{background:var(--gd);border-color:var(--gb);color:var(--green)}
+.asset-dot{width:8px;height:8px;border-radius:50%}
+.ad-btc{background:var(--btc)}
+.ad-eth{background:var(--eth)}
+.ad-hype{background:var(--hype)}
+.ad-sol{background:var(--sol)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sc-puts{border-top:3px solid var(--blb)}
+.sc-hold{border-top:3px solid var(--ob)}
+.sc-inc {border-top:3px solid var(--gb)}
+.sc-ph{font-size:.6rem;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
+.sc-det{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:5px}
+.sc-det-row{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-family:var(--mono)}
+.sc-det-lbl{color:var(--mu)}
+.sc-det-val{color:var(--text);font-weight:600}
+.sc{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
+.slbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--mu);margin-bottom:6px;font-family:var(--mono)}
+.sval{font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono)}
+.sval.green{color:var(--green)}.sval.red{color:var(--red)}.sval.orange{color:var(--orange)}.sval.blue{color:var(--blue)}.sval.btc{color:var(--btc)}.sval.eth{color:var(--eth)}
+.ssub{font-size:.7rem;color:var(--mu);margin-top:3px;font-family:var(--mono)}
+
+/* SECTION */
+.sec{background:var(--surface);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.sec-hd{padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.sec-ttl{font-size:.8rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--green);box-shadow:0 0 6px rgba(0,229,160,.6)}
+.db{background:var(--blue);box-shadow:0 0 6px rgba(61,142,240,.6)}
+.dp{background:var(--purple);box-shadow:0 0 6px rgba(155,114,245,.6)}
+
+/* FORM */
+.fi{padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fi-full{grid-column:1/-1}
+.fb{padding:0 20px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono)}
+.field input,.field select{background:var(--s2);border:1px solid var(--bd2);color:var(--text);border-radius:7px;padding:8px 11px;font-family:var(--mono);font-size:.82rem;transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,229,160,.07)}
+.field select option{background:var(--s2)}
+
+/* TOGGLES */
+.tg{display:flex;gap:5px}
+.tb{flex:1;padding:8px 4px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--mu);font-family:var(--sans);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.tb:hover:not(.active){border-color:var(--mu);color:var(--text)}
+.tp.active{background:var(--bld);border-color:var(--blue);color:var(--blue)}
+.tc.active{background:var(--pd);border-color:var(--purple);color:var(--purple)}
+.to.active{background:var(--bld);border-color:var(--blue);color:var(--blue)}
+.te.active{background:var(--gd);border-color:var(--green);color:var(--green)}
+.ta.active{background:var(--rd);border-color:var(--red);color:var(--red)}
+.tk.active{background:var(--od);border-color:var(--orange);color:var(--orange)}
+
+/* TABLE */
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:940px}
+thead tr{border-bottom:2px solid var(--bd2)}
+th{padding:9px 12px;text-align:left;font-family:var(--mono);font-size:.62rem;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:middle;font-family:var(--mono);font-size:.79rem}
+tbody tr:hover td{background:rgba(255,255,255,.012)}
+tbody tr:last-child td{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;font-size:.61rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:4px;white-space:nowrap}
+.bput{background:var(--bld);color:var(--blue);border:1px solid var(--blb)}
+.bcall{background:var(--pd);color:var(--purple);border:1px solid var(--pb)}
+.bexp{background:var(--gd);color:var(--green);border:1px solid var(--gb)}
+.bass{background:var(--rd);color:var(--red);border:1px solid var(--rb)}
+.bcal{background:var(--od);color:var(--orange);border:1px solid var(--ob)}
+.bopn{background:var(--bld);color:var(--blue);border:1px solid var(--blb)}
+.bclosed{background:var(--pd);color:var(--purple);border:1px solid var(--pb)}
+.bplat{font-size:.5rem;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.8px;vertical-align:middle;margin-left:4px;display:inline-flex}
+.bplat-rysk{background:var(--gd);color:var(--green);border:1px solid var(--gb)}
+.bplat-hsfc{background:var(--pd);color:var(--purple);border:1px solid var(--pb)}
+.bbtc{background:var(--btcd);color:var(--btc);border:1px solid var(--btcb)}
+.beth{background:var(--ethd);color:var(--eth);border:1px solid var(--ethb)}
+.bhype{background:var(--hyped);color:var(--hype);border:1px solid var(--hypeb)}
+.bsol{background:var(--sold);color:var(--sol);border:1px solid var(--solb)}
+
+.cr{color:var(--green);font-weight:600}
+.pos{color:var(--green);font-weight:700}
+.neg{color:var(--red);font-weight:700}
+.mu{color:var(--mu)}
+
+.psep td{background:rgba(61,142,240,.03);font-size:.62rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu2);padding:6px 12px;border-bottom:1px solid var(--bd2);border-left:3px solid var(--bd2)}
+.asset-sep td{padding:6px 12px;border-bottom:2px solid var(--bd2)}
+/* Lot group clustering — shared left border connects psep header → HOLDING → CALL rows */
+tr.lot-head > td:first-child{border-left:3px solid var(--bd2)}
+tr.lot-child > td{background:var(--s2)}
+tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
+.psep.la-btc td,tr.lot-head.la-btc > td:first-child,tr.lot-child.la-btc > td:first-child{border-left-color:var(--btc)}
+.psep.la-eth td,tr.lot-head.la-eth > td:first-child,tr.lot-child.la-eth > td:first-child{border-left-color:var(--eth)}
+.psep.la-hype td,tr.lot-head.la-hype > td:first-child,tr.lot-child.la-hype > td:first-child{border-left-color:var(--hype)}
+.psep.la-sol td,tr.lot-head.la-sol > td:first-child,tr.lot-child.la-sol > td:first-child{border-left-color:var(--sol)}
+
+/* NET COST BANNER */
+.ncb{margin:16px 20px 0;background:var(--s3);border:1px solid var(--bd2);border-radius:10px;padding:13px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:24px}
+.nci .ncl{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono);margin-bottom:3px}
+.nci .ncv{font-family:var(--mono);font-size:.93rem;font-weight:500;color:var(--text)}
+.ncv.orange{color:var(--orange)}.ncv.green{color:var(--green)}.ncv.btc{color:var(--btc)}.ncv.eth{color:var(--eth)}
+
+/* MERGE LOTS */
+.btn-merge{font-size:.62rem;font-family:var(--mono);font-weight:700;padding:3px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--ob);color:var(--orange);background:var(--od);transition:all .15s;white-space:nowrap;letter-spacing:.5px;text-transform:uppercase}
+.btn-merge:hover{filter:brightness(1.15)}
+.merge-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .18s}
+.merge-overlay.open{opacity:1;pointer-events:all}
+.merge-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:24px;max-width:520px;width:92%}
+.merge-preview{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:14px;margin:12px 0;font-family:var(--mono);font-size:.78rem}
+.merge-preview .mp-row{display:flex;justify-content:space-between;padding:3px 0}
+.merge-preview .mp-lbl{color:var(--mu2)}.merge-preview .mp-val{color:var(--text);font-weight:600}
+.merge-preview .mp-val.green{color:var(--green)}.merge-preview .mp-val.orange{color:var(--orange)}
+
+/* CLOSE ALERTS */
+.alert-bar{background:var(--surface);border:1px solid var(--ob);border-radius:12px;overflow:hidden;display:none}
+.alert-bar.has-alerts{display:block}
+.alert-hd{padding:10px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.alert-hd-left{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;color:var(--orange)}
+.alert-hd-right{display:flex;align-items:center;gap:10px}
+.alert-pulse{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:alertPulse 1.5s ease-in-out infinite}
+@keyframes alertPulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--orange)}50%{opacity:.4;box-shadow:0 0 12px var(--orange)}}
+.alert-threshold{font-size:.62rem;font-family:var(--mono);color:var(--mu2);display:flex;align-items:center;gap:4px}
+.alert-threshold input{width:40px;background:var(--s2);border:1px solid var(--bd2);border-radius:4px;padding:2px 4px;color:var(--text);font-family:var(--mono);font-size:.62rem;text-align:center}
+.alert-threshold input:focus{outline:none;border-color:var(--orange)}
+.alert-list{padding:8px 18px}
+.alert-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:var(--od);border:1px solid var(--ob);border-radius:8px;gap:12px;flex-wrap:wrap}
+.alert-item-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:200px}
+.alert-item-title{font-size:.75rem;font-weight:700;font-family:var(--mono);color:var(--text)}
+.alert-item-detail{font-size:.65rem;font-family:var(--mono);color:var(--mu2)}
+.alert-item-pct{font-size:.82rem;font-weight:800;font-family:var(--mono);color:var(--green)}
+.alert-item-actions{display:flex;gap:6px}
+.btn-close-pos{font-size:.65rem;font-family:var(--mono);font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--gb);color:var(--green);background:var(--gd);transition:all .15s;white-space:nowrap}
+.btn-close-pos:hover{filter:brightness(1.15)}
+.alert-status{font-size:.6rem;font-family:var(--mono);color:var(--mu);padding:4px 18px 8px;display:flex;align-items:center;gap:6px}
+.alert-spinner{display:inline-block;width:8px;height:8px;border:1.5px solid var(--bd2);border-top-color:var(--orange);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CHARTS */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px}
+.clbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono);margin-bottom:12px}
+
+/* EMPTY */
+.empty{text-align:center;padding:52px 24px}
+.eico{font-size:2.2rem;opacity:.3;margin-bottom:12px}
+.empty h3{font-size:.9rem;font-weight:700;color:var(--mu2);margin-bottom:5px}
+.empty p{font-size:.8rem;color:var(--mu)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:500;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:400px;width:90%;transform:translateY(10px);transition:transform .18s}
+.overlay.open .modal{transform:translateY(0)}
+.modal h3{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.modal p{font-size:.82rem;color:var(--mu2);margin-bottom:20px;line-height:1.6}
+.mbtns{display:flex;gap:8px;justify-content:flex-end}
+.ferr{padding:0 20px 14px;color:var(--red);font-size:.78rem;font-family:var(--mono);display:none}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+@media(max-width:720px){
+  .stats{grid-template-columns:1fr}
+  .fi{grid-template-columns:1fr 1fr}
+  .fb{grid-template-columns:1fr 1fr}
+  .cgrid{grid-template-columns:1fr}
+  .header{padding:14px 16px}
+  .hbtns{display:none!important}
+  .main{padding:18px 12px 60px}
+}
+
+
+.th.active{background:var(--od);border-color:var(--orange);color:var(--orange)}
+.bholding{background:var(--od);color:var(--orange);border:1px solid var(--ob)}
+.holding-hint{background:var(--od);border:1px solid var(--ob);border-radius:8px;padding:10px 14px;font-size:.75rem;color:var(--text);line-height:1.55;margin:0 20px 16px;display:none}
+.holding-hint strong{color:var(--orange)}
+.field-hide{opacity:0;pointer-events:none;transition:opacity .2s}
+
+.io-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:480px;width:92%;transform:translateY(10px);transition:transform .18s}
+.overlay.open .io-modal{transform:translateY(0)}
+.io-tabs{display:flex;gap:6px;margin-bottom:18px}
+.io-tab{flex:1;padding:8px;border-radius:7px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.io-tab.active{background:var(--gd);border-color:var(--gb);color:var(--green)}
+.io-panel{display:none}.io-panel.active{display:flex;flex-direction:column;gap:14px}
+.io-info{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;font-size:.78rem;color:var(--mu2);line-height:1.6}
+.io-info strong{color:var(--text)}
+.drop-zone{border:2px dashed var(--bd2);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);background:var(--gd)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone-ico{font-size:1.8rem;opacity:.4;margin-bottom:8px}
+.drop-zone-lbl{font-size:.8rem;color:var(--mu2);font-family:var(--mono)}
+.drop-zone-sub{font-size:.7rem;color:var(--mu);margin-top:4px}
+.io-status{font-size:.78rem;font-family:var(--mono);padding:8px 12px;border-radius:7px;display:none}
+.io-status.ok{background:var(--gd);border:1px solid var(--gb);color:var(--green)}
+.io-status.err{background:var(--rd);border:1px solid var(--rb);color:var(--red)}
+.export-btns{display:flex;flex-direction:column;gap:8px}
+.export-btn{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:9px;border:1px solid var(--bd2);background:var(--s2);cursor:pointer;transition:all .15s;width:100%}
+.export-btn:hover{border-color:var(--mu);background:var(--s3)}
+.export-btn-left{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.export-btn-title{font-size:.82rem;font-weight:700;color:var(--text);font-family:var(--sans)}
+.export-btn-sub{font-size:.7rem;color:var(--mu);font-family:var(--mono)}
+.export-btn-ico{font-size:1.2rem;opacity:.6}
+
+/* ─── THEME SYSTEM ─────────────────────────────────────────── */
+*, *::before, *::after { transition: background-color 0.25s ease, border-color 0.2s ease, color 0.15s ease; }
+a, button, input, select { transition: none; }
+
+/* THEME DROPDOWN */
+.theme-picker-wrap { position: relative; }
+.theme-btn {
+  font-family: var(--sans); font-size:.78rem; font-weight:600;
+  padding:7px 14px; border-radius:7px; border:1px solid var(--bd2);
+  background:transparent; color:var(--mu2); cursor:pointer;
+  display:flex; align-items:center; gap:7px; transition:none;
+  white-space:nowrap;
+}
+.theme-btn:hover { color:var(--text); border-color:var(--mu); }
+.theme-btn .swatch { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.theme-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0;
+  background:var(--surface); border:1px solid var(--bd2);
+  border-radius:12px; padding:8px; min-width:220px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.5);
+  z-index:300; display:none; flex-direction:column; gap:2px;
+}
+.theme-dropdown.open { display:flex; }
+.td-section { font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--mu); font-family:var(--mono); padding:6px 10px 4px; }
+.td-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:8px; cursor:pointer;
+  transition:none;
+}
+.td-item:hover { background:var(--s2); }
+.td-item.active { background:var(--gd); }
+.td-swatch { width:28px; height:28px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.7rem; }
+.td-info { display:flex; flex-direction:column; gap:1px; }
+.td-name { font-size:.78rem; font-weight:600; color:var(--text); }
+.td-item.active .td-name { color:var(--green); }
+.td-desc { font-size:.65rem; color:var(--mu); font-family:var(--mono); }
+.td-check { margin-left:auto; color:var(--green); font-size:.8rem; opacity:0; }
+.td-item.active .td-check { opacity:1; }
+
+/* ─── DARK THEMES ───────────────────────────────────────────── */
+
+/* 1. Abyss (current default) */
+[data-theme="abyss"] {
+  --bg:#07090f; --surface:#0e1219; --s2:#131923; --s3:#181f2e;
+  --bd:#1c2538; --bd2:#232f47;
+  --green:#00e5a0; --gd:rgba(0,229,160,0.08); --gb:rgba(0,229,160,0.18);
+  --blue:#3d8ef0; --bld:rgba(61,142,240,0.08); --blb:rgba(61,142,240,0.18);
+  --orange:#f0924a; --od:rgba(240,146,74,0.08); --ob:rgba(240,146,74,0.18);
+  --red:#f05050; --rd:rgba(240,80,80,0.08); --rb:rgba(240,80,80,0.18);
+  --purple:#9b72f5; --pd:rgba(155,114,245,0.08); --pb:rgba(155,114,245,0.18);
+  --btc:#f7931a; --btcd:rgba(247,147,26,0.08); --btcb:rgba(247,147,26,0.18);
+  --eth:#627eea; --ethd:rgba(98,126,234,0.08); --ethb:rgba(98,126,234,0.18);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#cdd5e8; --mu:#5a6680; --mu2:#8090b0;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+}
+
+/* 2. Obsidian Gold */
+[data-theme="gold"] {
+  --bg:#0d0c0a; --surface:#141210; --s2:#1a1710; --s3:#201d14;
+  --bd:#2a2418; --bd2:#352e20;
+  --green:#c9a84c; --gd:rgba(201,168,76,0.09); --gb:rgba(201,168,76,0.22);
+  --blue:#c9a84c; --bld:rgba(201,168,76,0.09); --blb:rgba(201,168,76,0.22);
+  --orange:#e07840; --od:rgba(224,120,64,0.09); --ob:rgba(224,120,64,0.22);
+  --red:#e05a3a; --rd:rgba(224,90,58,0.09); --rb:rgba(224,90,58,0.22);
+  --purple:#b8956a; --pd:rgba(184,149,106,0.09); --pb:rgba(184,149,106,0.22);
+  --btc:#c9a84c; --btcd:rgba(201,168,76,0.09); --btcb:rgba(201,168,76,0.22);
+  --eth:#9b8060; --ethd:rgba(155,128,96,0.09); --ethb:rgba(155,128,96,0.22);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#e8e0d0; --mu:#5a5040; --mu2:#8a7860;
+  --mono:'DM Mono',monospace; --sans:'Fraunces',serif;
+}
+
+/* 3. Deep Ocean */
+[data-theme="ocean"] {
+  --bg:#060d18; --surface:#0a1628; --s2:#0d1e36; --s3:#102444;
+  --bd:#0e2040; --bd2:#162e58;
+  --green:#34d399; --gd:rgba(52,211,153,0.08); --gb:rgba(52,211,153,0.18);
+  --blue:#38bdf8; --bld:rgba(56,189,248,0.08); --blb:rgba(56,189,248,0.18);
+  --orange:#fb923c; --od:rgba(251,146,60,0.08); --ob:rgba(251,146,60,0.18);
+  --red:#f87171; --rd:rgba(248,113,113,0.08); --rb:rgba(248,113,113,0.18);
+  --purple:#a78bfa; --pd:rgba(167,139,250,0.08); --pb:rgba(167,139,250,0.18);
+  --btc:#fbbf24; --btcd:rgba(251,191,36,0.08); --btcb:rgba(251,191,36,0.18);
+  --eth:#60a5fa; --ethd:rgba(96,165,250,0.08); --ethb:rgba(96,165,250,0.18);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#e2f0ff; --mu:#1e4060; --mu2:#4080a0;
+  --mono:'JetBrains Mono',monospace; --sans:'Rajdhani',sans-serif;
+}
+
+/* 4. Terminal */
+[data-theme="terminal"] {
+  --bg:#030a03; --surface:#050f05; --s2:#071207; --s3:#0a160a;
+  --bd:#0d2010; --bd2:#123018;
+  --green:#00ff88; --gd:rgba(0,255,136,0.06); --gb:rgba(0,255,136,0.15);
+  --blue:#00e5ff; --bld:rgba(0,229,255,0.06); --blb:rgba(0,229,255,0.15);
+  --orange:#ffc800; --od:rgba(255,200,0,0.06); --ob:rgba(255,200,0,0.15);
+  --red:#ff4444; --rd:rgba(255,68,68,0.06); --rb:rgba(255,68,68,0.15);
+  --purple:#00ff88; --pd:rgba(0,255,136,0.06); --pb:rgba(0,255,136,0.15);
+  --btc:#ffc800; --btcd:rgba(255,200,0,0.06); --btcb:rgba(255,200,0,0.15);
+  --eth:#00e5ff; --ethd:rgba(0,229,255,0.06); --ethb:rgba(0,229,255,0.15);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#80ff80; --mu:#1a4020; --mu2:#3a7a4a;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Mono',monospace;
+}
+
+/* 5. Matrix */
+[data-theme="matrix"] {
+  --bg:#010603; --surface:#040d05; --s2:#071209; --s3:#0b1a0d;
+  --bd:#0e2612; --bd2:#16381a;
+  --green:#00ff88; --gd:rgba(0,255,136,0.07); --gb:rgba(0,255,136,0.18);
+  --blue:#00e5ff; --bld:rgba(0,229,255,0.07); --blb:rgba(0,229,255,0.18);
+  --orange:#ffcc00; --od:rgba(255,204,0,0.07); --ob:rgba(255,204,0,0.18);
+  --red:#ff4455; --rd:rgba(255,68,85,0.07); --rb:rgba(255,68,85,0.18);
+  --purple:#cc66ff; --pd:rgba(204,102,255,0.07); --pb:rgba(204,102,255,0.18);
+  --btc:#ffcc00; --btcd:rgba(255,204,0,0.07); --btcb:rgba(255,204,0,0.18);
+  --eth:#00e5ff; --ethd:rgba(0,229,255,0.07); --ethb:rgba(0,229,255,0.18);
+  --hype:#00ff88; --hyped:rgba(0,255,136,0.07); --hypeb:rgba(0,255,136,0.18);
+  --sol:#cc66ff;  --sold:rgba(204,102,255,0.07); --solb:rgba(204,102,255,0.18);
+  --text:#00e878; --mu:#5aaa65; --mu2:#7dd688;
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Mono',monospace;
+}
+
+/* 6. Warm Charcoal */
+[data-theme="charcoal"] {
+  --bg:#111010; --surface:#1a1816; --s2:#211f1c; --s3:#282420;
+  --bd:#2e2a26; --bd2:#3a342e;
+  --green:#64c88c; --gd:rgba(100,200,140,0.08); --gb:rgba(100,200,140,0.2);
+  --blue:#60a8e0; --bld:rgba(96,168,224,0.08); --blb:rgba(96,168,224,0.2);
+  --orange:#ff8c5a; --od:rgba(255,140,90,0.08); --ob:rgba(255,140,90,0.22);
+  --red:#ff5a5a; --rd:rgba(255,90,90,0.08); --rb:rgba(255,90,90,0.22);
+  --purple:#c08cdc; --pd:rgba(192,140,220,0.08); --pb:rgba(192,140,220,0.22);
+  --btc:#ffc850; --btcd:rgba(255,200,80,0.08); --btcb:rgba(255,200,80,0.22);
+  --eth:#60a8e0; --ethd:rgba(96,168,224,0.08); --ethb:rgba(96,168,224,0.22);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#f0ece6; --mu:#4a4038; --mu2:#7a6e62;
+  --mono:'DM Mono',monospace; --sans:'Outfit',sans-serif;
+}
+
+/* 6. Steel & Crimson */
+[data-theme="crimson"] {
+  --bg:#0a0c0e; --surface:#10151a; --s2:#151c24; --s3:#1a242e;
+  --bd:#1c2530; --bd2:#243040;
+  --green:#50c8a0; --gd:rgba(80,200,160,0.08); --gb:rgba(80,200,160,0.2);
+  --blue:#6090c0; --bld:rgba(96,144,192,0.08); --blb:rgba(96,144,192,0.2);
+  --orange:#fac850; --od:rgba(250,200,80,0.08); --ob:rgba(250,200,80,0.2);
+  --red:#e84040; --rd:rgba(232,64,64,0.08); --rb:rgba(232,64,64,0.2);
+  --purple:#c070c0; --pd:rgba(192,112,192,0.08); --pb:rgba(192,112,192,0.2);
+  --btc:#fac850; --btcd:rgba(250,200,80,0.08); --btcb:rgba(250,200,80,0.2);
+  --eth:#6090c0; --ethd:rgba(96,144,192,0.08); --ethb:rgba(96,144,192,0.2);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#e8edf2; --mu:#2a3540; --mu2:#5a6e80;
+  --mono:'IBM Plex Mono',monospace; --sans:'Bebas Neue',cursive;
+}
+
+/* ─── LIGHT THEMES ──────────────────────────────────────────── */
+
+/* 7. Paper */
+[data-theme="paper"] {
+  --bg:#f5f2ec; --surface:#fdfaf6; --s2:#f0ece4; --s3:#e8e2d8;
+  --bd:#ddd8ce; --bd2:#ccc6ba;
+  --green:#1a7a4a; --gd:rgba(26,122,74,0.08); --gb:rgba(26,122,74,0.2);
+  --blue:#1a5a9a; --bld:rgba(26,90,154,0.08); --blb:rgba(26,90,154,0.2);
+  --orange:#c05a20; --od:rgba(192,90,32,0.08); --ob:rgba(192,90,32,0.2);
+  --red:#b03030; --rd:rgba(176,48,48,0.08); --rb:rgba(176,48,48,0.2);
+  --purple:#6a3a9a; --pd:rgba(106,58,154,0.08); --pb:rgba(106,58,154,0.2);
+  --btc:#c07020; --btcd:rgba(192,112,32,0.08); --btcb:rgba(192,112,32,0.2);
+  --eth:#1a5a9a; --ethd:rgba(26,90,154,0.08); --ethb:rgba(26,90,154,0.2);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#1a1208; --mu:#5a4e42; --mu2:#3d3228;
+  --mono:'DM Mono',monospace; --sans:'Lora',serif;
+}
+
+/* 8. Arctic */
+[data-theme="arctic"] {
+  --bg:#f0f4f8; --surface:#ffffff; --s2:#f5f8fc; --s3:#eaf0f8;
+  --bd:#d8e4f0; --bd2:#c4d4e8;
+  --green:#0d9460; --gd:rgba(13,148,96,0.08); --gb:rgba(13,148,96,0.2);
+  --blue:#1e6bb8; --bld:rgba(30,107,184,0.08); --blb:rgba(30,107,184,0.2);
+  --orange:#d4600a; --od:rgba(212,96,10,0.08); --ob:rgba(212,96,10,0.2);
+  --red:#c0342c; --rd:rgba(192,52,44,0.08); --rb:rgba(192,52,44,0.2);
+  --purple:#6040b8; --pd:rgba(96,64,184,0.08); --pb:rgba(96,64,184,0.2);
+  --btc:#d4600a; --btcd:rgba(212,96,10,0.08); --btcb:rgba(212,96,10,0.2);
+  --eth:#1e6bb8; --ethd:rgba(30,107,184,0.08); --ethb:rgba(30,107,184,0.2);
+  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
+  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
+  --text:#1a2838; --mu:#8aa0b8; --mu2:#4a6880;
+  --mono:'JetBrains Mono',monospace; --sans:'Nunito',sans-serif;
+}
+
+/* ─── LIGHT THEME TEXT/BORDER OVERRIDES ─────────────────────── */
+[data-theme="paper"] .header,
+[data-theme="arctic"] .header {
+  box-shadow: 0 1px 0 var(--bd);
+}
+[data-theme="paper"] .scan-refresh,
+[data-theme="arctic"] .scan-refresh {
+  color: var(--mu2);
+}
+
+/* ── Light theme: fix all hardcoded white text ─────────────── */
+[data-theme="paper"] .sec-ttl,
+[data-theme="arctic"] .sec-ttl,
+[data-theme="paper"] .htitle,
+[data-theme="arctic"] .htitle,
+[data-theme="paper"] .scan-title,
+[data-theme="arctic"] .scan-title,
+[data-theme="paper"] .asset-name,
+[data-theme="arctic"] .asset-name,
+[data-theme="paper"] .reg-label,
+[data-theme="arctic"] .reg-label,
+[data-theme="paper"] .reco-action,
+[data-theme="arctic"] .reco-action,
+[data-theme="paper"] .sval,
+[data-theme="arctic"] .sval,
+[data-theme="paper"] .ncv,
+[data-theme="arctic"] .ncv,
+[data-theme="paper"] .td-name,
+[data-theme="arctic"] .td-name,
+[data-theme="paper"] .theme-btn,
+[data-theme="arctic"] .theme-btn,
+[data-theme="paper"] .io-modal h3,
+[data-theme="arctic"] .io-modal h3,
+[data-theme="paper"] .export-btn-title,
+[data-theme="arctic"] .export-btn-title,
+[data-theme="paper"] .modal h3,
+[data-theme="arctic"] .modal h3,
+[data-theme="paper"] label,
+[data-theme="arctic"] label {
+  color: var(--text) !important;
+}
+
+/* Section header background for light themes */
+[data-theme="paper"] .sec-hd,
+[data-theme="arctic"] .sec-hd {
+  background: var(--s2);
+}
+
+/* Stat card values */
+[data-theme="paper"] .sval,
+[data-theme="arctic"] .sval {
+  color: var(--text) !important;
+}
+
+/* Table header text */
+[data-theme="paper"] .ttable th,
+[data-theme="arctic"] .ttable th {
+  color: var(--mu2) !important;
+}
+
+/* Table body text */
+[data-theme="paper"] .ttable td,
+[data-theme="arctic"] .ttable td {
+  color: var(--text);
+}
+
+/* Header area */
+[data-theme="paper"] .header,
+[data-theme="arctic"] .header {
+  background: var(--surface);
+}
+
+/* Form labels and inputs */
+[data-theme="paper"] input,
+[data-theme="arctic"] input,
+[data-theme="paper"] textarea,
+[data-theme="arctic"] textarea {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--bd2);
+}
+
+/* Asset filter tabs */
+[data-theme="paper"] .ftab,
+[data-theme="arctic"] .ftab {
+  color: var(--mu2);
+}
+[data-theme="paper"] .ftab.active,
+[data-theme="arctic"] .ftab.active {
+  color: var(--text);
+}
+
+/* Toggle buttons */
+[data-theme="paper"] .tb,
+[data-theme="arctic"] .tb {
+  color: var(--mu2);
+}
+[data-theme="paper"] .tb.active,
+[data-theme="arctic"] .tb.active {
+  color: var(--text);
+}
+
+/* Net cost banner text */
+[data-theme="paper"] .ncl,
+[data-theme="arctic"] .ncl {
+  color: var(--mu2) !important;
+}
+
+
+/* Modal overlay background */
+[data-theme="paper"] .overlay,
+[data-theme="arctic"] .overlay {
+  background: rgba(0,0,0,0.35);
+}
+
+/* Modal surface */
+[data-theme="paper"] .modal,
+[data-theme="arctic"] .modal,
+[data-theme="paper"] .io-modal,
+[data-theme="arctic"] .io-modal {
+  background: var(--surface);
+  border-color: var(--bd2);
+  color: var(--text);
+}
+
+/* IO info box */
+[data-theme="paper"] .io-info,
+[data-theme="arctic"] .io-info {
+  color: var(--text);
+  background: var(--s2);
+}
+
+/* Drop zone */
+[data-theme="paper"] .drop-zone,
+[data-theme="arctic"] .drop-zone {
+  border-color: var(--bd2);
+}
+[data-theme="paper"] .drop-zone-lbl,
+[data-theme="arctic"] .drop-zone-lbl {
+  color: var(--mu2);
+}
+
+/* Export buttons */
+[data-theme="paper"] .export-btn,
+[data-theme="arctic"] .export-btn {
+  background: var(--s2);
+  border-color: var(--bd2);
+}
+[data-theme="paper"] .export-btn:hover,
+[data-theme="arctic"] .export-btn:hover {
+  background: var(--s3);
+}
+
+/* Theme dropdown */
+[data-theme="paper"] .theme-dropdown,
+[data-theme="arctic"] .theme-dropdown {
+  background: var(--surface);
+  border-color: var(--bd2);
+}
+[data-theme="paper"] .td-item:hover,
+[data-theme="arctic"] .td-item:hover {
+  background: var(--s2);
+}
+
+/* Section separators in table */
+[data-theme="paper"] .asset-sep td,
+[data-theme="arctic"] .asset-sep td,
+[data-theme="paper"] .psep td,
+[data-theme="arctic"] .psep td {
+  color: var(--mu2);
+}
+
+/* Form field background */
+[data-theme="paper"] .form-wrap,
+[data-theme="arctic"] .form-wrap,
+[data-theme="paper"] .sec,
+[data-theme="arctic"] .sec {
+  background: var(--surface);
+}
+
+
+
+/* ─── WALLET / RYSK IMPORT ──────────────────────────────── */
+.wallet-card {
+  background: var(--surface);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.wallet-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px 10px;
+  border-bottom: 1px solid var(--bd);
+}
+.wallet-ttl {
+  font-family: var(--sans); font-size: .72rem; font-weight: 700;
+  color: var(--text); display: flex; align-items: center; gap: 7px;
+}
+.wallet-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+.wallet-addr-row { display: flex; gap: 7px; align-items: center; }
+.wallet-input {
+  flex: 1; font-family: var(--mono); font-size: .67rem;
+  background: var(--s2); border: 1px solid var(--bd2);
+  border-radius: 7px; padding: 7px 10px; color: var(--text);
+}
+.wallet-input:focus { outline: none; border-color: var(--green); }
+.wallet-input::placeholder { color: var(--mu); }
+.wallet-sync-btn {
+  font-family: var(--sans); font-size: .67rem; font-weight: 700;
+  background: var(--green); color: var(--bg);
+  border: none; border-radius: 7px; padding: 7px 12px;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.wallet-sync-btn:disabled { opacity: .4; cursor: not-allowed; }
+.wallet-status {
+  font-family: var(--mono); font-size: .65rem; color: var(--mu);
+  line-height: 1.5; min-height: 16px;
+}
+.wallet-status.ok  { color: var(--green); }
+.wallet-status.err { color: var(--red); }
+.wallet-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.wallet-chip {
+  font-family: var(--mono); font-size: .63rem;
+  background: var(--s2); border: 1px solid var(--bd);
+  border-radius: 20px; padding: 3px 10px;
+  color: var(--mu2); cursor: default;
+}
+.wallet-chip.active {
+  background: var(--gd); border-color: var(--gb); color: var(--green);
+}
+.wallet-chip.warn {
+  background: var(--od); border-color: var(--ob); color: var(--orange);
+}
+
+/* Rysk Import Modal */
+.rysk-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.rysk-overlay.open { display: flex; }
+.rysk-modal {
+  background: var(--surface); border: 1px solid var(--bd2);
+  border-radius: 16px; padding: 22px 24px;
+  width: min(540px, 92vw); max-height: 82vh;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+}
+.rysk-modal h3 {
+  font-family: var(--sans); font-size: .95rem; font-weight: 700;
+  color: var(--text); margin: 0;
+}
+.rysk-modal-hd {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rysk-close-btn {
+  background: transparent; border: none; color: var(--mu2);
+  font-size: 1.2rem; cursor: pointer; padding: 2px 6px;
+}
+.rysk-tabs {
+  display: flex; gap: 4px; border-bottom: 1px solid var(--bd); padding-bottom: 8px;
+}
+.rysk-tab {
+  font-family: var(--sans); font-size: .7rem; font-weight: 700;
+  background: transparent; border: 1px solid transparent;
+  border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  color: var(--mu2);
+}
+.rysk-tab.active {
+  background: var(--s2); border-color: var(--bd2); color: var(--text);
+}
+.rysk-panel { display: none; flex-direction: column; gap: 10px; }
+.rysk-panel.active { display: flex; }
+.rysk-table-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+.rysk-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--mono); font-size: .67rem;
+}
+.rysk-table th {
+  font-size: .6rem; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--mu); background: var(--s2);
+  border-bottom: 1px solid var(--bd); padding: 6px 8px;
+  text-align: left; white-space: nowrap; position: sticky; top: 0;
+}
+.rysk-table td {
+  color: var(--text); border-bottom: 1px solid var(--bd);
+  padding: 6px 8px; white-space: nowrap;
+}
+.rysk-table tr:hover td { background: var(--s2); }
+.rysk-table td.new  { color: var(--green); }
+.rysk-table td.dup  { color: var(--mu); }
+.rysk-table td.mismatch { color: var(--orange); }
+.rysk-import-actions {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.rysk-btn {
+  font-family: var(--sans); font-size: .7rem; font-weight: 700;
+  border-radius: 7px; padding: 7px 14px; cursor: pointer; border: none;
+}
+.rysk-btn.primary { background: var(--green); color: var(--bg); }
+.rysk-btn.ghost {
+  background: transparent; border: 1px solid var(--bd2); color: var(--mu2);
+}
+.rysk-btn:disabled { opacity: .4; cursor: not-allowed; }
+.rysk-summary {
+  font-family: var(--mono); font-size: .68rem; color: var(--mu2);
+  background: var(--s2); border: 1px solid var(--bd);
+  border-radius: 8px; padding: 10px 12px; line-height: 1.7;
+}
+.rysk-summary strong { color: var(--text); }
+.rysk-chain-row {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.chain-badge {
+  font-family: var(--mono); font-size: .6rem; font-weight: 700;
+  background: var(--pd); border: 1px solid var(--pb); color: var(--purple);
+  border-radius: 4px; padding: 2px 7px;
+}
+
+/* ─── EDIT TRADE MODAL ──────────────────────────────────── */
+.btn-e {
+  background: transparent; border: 1px solid var(--bd2);
+  color: var(--mu2); border-radius: 4px; padding: 2px 6px;
+  cursor: pointer; font-size: .75rem; line-height: 1;
+}
+.btn-e:hover { color: var(--blue); border-color: var(--blb); background: var(--bld); }
+.btn-qa {
+  border-radius: 4px; padding: 2px 7px; cursor: pointer;
+  font-size: .65rem; line-height: 1.4; font-family: var(--mono);
+  font-weight: 700; white-space: nowrap; transition: all .15s; border: 1px solid;
+}
+.btn-qa-exp { color: var(--green);  border-color: var(--gb); background: var(--gd); }
+.btn-qa-cal { color: var(--orange); border-color: var(--ob); background: var(--od); }
+.btn-qa-asg { color: var(--red);    border-color: var(--rb); background: var(--rd); }
+.btn-qa:hover { filter: brightness(1.18); }
+/* Row action buttons — fade in on row hover */
+.row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }
+tr:hover .row-actions { opacity:1; pointer-events:all; }
+td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
+.edit-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.72); z-index: 900;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .18s;
+}
+.edit-overlay.open { opacity: 1; pointer-events: all; }
+.edit-modal {
+  background: var(--surface); border: 1px solid var(--bd2);
+  border-radius: 16px; padding: 22px 24px;
+  width: min(480px, 92vw); max-height: 88vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.edit-modal h3 {
+  font-family: var(--sans); font-size: .92rem; font-weight: 700;
+  color: var(--text); margin: 0;
+}
+.edit-modal-hd {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.edit-field { display: flex; flex-direction: column; gap: 4px; }
+.edit-field.full { grid-column: 1 / -1; }
+.edit-field label {
+  font-family: var(--mono); font-size: .63rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px; color: var(--mu);
+}
+.edit-input {
+  font-family: var(--mono); font-size: .75rem;
+  background: var(--s2); border: 1px solid var(--bd2);
+  border-radius: 7px; padding: 7px 10px; color: var(--text);
+}
+.edit-input:focus { outline: none; border-color: var(--green); }
+.edit-select {
+  font-family: var(--mono); font-size: .75rem;
+  background: var(--s2); border: 1px solid var(--bd2);
+  border-radius: 7px; padding: 7px 10px; color: var(--text);
+  cursor: pointer;
+}
+.edit-actions {
+  display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px;
+}
+.edit-save-btn {
+  font-family: var(--sans); font-size: .75rem; font-weight: 700;
+  background: var(--green); color: var(--bg);
+  border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer;
+}
+.edit-cancel-btn {
+  font-family: var(--sans); font-size: .75rem; font-weight: 700;
+  background: transparent; border: 1px solid var(--bd2); color: var(--mu2);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer;
+}
+.edit-cancel-btn:hover { color: var(--text); border-color: var(--mu); }
+.edit-err {
+  font-family: var(--mono); font-size: .68rem; color: var(--red);
+  background: var(--rd); border: 1px solid var(--rb);
+  border-radius: 6px; padding: 6px 10px; display: none;
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="hl">
+    <div class="hlogo">&#9881;</div>
+    <div>
+      <div class="htitle">Rysk Wheel Tracker</div>
+    </div>
+  </div>
+  <div class="hbtns" style="display:flex;gap:8px">
+    <div class="theme-picker-wrap">
+      <button class="theme-btn" id="theme-btn" onclick="toggleThemeDropdown()">
+        <span class="swatch" id="theme-swatch" style="background:#00e5a0"></span>
+        <span id="theme-btn-label">Abyss</span>
+        <span style="opacity:.5;font-size:.7rem">&#9660;</span>
+      </button>
+      <div class="theme-dropdown" id="theme-dropdown">
+        <div class="td-section">Dark Themes</div>
+        <div class="td-item active" id="tdi-abyss" onclick="applyTheme('abyss')">
+          <div class="td-swatch" style="background:#0e1219;border:1px solid #232f47">&#127759;</div>
+          <div class="td-info"><div class="td-name">Abyss</div><div class="td-desc">Deep navy · Mint green</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-gold" onclick="applyTheme('gold')">
+          <div class="td-swatch" style="background:#141210;border:1px solid #352e20">&#127774;</div>
+          <div class="td-info"><div class="td-name">Obsidian Gold</div><div class="td-desc">Dark warm · Gold accent</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-ocean" onclick="applyTheme('ocean')">
+          <div class="td-swatch" style="background:#0a1628;border:1px solid #162e58">&#127754;</div>
+          <div class="td-info"><div class="td-name">Deep Ocean</div><div class="td-desc">Dark blue · Sky accent</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-terminal" onclick="applyTheme('terminal')">
+          <div class="td-swatch" style="background:#050f05;border:1px solid #123018">&#128187;</div>
+          <div class="td-info"><div class="td-name">Terminal</div><div class="td-desc">Pitch black · Neon green</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-matrix" onclick="applyTheme('matrix')">
+          <div class="td-swatch" style="background:#040d05;border:1px solid #16381a">&#9651;</div>
+          <div class="td-info"><div class="td-name">Matrix</div><div class="td-desc">Pure black · Phosphor green</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-charcoal" onclick="applyTheme('charcoal')">
+          <div class="td-swatch" style="background:#1a1816;border:1px solid #3a342e">&#128293;</div>
+          <div class="td-info"><div class="td-name">Warm Charcoal</div><div class="td-desc">Warm dark · Coral accent</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-crimson" onclick="applyTheme('crimson')">
+          <div class="td-swatch" style="background:#10151a;border:1px solid #243040">&#128308;</div>
+          <div class="td-info"><div class="td-name">Steel &amp; Crimson</div><div class="td-desc">Cool dark · Red accent</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-section" style="margin-top:4px">Light Themes</div>
+        <div class="td-item" id="tdi-paper" onclick="applyTheme('paper')">
+          <div class="td-swatch" style="background:#fdfaf6;border:1px solid #ddd8ce">&#128220;</div>
+          <div class="td-info"><div class="td-name">Paper</div><div class="td-desc">Warm ivory · Serif fonts</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+        <div class="td-item" id="tdi-arctic" onclick="applyTheme('arctic')">
+          <div class="td-swatch" style="background:#ffffff;border:1px solid #c4d4e8">&#10052;</div>
+          <div class="td-info"><div class="td-name">Arctic</div><div class="td-desc">Clean white · Cool blue</div></div>
+          <span class="td-check">&#10003;</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
+    <button class="btn btn-g" onclick="showReset()">Reset</button>
+    <button class="btn btn-p" onclick="focusForm()">+ Add Trade</button>
+  </div>
+</header>
+
+<main class="page-wrap">
+<div class="content-col">
+
+  <!-- ASSET FILTER TABS -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div class="asset-tabs">
+      <button class="asset-tab all active" id="fb-ALL" onclick="setFilter('ALL')">All Assets</button>
+      <button class="asset-tab btc" id="fb-BTC" onclick="setFilter('BTC')">
+        <span class="asset-dot ad-btc"></span> BTC
+      </button>
+      <button class="asset-tab eth" id="fb-ETH" onclick="setFilter('ETH')">
+        <span class="asset-dot ad-eth"></span> ETH
+      </button>
+          <button class="asset-tab hype" id="fb-HYPE" onclick="setFilter('HYPE')">
+        <span class="asset-dot ad-hype"></span> HYPE
+      </button>
+          <button class="asset-tab sol" id="fb-SOL" onclick="setFilter('SOL')">
+        <span class="asset-dot ad-sol"></span> SOL
+      </button>
+    </div>
+  </div>
+
+  <div class="top-row">
+  <div class="top-left">
+
+  <!-- STATS: Wheel Phases -->
+  <div class="stats">
+    <!-- Phase 1: Selling Puts -->
+    <div class="sc sc-puts">
+      <div class="sc-ph" style="color:var(--blue)">&#9654;&nbsp; Selling Puts</div>
+      <div class="slbl">Capital Locked</div>
+      <div class="sval blue" id="s-lk">$0</div>
+      <div class="ssub" id="s-lk-s">no open puts</div>
+      <div class="sc-det">
+        <div class="sc-det-row"><span class="sc-det-lbl">Assets</span><span class="sc-det-val" id="s-lk-assets">&mdash;</span></div>
+      </div>
+    </div>
+    <!-- Phase 2: Holding Tokens -->
+    <div class="sc sc-hold">
+      <div class="sc-ph" style="color:var(--orange)">&#9670;&nbsp; Holding Tokens</div>
+      <div class="slbl">Net Cost / Token</div>
+      <div class="sval orange" id="s-nc">&mdash;</div>
+      <div class="ssub" id="s-nc-s">no position held</div>
+      <div class="sc-det">
+        <div class="sc-det-row"><span class="sc-det-lbl">Tokens held</span><span class="sc-det-val" id="s-held">&mdash;</span></div>
+        <div class="sc-det-row"><span class="sc-det-lbl">Open lots</span><span class="sc-det-val" id="s-lots">0</span></div>
+      </div>
+    </div>
+    <!-- Phase 3: Income -->
+    <div class="sc sc-inc">
+      <div class="sc-ph" style="color:var(--green)">&#36;&nbsp; Income</div>
+      <div class="slbl">Total Premiums</div>
+      <div class="sval green" id="s-pr">$0</div>
+      <div class="ssub" id="s-pr-s">0 trades completed</div>
+      <div class="sc-det">
+        <div class="sc-det-row"><span class="sc-det-lbl">Avg APR</span><span class="sc-det-val" id="s-apr">&mdash;</span></div>
+        <div class="sc-det-row"><span class="sc-det-lbl">Based on</span><span class="sc-det-val" id="s-apr-s">completed trades only</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="sec">
+    <div class="sec-hd">
+      <div class="sec-ttl"><span class="dot dg"></span>Charts</div>
+    </div>
+    <div class="cgrid">
+      <div><div class="clbl">Monthly Premium Income</div><canvas id="pnlChart" style="max-height:220px"></canvas></div>
+      <div><div class="clbl">Cost Basis vs Net Cost per Lot</div><canvas id="ncChart" style="max-height:220px"></canvas></div>
+    </div>
+  </div>
+
+  </div><!-- end top-left -->
+
+  <div class="top-right">
+  <div class="sec" id="aform">
+    <div class="sec-hd"><div class="sec-ttl"><span class="dot dp"></span>Log New Trade</div></div>
+    <div class="fi">
+      <!-- Asset -->
+      <div class="field fi-full">
+        <label>Asset</label>
+        <div class="tg">
+          <button class="tb active" id="ab-BTC" onclick="setAsset('BTC')" style="color:var(--btc);border-color:var(--btcb);background:var(--btcd)">&#9654; BTC</button>
+          <button class="tb" id="ab-ETH" onclick="setAsset('ETH')">&#9670; ETH</button>
+          <button class="tb" id="ab-HYPE" onclick="setAsset('HYPE')" style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9632; HYPE</button>
+          <button class="tb" id="ab-SOL"  onclick="setAsset('SOL')"  style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9679; SOL</button>
+        </div>
+      </div>
+      <!-- Platform -->
+      <div class="field fi-full">
+        <label>Platform</label>
+        <div class="tg">
+          <button class="tb te active" id="tog-RYSK" onclick="setPlatform('RYSK')">RYSK</button>
+          <button class="tb tc" id="tog-HSFC" onclick="setPlatform('HSFC')">HSFC</button>
+        </div>
+      </div>
+      <!-- Type -->
+      <div class="field fi-full">
+        <label>Trade Type</label>
+        <div class="tg">
+          <button class="tb tp active" id="tog-PUT" onclick="setType('PUT')">PUT</button>
+          <button class="tb tc" id="tog-CALL" onclick="setType('CALL')">CALL</button>
+          <button class="tb th" id="tog-HOLDING" onclick="setType('HOLDING')" style="font-size:.65rem">&#9632; HOLDING</button>
+        </div>
+      </div>
+      <!-- Open date -->
+      <div class="field"><label>Open Date</label><input type="date" id="f-date"></div>
+      <!-- Expiry -->
+      <div class="field" id="field-expiry"><label>Expiry Date</label><input type="date" id="f-expiry"></div>
+      <!-- DTE -->
+      <div class="field" id="field-dte"><label>DTE (auto)</label><input type="number" id="f-dte" placeholder="&mdash;" readonly style="color:var(--mu2)"></div>
+    </div>
+
+    <!-- Lot picker — only shown when type=CALL and 2+ lots are open for the selected asset -->
+    <div id="field-lot-row" style="display:none;padding:0 20px 10px">
+      <div class="field">
+        <label>Assign Call to Lot</label>
+        <select id="f-lot" onchange="autoFillFromLot()"></select>
+      </div>
+    </div>
+
+    <div class="holding-hint" id="holding-hint">
+      <strong>Spot / Manual Entry</strong> &mdash; Use this to log ETH or BTC you already hold from spot purchases.<br>
+      Enter your <strong>cost basis</strong> (what you paid per token) as the Strike, your <strong>quantity</strong> as Size, and set Premium to <strong>0</strong>.<br>
+      The tracker will treat this as an open position so you can start selling covered calls against it immediately.
+    </div>
+    <div class="fb">
+      <div class="field"><label id="f-strike-lbl">Strike ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
+      <div class="field"><label>Size</label><input type="number" id="f-size" value="0.05" step="0.01"><span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span></div>
+      <div class="field"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
+      <div class="field fi-full" id="field-outcome">
+        <label>Outcome</label>
+        <div class="tg">
+          <button class="tb to active" id="tog-OPEN" onclick="setOut('OPEN')">Open</button>
+          <button class="tb te" id="tog-EXPIRED" onclick="setOut('EXPIRED')">Expired</button>
+          <button class="tb ta" id="tog-ASSIGNED" onclick="setOut('ASSIGNED')">Assigned</button>
+          <button class="tb tk" id="tog-CALLED" onclick="setOut('CALLED')">Called</button>
+          <button class="tb tc" id="tog-CLOSED" onclick="setOut('CLOSED')">Closed</button>
+        </div>
+      </div>
+      <div class="field" id="field-closecost" style="display:none">
+        <label>Close Cost (USD)</label>
+        <input type="number" id="f-closecost" placeholder="0" step="1" min="0">
+        <span style="font-size:.62rem;color:var(--mu);font-family:var(--mono);margin-top:2px">cost to buy back position</span>
+      </div>
+    </div>
+    <div style="padding:0 20px 20px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+      <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="e.g. ETH at $3,200, starting with covered calls on held ETH"></div>
+      <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add Trade &rarr;</button>
+    </div>
+    <div class="ferr" id="ferr"></div>
+  </div>
+  </div><!-- end top-right -->
+  </div><!-- end top-row -->
+
+  <!-- CLOSE ALERTS -->
+  <div class="alert-bar" id="alert-bar">
+    <div class="alert-hd">
+      <div class="alert-hd-left"><span class="alert-pulse"></span> Close Alerts</div>
+      <div class="alert-hd-right">
+        <div class="alert-threshold">Target: <input type="number" id="alert-pct" value="50" min="1" max="99" step="1" onchange="saveAlertThreshold()">%</div>
+        <button class="btn" style="font-size:.6rem;padding:3px 8px" onclick="checkAlerts()">Refresh</button>
+      </div>
+    </div>
+    <div id="alert-items" style="padding:6px 12px"></div>
+    <div class="alert-status" id="alert-status"></div>
+  </div>
+
+  <!-- TRADE LOG -->
+  <div class="sec" id="tlog">
+    <div class="sec-hd">
+      <div class="sec-ttl"><span class="dot db"></span>Trade Log</div>
+      <span id="tcnt" style="font-size:.7rem;color:var(--mu);font-family:var(--mono)"></span>
+    </div>
+    <div id="ncbwrap"></div>
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th>Asset</th><th>Lot</th><th>Opened</th><th>Expiry</th><th>DTE</th><th>Type</th>
+          <th>Strike</th><th>Size</th><th>Coll.</th><th>Premium</th>
+          <th>Outcome</th><th>APR</th><th>Lot Premium</th><th></th>
+        </tr></thead>
+        <tbody id="ttbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end content-col -->
+
+
+</main>
+
+
+<!-- IMPORT / EXPORT MODAL -->
+<div class="overlay" id="io-overlay">
+  <div class="io-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0">Import / Export</h3>
+      <button onclick="closeIO()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+    <div class="io-tabs">
+      <button class="io-tab active" id="io-tab-export" onclick="switchIOTab('export')">&#8595; Export</button>
+      <button class="io-tab" id="io-tab-import" onclick="switchIOTab('import')">&#8593; Import</button>
+    </div>
+    <!-- EXPORT PANEL -->
+    <div class="io-panel active" id="io-panel-export">
+      <div class="io-info">
+        Export your trades to move them to another browser or device, or keep an offline backup. <strong>JSON preserves everything</strong> and can be re-imported. CSV is for spreadsheets only.
+      </div>
+      <div class="export-btns">
+        <button class="export-btn" onclick="exportJSON()">
+          <div class="export-btn-left">
+            <div class="export-btn-title">Export JSON</div>
+            <div class="export-btn-sub">Full backup &mdash; reimportable, all fields preserved</div>
+          </div>
+          <div class="export-btn-ico">&#128230;</div>
+        </button>
+        <button class="export-btn" onclick="exportCSV()">
+          <div class="export-btn-left">
+            <div class="export-btn-title">Export CSV</div>
+            <div class="export-btn-sub">Spreadsheet-friendly &mdash; cannot be reimported</div>
+          </div>
+          <div class="export-btn-ico">&#128202;</div>
+        </button>
+      </div>
+      <div style="font-family:var(--mono);font-size:.7rem;color:var(--mu);margin-top:4px" id="export-count"></div>
+    </div>
+    <!-- IMPORT PANEL -->
+    <div class="io-panel" id="io-panel-import">
+      <div class="io-info">
+        Import a <strong>JSON backup</strong> previously exported from this tracker. Choose to <strong>merge</strong> with existing trades or <strong>replace</strong> everything.
+      </div>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="import-file" accept=".json" onchange="handleFileSelect(event)">
+        <div class="drop-zone-ico">&#128228;</div>
+        <div class="drop-zone-lbl">Drop JSON file here or click to browse</div>
+        <div class="drop-zone-sub">Only .json files exported from this tracker</div>
+      </div>
+      <div class="io-status" id="io-status"></div>
+      <div id="import-preview" style="display:none;flex-direction:column;gap:10px">
+        <div style="background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:.75rem;color:var(--text)" id="import-preview-text"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p" style="flex:1;justify-content:center" onclick="doImport('merge')">&#43; Merge with existing</button>
+          <button class="btn btn-g" style="flex:1;justify-content:center" onclick="doImport('replace')">&#8635; Replace all</button>
+        </div>
+        <div style="font-size:.7rem;color:var(--mu);font-family:var(--mono)">
+          <strong style="color:var(--mu2)">Merge:</strong> adds imported trades, skips duplicates by ID.<br>
+          <strong style="color:var(--mu2)">Replace:</strong> deletes all current trades, loads imported file.
+        </div>
+      </div>
+    </div>
+      <!-- Wallet address row -->
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:4px">
+        <input class="wallet-input" id="io-wallet-addr" type="text"
+          placeholder="0x... your wallet address"
+          style="flex:1;font-family:var(--mono);font-size:.7rem;background:var(--s2);border:1px solid var(--bd2);border-radius:7px;padding:8px 11px;color:var(--text)"
+          oninput="syncIOWalletInput(this.value)">
+        <button onclick="syncFromIO()" id="io-sync-btn"
+          style="flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:var(--green);color:var(--bg);border:none;border-radius:7px;padding:8px 14px;cursor:pointer;white-space:nowrap">
+          &#8635; Fetch
+        </button>
+      </div>
+      <div class="io-status" id="io-rysk-status"></div>
+
+      <!-- History preview -->
+      <div id="io-rysk-preview" style="display:none;flex-direction:column;gap:10px">
+        <div class="rysk-summary" id="io-rysk-summary"></div>
+        <div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px">
+          <table class="rysk-table" id="io-rysk-table">
+            <thead>
+              <tr>
+                <th></th><th>Date</th><th>Asset</th><th>Type</th>
+                <th>Strike</th><th>Size</th><th>Premium</th><th>Expiry</th><th>APY</th>
+              </tr>
+            </thead>
+            <tbody id="io-rysk-tbody"></tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="export-btn" id="io-rysk-import-btn" onclick="doIOImport('merge')"
+            style="background:var(--gd);border-color:var(--gb);color:var(--green)">
+            &#10010; Import New Trades
+          </button>
+          <button class="export-btn" onclick="doIOImport('replace')"
+            style="color:var(--mu2)">Replace All</button>
+          <span style="font-family:var(--mono);font-size:.63rem;color:var(--mu)" id="io-rysk-count"></span>
+        </div>
+
+        <!-- Positions mismatch notice -->
+        <div id="io-positions-notice" style="display:none"
+          class="rysk-summary">
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay" id="rovl">
+  <div class="modal">
+    <h3>Delete all trades?</h3>
+    <p>This permanently removes everything from your tracker and cannot be undone.</p>
+    <div class="mbtns">
+      <button class="btn btn-g" onclick="closeReset()">Cancel</button>
+      <button class="btn-d" style="padding:7px 16px;font-size:.78rem;border-radius:7px" onclick="doReset()">Yes, delete all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'rysk_wheel_v4';
+let trades = [];
+let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK';
+let cPnl = null, cNc = null;
+
+const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
+const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9945ff' };
+
+// ── BOOT
+(function init() {
+  try { trades = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) { trades = []; }
+  // Migrate: ensure all trades have a platform field
+  trades.forEach(t => { if (!t.platform) t.platform = 'RYSK'; });
+  document.getElementById('f-date').value = today();
+  document.getElementById('f-date').addEventListener('change', autoDTE);
+  document.getElementById('f-expiry').addEventListener('change', autoDTE);
+  render();
+})();
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function save()  { localStorage.setItem(KEY, JSON.stringify(trades)); }
+function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
+function sk(v)   { return Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/,'')+'K' : fmt(v); }
+
+// ── FORM CONTROLS
+function setAsset(a) {
+  sAsset = a;
+  const assetVars = {
+    BTC:  { c: 'var(--btc)',  b: 'var(--btcb)',  bg: 'var(--btcd)',  placeholder: '75000' },
+    ETH:  { c: 'var(--eth)',  b: 'var(--ethb)',  bg: 'var(--ethd)',  placeholder: '3200'  },
+    HYPE: { c: 'var(--hype)', b: 'var(--hypeb)', bg: 'var(--hyped)', placeholder: '25'    },
+    SOL:  { c: 'var(--sol)',  b: 'var(--solb)',  bg: 'var(--sold)',  placeholder: '180'   },
+  };
+  const baseStyle = 'flex:1;padding:8px 4px;border-radius:6px;font-family:var(--sans);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;border:1px solid';
+  ['BTC','ETH','HYPE','SOL'].forEach(x => {
+    const btn = document.getElementById('ab-' + x);
+    if (!btn) return;
+    if (x === a) {
+      const v = assetVars[x];
+      btn.style.cssText = `${baseStyle} ${v.b};color:${v.c};background:${v.bg}`;
+    } else {
+      btn.style.cssText = `${baseStyle} var(--bd2);color:var(--mu);background:transparent`;
+    }
+  });
+  document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : MIN_SIZE[a];
+  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? 'no minimum' : 'min ' + MIN_SIZE[a] + ' ' + a;
+  document.getElementById('f-strike').placeholder = assetVars[a]?.placeholder || '100';
+  refreshLotPicker();
+}
+
+function setType(t) {
+  sType = t;
+  ['PUT','CALL','HOLDING'].forEach(x => {
+    const btn = document.getElementById('tog-'+x);
+    if (!btn) return;
+    btn.classList.toggle('active', x===t);
+  });
+
+  const isHolding = t === 'HOLDING';
+
+  // Show/hide fields that don't apply to spot holding entries
+  ['field-expiry','field-dte','field-outcome'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = isHolding ? '0.3' : '1';
+    if (el) el.style.pointerEvents = isHolding ? 'none' : 'auto';
+  });
+
+  // Update strike label and placeholder
+  const strikeLbl = document.getElementById('f-strike-lbl');
+  const strikeInp = document.getElementById('f-strike');
+  if (strikeLbl) strikeLbl.textContent = isHolding ? 'Cost Basis ($)' : 'Strike ($)';
+  if (strikeInp) strikeInp.placeholder = isHolding
+    ? (sAsset === 'ETH' ? '3200' : '85000')
+    : (sAsset === 'BTC' ? '75000' : '3200');
+
+  // Show/hide hint
+  const hint = document.getElementById('holding-hint');
+  if (hint) hint.style.display = isHolding ? 'block' : 'none';
+
+  // If switching to holding, force premium to 0 and outcome to HOLDING internally
+  if (isHolding) {
+    document.getElementById('f-prem').value = '0';
+    document.getElementById('f-prem').style.opacity = '0.4';
+    document.getElementById('f-prem').readOnly = true;
+    setOut('OPEN'); // internal state — compute() handles holding specially
+  } else {
+    document.getElementById('f-prem').style.opacity = '1';
+    document.getElementById('f-prem').readOnly = false;
+    if (document.getElementById('f-prem').value === '0') {
+      document.getElementById('f-prem').value = '';
+    }
+  }
+  refreshLotPicker();
+}
+function setPlatform(p) {
+  sPlatform = p;
+  ['RYSK','HSFC'].forEach(x => {
+    const btn = document.getElementById('tog-'+x);
+    if (btn) btn.classList.toggle('active', x===p);
+  });
+  // CLOSED outcome only available on HSFC
+  const closedBtn = document.getElementById('tog-CLOSED');
+  if (closedBtn) closedBtn.style.display = (p === 'HSFC') ? '' : 'none';
+  // If switching to RYSK while CLOSED is selected, reset to OPEN
+  if (p === 'RYSK' && sOut === 'CLOSED') setOut('OPEN');
+  // Update size hint and default
+  const sizeHint = document.getElementById('f-size-hint');
+  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? 'no minimum' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
+  const sizeEl = document.getElementById('f-size');
+  if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
+}
+function setOut(o) {
+  sOut = o;
+  ['OPEN','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+    const btn = document.getElementById('tog-'+x);
+    if (btn) btn.classList.toggle('active', x===o);
+  });
+  // Show close cost field only when CLOSED
+  const ccField = document.getElementById('field-closecost');
+  if (ccField) ccField.style.display = (o === 'CLOSED') ? '' : 'none';
+  autoFillFromLot();
+}
+function refreshLotPicker() {
+  const row = document.getElementById('field-lot-row');
+  const sel = document.getElementById('f-lot');
+  if (!row || !sel) return;
+  if (sType !== 'CALL') { row.style.display = 'none'; return; }
+  const { lots } = compute();
+  const openLots = (lots[sAsset] || []).filter(l => l.open);
+  if (openLots.length < 2) { row.style.display = 'none'; return; }
+  sel.innerHTML = openLots.map(l =>
+    '<option value="' + l.lotNum + '">Lot ' + l.lotNum + ' \u2014 ' + l.size + ' ' + sAsset + ' @ $' + fmt(l.costBasis) + '</option>'
+  ).join('');
+  row.style.display = '';
+  autoFillFromLot(); // auto-fill if outcome is already EXPIRED/CALLED
+}
+function autoFillFromLot() {
+  // Only applies when logging an expiry or called-away event on a CALL
+  if (sType !== 'CALL') return;
+  if (sOut !== 'EXPIRED' && sOut !== 'CALLED') return;
+
+  // Determine which lot's history to search
+  const lotRow = document.getElementById('field-lot-row');
+  const pickerVisible = lotRow && lotRow.style.display !== 'none';
+  const lotNum = pickerVisible ? (parseInt(document.getElementById('f-lot').value) || null) : null;
+
+  // Find the most recent CALL for this asset on the selected lot
+  let candidates = trades.filter(t => t.asset === sAsset && t.type === 'CALL');
+  if (lotNum !== null) {
+    const withLot = candidates.filter(t => t.lotNum === lotNum);
+    // Prefer explicit-lot matches; fall back to all asset calls for old trades without lotNum
+    if (withLot.length) candidates = withLot;
+  }
+  candidates.sort((a, b) => b.id - a.id);
+  if (!candidates.length) return;
+
+  const prev = candidates[0];
+  const strikeEl = document.getElementById('f-strike');
+  const sizeEl   = document.getElementById('f-size');
+  const premEl   = document.getElementById('f-prem');
+  if (strikeEl) strikeEl.value = prev.strike;
+  if (sizeEl)   sizeEl.value   = prev.size;
+  // EXPIRED / CALLED = closing event; premium was already collected at OPEN, set to 0
+  if (premEl && !premEl.readOnly) premEl.value = '0';
+}
+function setFilter(f) {
+  sFilter = f;
+  ['ALL','BTC','ETH','HYPE','SOL'].forEach(x => { const el = document.getElementById('fb-'+x); if(el) el.classList.toggle('active', x===f); });
+  render();
+}
+function autoDTE() {
+  const d = document.getElementById('f-date').value;
+  const e = document.getElementById('f-expiry').value;
+  if (d && e) {
+    const n = Math.round((new Date(e) - new Date(d)) / 86400000);
+    document.getElementById('f-dte').value = n > 0 ? n : '';
+  }
+}
+
+// ── ADD TRADE
+function addTrade() {
+  const errEl = document.getElementById('ferr');
+  errEl.style.display = 'none';
+  const g = id => document.getElementById(id).value;
+  const date = g('f-date'), expiry = g('f-expiry');
+  const strike = parseFloat(g('f-strike')), size = parseFloat(g('f-size'));
+  const prem = parseFloat(g('f-prem')), dte = parseInt(g('f-dte'));
+  const notes = g('f-notes').trim();
+  function err(m) { errEl.textContent = '⚠ ' + m; errEl.style.display = 'block'; }
+  if (!date)   return err('Open date required.');
+  if (sType !== 'HOLDING' && !expiry) return err('Expiry date required.');
+  if (!strike || strike <= 0) return err(sType === 'HOLDING' ? 'Cost basis required.' : 'Strike price required.');
+  if (!size || size <= 0)     return err('Size required.');
+  if (sPlatform === 'RYSK' && size < MIN_SIZE[sAsset]) return err('Minimum size for ' + sAsset + ' is ' + MIN_SIZE[sAsset] + '.');
+  if (sType !== 'HOLDING' && (isNaN(prem) || prem < 0)) return err('Premium required (enter 0 if none).');
+  const lotRow = document.getElementById('field-lot-row');
+  const lotNumVal = (sType === 'CALL' && lotRow && lotRow.style.display !== 'none')
+    ? (parseInt(document.getElementById('f-lot').value) || null)
+    : null;
+  const closeCost = parseFloat(document.getElementById('f-closecost').value) || 0;
+  if (sOut === 'CLOSED' && closeCost < 0) return err('Close cost cannot be negative.');
+  const tradeObj = { id: Date.now(), asset: sAsset, type: sType, date, expiry, dte: isNaN(dte)?null:dte, strike, size, premium: prem, outcome: sOut, notes, platform: sPlatform };
+  if (sOut === 'CLOSED') tradeObj.closeCost = closeCost;
+  if (lotNumVal !== null) tradeObj.lotNum = lotNumVal;
+  trades.push(tradeObj);
+  save(); render(); clearForm();
+  document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearForm() {
+  ['f-expiry','f-strike','f-notes','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('f-prem').value = '';
+  document.getElementById('f-prem').style.opacity = '1';
+  document.getElementById('f-prem').readOnly = false;
+  document.getElementById('f-size').value = MIN_SIZE[sAsset];
+  setOut('OPEN');
+  // Reset to PUT if was on HOLDING
+  if (sType === 'HOLDING') setType('PUT');
+  document.getElementById('ferr').style.display = 'none';
+  const hint = document.getElementById('holding-hint');
+  if (hint) hint.style.display = 'none';
+  const ccField = document.getElementById('field-closecost');
+  if (ccField) ccField.style.display = 'none';
+}
+
+function deleteTrade(id) { trades = trades.filter(t => t.id !== id); save(); render(); }
+function quickOutcome(id, outcome) {
+  const t = trades.find(t => t.id === id);
+  if (!t) return;
+  t.outcome = outcome;
+  save(); render();
+}
+
+// ── COMPUTE (lot-aware, multi-wheel per asset) ───────────────
+// Architecture:
+//   - PUT trades: portfolio-level income (pre-assignment)
+//   - HOLDING / ASSIGNED: starts a new LOT with its own cost basis
+//   - CALL trades: attached to the currently open lot for that asset
+//   - CALLED outcome: closes the lot
+// Each lot tracks: costBasis, size, lotPremiums (calls only), netCost
+// Portfolio-level P&L includes all premiums + assignment debits/credits
+
+function compute(assetFilter) {
+  const assets = ['BTC', 'ETH', 'HYPE', 'SOL'];
+  const streams = {};  // per-asset flat rows with enriched fields
+  const lots = {};     // per-asset array of lot objects
+
+  assets.forEach(a => {
+    const assetTrades = trades.filter(t => t.asset === a);
+    let portfolioPnl = 0;      // tracks full P&L inc. assignment debits
+    let portfolioPremiums = 0; // total premiums (puts + calls) for asset
+    let putOnlyPnl = 0;        // running premiums from non-assigned PUTs only
+    let lotCounter = 0;
+    let openLot = null;        // currently open lot
+
+    const lotList = [];        // all lots (open + closed) for this asset
+    const enriched = [];
+
+    assetTrades.forEach((t, i) => {
+      const cc = t.closeCost || 0;
+      const netPrem = t.premium - cc;
+      portfolioPremiums += netPrem;
+      portfolioPnl      += netPrem;
+      if (t.type === 'PUT' && t.outcome !== 'ASSIGNED') putOnlyPnl += netPrem;
+
+      // ── LOT LIFECYCLE ──────────────────────────────────────
+      if (t.type === 'HOLDING') {
+        // Spot entry — open a new lot, don't debit P&L
+        lotCounter++;
+        openLot = {
+          lotNum: lotCounter,
+          startDate: t.date,
+          costBasis: t.strike,
+          size: t.size,
+          lotPremiums: 0,   // call premiums collected on this lot
+          putPremiums: 0,   // put premiums attributed at lot level (none yet)
+          open: true,
+          endDate: null,
+          exitStrike: null,
+          tradeIds: [t.id],
+        };
+        lotList.push(openLot);
+
+      } else if (t.outcome === 'ASSIGNED') {
+        // Put gets assigned — debit P&L, open new lot
+        portfolioPnl -= t.strike * t.size;
+        lotCounter++;
+        openLot = {
+          lotNum: lotCounter,
+          startDate: t.date,
+          costBasis: t.strike,
+          size: t.size,
+          lotPremiums: 0,
+          open: true,
+          endDate: null,
+          exitStrike: null,
+          tradeIds: [t.id],
+        };
+        lotList.push(openLot);
+
+      } else if (t.type === 'CALL') {
+        // Find the correct lot: explicit lotNum takes priority over openLot
+        let targetLot = null;
+        if (t.lotNum != null) {
+          targetLot = lotList.find(l => l.lotNum === t.lotNum && l.open) || null;
+        }
+        if (!targetLot) targetLot = openLot;
+        if (targetLot) {
+          targetLot.lotPremiums += netPrem;
+          targetLot.tradeIds.push(t.id);
+          if (t.outcome === 'CALLED') {
+            // Lot closed — asset called away
+            portfolioPnl += t.strike * targetLot.size;
+            targetLot.open = false;
+            targetLot.endDate = t.date;
+            targetLot.exitStrike = t.strike;
+            if (openLot === targetLot) openLot = null;
+          }
+          // CLOSED call: lot stays open — position was bought back early
+        }
+      }
+      // PUT (not assigned) — portfolio level only, no lot attachment
+
+      // ── PER-ROW ENRICHMENT ─────────────────────────────────
+      // For CALL rows with an explicit lotNum, display that lot's data.
+      // For everything else, use openLot.
+      let rowLot = null;
+      if (t.type === 'CALL') {
+        if (t.lotNum != null) {
+          rowLot = lotList.find(l => l.lotNum === t.lotNum) || openLot;
+        } else {
+          rowLot = openLot;
+        }
+        // CALLED closes the lot — suppress net cost on the closing row
+        if (t.outcome === 'CALLED') rowLot = null;
+      } else if (t.type === 'HOLDING' || t.outcome === 'ASSIGNED') {
+        rowLot = openLot; // the lot just created above
+      }
+      let nc = null, lotNum = null, lotSize = null, lotCostBasis = null;
+      if (rowLot) {
+        nc = rowLot.costBasis - (rowLot.lotPremiums / rowLot.size);
+        lotNum = rowLot.lotNum;
+        lotSize = rowLot.size;
+        lotCostBasis = rowLot.costBasis;
+      }
+
+      const collateral = t.strike * t.size;
+      const returnPct  = collateral > 0 ? (netPrem / collateral) * 100 : null;
+      const dte        = t.dte && t.dte > 0 ? t.dte : null;
+      const monthly    = (returnPct !== null && dte) ? returnPct / dte * 30  : null;
+      const annual     = (returnPct !== null && dte) ? returnPct / dte * 365 : null;
+
+      // lotPnl: running premium total for CALLs in a lot, or individual premium for PUTs
+      let lotPnl = null;
+      if (t.type === 'CALL' && rowLot) {
+        lotPnl = rowLot.lotPremiums;
+      } else if (t.type === 'PUT' && t.outcome !== 'ASSIGNED') {
+        lotPnl = netPrem;
+      }
+
+      enriched.push({
+        ...t,
+        assetIdx: i + 1,
+        pnl: portfolioPnl,
+        totPr: portfolioPremiums,
+        nc,
+        lotPnl,
+        held: openLot ? openLot.size : null,
+        lotNum,
+        lotSize,
+        lotCostBasis,
+        returnPct, monthly, annual,
+      });
+    });
+
+    streams[a] = enriched;
+    lots[a] = lotList;
+  });
+
+  // ── COMBINE & SORT ─────────────────────────────────────────
+  let allRows = [];
+  assets.forEach(a => streams[a].forEach(r => allRows.push(r)));
+  allRows.sort((a, b) => {
+    if (a.asset !== b.asset) return a.asset.localeCompare(b.asset);
+    const aLot = a.lotNum ?? 0;
+    const bLot = b.lotNum ?? 0;
+    if (aLot !== bLot) return aLot - bLot;
+    return a.date.localeCompare(b.date) || a.id - b.id;
+  });
+  allRows = allRows.map((r, i) => ({ ...r, idx: i + 1 }));
+
+  const displayRows = assetFilter && assetFilter !== 'ALL'
+    ? allRows.filter(r => r.asset === assetFilter)
+    : allRows;
+
+  return { streams, lots, allRows, displayRows };
+}
+
+// ── RENDER
+function render() {
+  const { streams, lots, allRows, displayRows } = compute(sFilter);
+  rStats(streams, lots, displayRows);
+  rTable(displayRows, streams, lots);
+  rCharts(displayRows, streams, lots);
+  refreshAlertBar();
+}
+
+function refreshAlertBar() {
+  var bar = document.getElementById('alert-bar');
+  if (!bar) return;
+  var openTrades = getOpenHSFCTrades();
+  if (openTrades.length > 0) {
+    bar.classList.add('has-alerts');
+  } else {
+    bar.classList.remove('has-alerts');
+    document.getElementById('alert-items').innerHTML = '';
+    setAlertStatus('', false);
+  }
+}
+
+function rStats(streams, lots, displayRows) {
+  // Totals across displayed rows
+  const last = displayRows[displayRows.length - 1];
+  const allPr = displayRows.reduce((s,r) => s + r.premium - (r.closeCost || 0), 0);
+
+  // Combined P&L = sum of each asset's final P&L
+  let combPnl = 0;
+  ['BTC','ETH','HYPE','SOL'].forEach(a => {
+    if (sFilter === 'ALL' || sFilter === a) {
+      const s = streams[a];
+      if (s.length) combPnl += s[s.length-1].pnl;
+    }
+  });
+
+  // Net cost: lot-aware — show open lots per asset
+  let ncText = '&mdash;', ncCls = 'orange', ncSub = 'no position held';
+  {
+    const assetsToCheck = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
+    const lotParts = [];
+    assetsToCheck.forEach(a => {
+      const openLots = (lots[a] || []).filter(l => l.open);
+      openLots.forEach(l => {
+        const nc = l.costBasis - (l.lotPremiums / l.size);
+        lotParts.push(a + ' Lot ' + l.lotNum + ': $' + fmt(nc));
+      });
+    });
+    if (lotParts.length === 1) {
+      ncText = '$' + fmt(
+        (() => { const a = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
+          for (const asset of a) { const ol = (lots[asset]||[]).filter(l=>l.open); if(ol.length) return ol[0].costBasis - ol[0].lotPremiums/ol[0].size; }
+          return 0; })()
+      );
+      ncSub = lotParts[0].split(':')[0] + ' breakeven';
+      ncCls = 'orange';
+    } else if (lotParts.length > 1) {
+      ncText = lotParts.length + ' open lots';
+      ncSub = 'see lot cards below';
+      ncCls = 'orange';
+    }
+  }
+
+  // Capital locked (open positions)
+  const openTrades = trades.filter(t => t.outcome === 'OPEN' && (sFilter === 'ALL' || t.asset === sFilter));
+  const locked = openTrades.reduce((s,t) => s + (t.type === 'PUT' ? t.strike*t.size : 0), 0);
+
+  const done = displayRows.filter(r => r.outcome !== 'OPEN').length;
+
+  // Phase 1: Selling Puts details
+  const openPutsList = trades.filter(t => t.type === 'PUT' && t.outcome === 'OPEN' && (sFilter === 'ALL' || t.asset === sFilter));
+  const putAssetsList = [...new Set(openPutsList.map(t => t.asset))];
+  sv('s-lk', locked > 0 ? '$' + fmt(locked) : '$0', locked > 0 ? 'blue' : '');
+  st('s-lk-s', locked > 0 ? 'USDC locked in ' + openPutsList.length + ' put' + (openPutsList.length !== 1 ? 's' : '') : 'no open puts');
+  st('s-lk-count', openPutsList.length > 0 ? openPutsList.length + ' open put' + (openPutsList.length !== 1 ? 's' : '') : 'none active');
+  st('s-lk-assets', putAssetsList.length > 0 ? putAssetsList.join(' · ') : '—');
+
+  // Phase 2: Holding Tokens details
+  const heldAssets = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
+  const heldParts = [];
+  let openLotsCount = 0;
+  heldAssets.forEach(a => {
+    (lots[a] || []).filter(l => l.open).forEach(l => {
+      heldParts.push(fmt(l.size) + ' ' + a);
+      openLotsCount++;
+    });
+  });
+  svh('s-nc', ncText, ncCls);
+  st('s-nc-s', ncSub);
+  st('s-held', heldParts.length > 0 ? heldParts.join(' · ') : '—');
+  st('s-lots', openLotsCount > 0 ? openLotsCount + ' open lot' + (openLotsCount !== 1 ? 's' : '') : 'none held');
+
+  // Phase 3: Income
+  sv('s-pr', '$' + Number(allPr).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), 'green');
+  st('s-pr-s', done + ' trade' + (done!==1?'s':'') + ' completed');
+
+  // Weighted average annualized return across all trades with DTE (open + completed)
+  // Weight = collateral × DTE (bigger, longer trades count more)
+  const completedWithDTE = displayRows.filter(r => r.annual !== null && r.dte > 0);
+  let weightedAnnSum = 0, weightSum = 0;
+  completedWithDTE.forEach(r => {
+    const w = (r.strike * r.size) * r.dte;
+    weightedAnnSum += r.annual * w;
+    weightSum += w;
+  });
+  const avgAnnual = weightSum > 0 ? weightedAnnSum / weightSum : null;
+  svh('s-apr', avgAnnual !== null ? avgAnnual.toFixed(1) + '%' : '&mdash;', avgAnnual !== null ? 'green' : '');
+  st('s-apr-s', avgAnnual !== null ? completedWithDTE.length + ' trade' + (completedWithDTE.length !== 1 ? 's' : '') + ' with DTE' : 'completed trades only');
+
+}
+
+function sv(id, text, cls='')  { const el=document.getElementById(id); if(!el) return; el.textContent=text; el.className='sval'+(cls?' '+cls:''); }
+function svh(id, html, cls='') { const el=document.getElementById(id); if(!el) return; el.innerHTML=html; el.className='sval'+(cls?' '+cls:''); }
+function st(id, t)             { const el=document.getElementById(id); if(el) el.textContent=t; }
+
+function rTable(displayRows, streams, lots) {
+  const tbody  = document.getElementById('ttbody');
+  const ncWrap = document.getElementById('ncbwrap');
+  const cntEl  = document.getElementById('tcnt');
+
+  if (!displayRows.length) {
+    tbody.innerHTML = '<tr><td colspan="14"><div class="empty"><div class="eico">&#128203;</div><h3>No trades yet</h3><p>Add your first trade using the form below — you can start with a covered call if you already hold ETH or BTC.</p></div></td></tr>';
+    ncWrap.innerHTML = ''; cntEl.textContent = ''; return;
+  }
+
+  cntEl.textContent = displayRows.length + ' trade' + (displayRows.length!==1?'s':'');
+
+  // Net cost banners — one card per open LOT (lot-aware multi-wheel)
+  let bannerHtml = '';
+  ['BTC','ETH','HYPE','SOL'].forEach(a => {
+    if (sFilter !== 'ALL' && sFilter !== a) return;
+    const assetLots = (lots[a] || []).filter(l => l.open);
+    if (!assetLots.length) return;
+    const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a] || 'mu2';
+    const totalLots = (lots[a] || []).length;
+
+    // Show merge button if 2+ open lots for this asset
+    if (assetLots.length >= 2) {
+      bannerHtml += `<div style="margin-bottom:4px;text-align:right"><button class="btn-merge" onclick="openMergeModal('${a}')">Merge ${a} Lots</button></div>`;
+    }
+    assetLots.forEach(lot => {
+      const nc = lot.costBasis - (lot.lotPremiums / lot.size);
+      const lotLabel = totalLots > 1 ? `${a} Lot ${lot.lotNum}` : `${a} Held`;
+      const reduction = lot.costBasis - nc;
+      bannerHtml += `<div class="ncb" style="margin-bottom:8px">
+        <div class="nci"><div class="ncl">${lotLabel}</div><div class="ncv ${col}">${lot.size} ${a}</div></div>
+        <div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$${fmt(lot.costBasis)}</div></div>
+        <div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$${fmt(lot.lotPremiums)}</div></div>
+        <div class="nci"><div class="ncl">Net Cost / ${a}</div><div class="ncv orange">$${fmt(nc)}</div></div>
+        <div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$${fmt(reduction)}</div></div>
+        <div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$${fmt(nc)}</div></div>
+      </div>`;
+    });
+  });
+  if (bannerHtml) ncWrap.innerHTML = '<div style="padding:16px 20px 0">' + bannerHtml + '</div>';
+  else ncWrap.innerHTML = '';
+
+  const OMAP = { EXPIRED:'Expired &#10003;', ASSIGNED:'Assigned', CALLED:'Called Away', OPEN:'Open &#9679;', HOLDING:'&mdash;', CLOSED:'Closed &#10003;' };
+  const OBDG = { EXPIRED:'bexp', ASSIGNED:'bass', CALLED:'bcal', OPEN:'bopn', HOLDING:'bholding', CLOSED:'bclosed' };
+
+  let html = '', lastAsset = null, inCC = {}, lastLot = {};
+
+  displayRows.forEach(r => {
+    const assetLo = r.asset.toLowerCase();
+
+    // Asset separator when showing ALL and switching assets in sorted order
+    if (sFilter === 'ALL' && r.asset !== lastAsset) {
+      html += `<tr class="asset-sep"><td colspan="14"><span class="badge b${assetLo}">${{ BTC:'&#9654;', ETH:'&#9670;', HYPE:'&#9632;', SOL:'&#9679;' }[r.asset] || '&#9632;'} ${r.asset} Trades</span></td></tr>`;
+      lastAsset = r.asset;
+    }
+
+    // Lot group header — shown for every lot (single and multi)
+    const prevLot = lastLot[r.asset];
+    if (r.lotNum && r.lotNum !== prevLot) {
+      lastLot[r.asset] = r.lotNum;
+      const lotLabel = r.type === 'HOLDING' ? 'Spot Entry' : 'Assigned';
+      html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9632; ${r.asset} — Lot ${r.lotNum} (${lotLabel} @ $${fmt(r.lotCostBasis)})</td></tr>`;
+    } else if (!r.lotNum && r.type === 'PUT') {
+      // Unassigned put — portfolio-level separator (only if there are also lots for this asset)
+      if (!lastLot['_put_' + r.asset] && (lots[r.asset] || []).length > 0) {
+        lastLot['_put_' + r.asset] = true;
+        html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9654; ${r.asset} — Cash-Secured Put (portfolio level)</td></tr>`;
+      }
+    }
+
+    // Fallback separator for CALL rows with no lot context (edge case: calls logged without a HOLDING)
+    if (r.type === 'CALL' && !r.lotNum && !inCC[r.asset]) {
+      inCC[r.asset] = true;
+      html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9654; ${r.asset} Covered Call Phase</td></tr>`;
+    }
+
+    const lotPnlCell = r.lotPnl !== null
+      ? `<span class="cr">+$${fmt(r.lotPnl)}</span>`
+      : '<span style="color:var(--mu)">&mdash;</span>';
+    const coll = r.type === 'PUT' ? '$'+fmt(r.strike*r.size) : r.size+' '+r.asset;
+    const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
+    const isHoldingRow = r.type === 'HOLDING';
+
+    // APR display (single column replacing % Return / Mo% / Ann%)
+    const fmtPct = (v, dp=1) => v !== null ? v.toFixed(dp) + '%' : '&mdash;';
+    const aprColor = r.annual > 0 ? 'var(--green)' : 'var(--mu2)';
+    const aprStr = isHoldingRow ? '&mdash;' : `<span style="font-weight:700;color:${aprColor}">${fmtPct(r.annual)}</span>`;
+    const typeBadge = isHoldingRow
+      ? '<span class="badge bholding">&#9632; SPOT</span>'
+      : `<span class="badge b${r.type.toLowerCase()}">${r.type}</span>`;
+    const outcomeBadge = isHoldingRow
+      ? '<span style="color:var(--mu);font-size:.72rem">spot entry</span>'
+      : `<span class="badge ${OBDG[r.outcome]}">${OMAP[r.outcome]}</span>`;
+    // Lot clustering row classes
+    let rowCls = '';
+    if (r.lotNum) {
+      if (r.type === 'HOLDING' || r.outcome === 'ASSIGNED') rowCls = `lot-head la-${assetLo}`;
+      else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
+    }
+    const platBadge = (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '';
+    const notesTitle = r.notes ? ` title="${r.notes.replace(/"/g,'&quot;')}"` : '';
+    const notesIcon = r.notes ? ' <span style="color:var(--mu);font-size:.65rem;cursor:default" title="' + r.notes.replace(/"/g,'&quot;') + '">&#128196;</span>' : '';
+    const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
+    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}${notesTitle}>
+      <td><span class="badge ${assetCls}">${r.asset}</span>${platBadge}${notesIcon}</td>
+      <td class="mu" style="font-size:.72rem">${r.lotNum ? 'L'+r.lotNum : '&mdash;'}</td>
+      <td>${r.date}</td>
+      <td class="mu">${isHoldingRow ? '&mdash;' : r.expiry}</td>
+      <td class="mu">${isHoldingRow ? '&mdash;' : (r.dte||'&mdash;')}</td>
+      <td>${typeBadge}</td>
+      <td>$${fmt(r.strike)}<br><span style="font-size:.65rem;color:var(--mu)">${isHoldingRow?'cost basis':'strike'}</span></td>
+      <td class="mu">${r.size} ${r.asset}</td>
+      <td class="mu">${coll}</td>
+      <td class="${isHoldingRow?'mu':'cr'}">${isHoldingRow?'&mdash;': (r.outcome === 'CLOSED' ? '+$' + r.premium + '<br><span style="font-size:.6rem;color:var(--red)">-$' + fmt(r.closeCost || 0) + ' close</span>' : '+$'+r.premium)}</td>
+      <td>${outcomeBadge}</td>
+      <td>${aprStr}</td>
+      <td>${lotPnlCell}</td>
+      <td class="td-act"><div class="row-actions">${
+        (r.outcome === 'OPEN' && r.type === 'CALL') ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-cal" onclick="quickOutcome(${r.id},'CALLED')" title="Mark called away">Called ↑</button>` :
+        (r.outcome === 'OPEN' && r.type === 'PUT')  ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-asg" onclick="quickOutcome(${r.id},'ASSIGNED')" title="Mark assigned">Asgn ↓</button>` : ''
+      }<button class="btn-e" onclick="openEditModal(${r.id})" title="Edit">&#9998;</button><button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function rCharts(displayRows, streams, lots) {
+  const cs = getComputedStyle(document.documentElement);
+  const themeGreen = cs.getPropertyValue('--green').trim() || '#00e5a0';
+  const themeMu    = cs.getPropertyValue('--mu').trim()    || '#5a6680';
+  const ACLR = {
+    BTC:  cs.getPropertyValue('--btc').trim()  || '#f7931a',
+    ETH:  cs.getPropertyValue('--eth').trim()  || '#627eea',
+    HYPE: cs.getPropertyValue('--hype').trim() || '#00e5a0',
+    SOL:  cs.getPropertyValue('--sol').trim()  || '#9945ff',
+  };
+  const ttBase = {
+    backgroundColor:'#131923', borderColor:'#232f47', borderWidth:1,
+    titleColor:'#cdd5e8', bodyColor:'#8090b0',
+    titleFont:{family:'DM Mono',size:11}, bodyFont:{family:'DM Mono',size:11},
+  };
+  const tickStyle = { color: themeMu, font: { family: 'DM Mono', size: 10 } };
+  const gridStyle = { color: 'rgba(28,37,56,.8)' };
+
+  // ── CHART 1: Monthly Premium Income ──────────────────────────
+  if (cPnl) cPnl.destroy();
+  const pc = document.getElementById('pnlChart').getContext('2d');
+
+  const monthMap = {};
+  displayRows.forEach(r => {
+    if (!r.premium || r.type === 'HOLDING') return;
+    const month = r.date.substring(0, 7);
+    if (!monthMap[month]) monthMap[month] = { BTC:0, ETH:0, HYPE:0, SOL:0 };
+    monthMap[month][r.asset] += r.premium - (r.closeCost || 0);
+  });
+  const monthKeys = Object.keys(monthMap).sort();
+  const monthLabels = monthKeys.map(k => {
+    const [y, m] = k.split('-');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1] + " '" + y.slice(2);
+  });
+  const activeAssets = ['BTC','ETH','HYPE','SOL'].filter(
+    a => (sFilter === 'ALL' || a === sFilter) && monthKeys.some(m => (monthMap[m][a] || 0) > 0)
+  );
+  const monthDatasets = activeAssets.map(a => ({
+    label: a,
+    data: monthKeys.map(m => +(monthMap[m][a] || 0).toFixed(2)),
+    backgroundColor: ACLR[a] + 'bb',
+    borderColor: ACLR[a],
+    borderWidth: 1,
+    borderRadius: 3,
+    stack: 'income',
+  }));
+
+  cPnl = new Chart(pc, {
+    type: 'bar',
+    data: { labels: monthLabels.length ? monthLabels : ['—'], datasets: monthDatasets.length ? monthDatasets : [{ label:'', data:[0], backgroundColor:'transparent', stack:'income' }] },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: activeAssets.length > 1, labels: { color: themeMu, font:{ family:'DM Mono', size:10 }, boxWidth:10, padding:12 } },
+        tooltip: {
+          ...ttBase,
+          callbacks: {
+            label: ctx => ' ' + ctx.dataset.label + ': +$' + fmt(ctx.raw),
+            footer: items => items.length > 1 ? [' Total: +$' + fmt(items.reduce((s,i) => s + i.raw, 0))] : [],
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: tickStyle, grid: gridStyle },
+        y: { stacked: true, beginAtZero: true, ticks: { ...tickStyle, callback: v => '$'+sk(v) }, grid: gridStyle },
+      }
+    }
+  });
+
+  // ── CHART 2: Cost Basis vs Net Cost per Lot ──────────────────
+  if (cNc) cNc.destroy();
+  const nc = document.getElementById('ncChart').getContext('2d');
+
+  const checkAssets = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
+  const lotBars = [];
+  checkAssets.forEach(a => {
+    (lots[a] || []).forEach(lot => {
+      if (lot.lotPremiums <= 0) return;
+      const netCost  = lot.costBasis - (lot.lotPremiums / lot.size);
+      const reduction = lot.costBasis - netCost;
+      const pct = (reduction / lot.costBasis * 100).toFixed(1);
+      lotBars.push({ label: a + ' L' + lot.lotNum + (lot.open ? '' : ' ✓'), asset: a, costBasis: lot.costBasis, netCost, reduction, pct });
+    });
+  });
+
+  if (lotBars.length) {
+    const multiAsset = sFilter === 'ALL' && new Set(lotBars.map(l => l.asset)).size > 1;
+
+    if (multiAsset) {
+      // Multi-asset: % reduction per lot (avoids scale mismatch between BTC/ETH)
+      cNc = new Chart(nc, {
+        type: 'bar',
+        data: {
+          labels: lotBars.map(l => l.label),
+          datasets: [{
+            data: lotBars.map(l => +l.pct),
+            backgroundColor: lotBars.map(l => ACLR[l.asset] + 'bb'),
+            borderColor:     lotBars.map(l => ACLR[l.asset]),
+            borderWidth: 1, borderRadius: 4,
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { ...ttBase, callbacks: { label: ctx => {
+              const l = lotBars[ctx.dataIndex];
+              return [' ' + l.pct + '% reduced', ' -$' + fmt(l.reduction.toFixed(2)) + '/token', ' $' + fmt(l.netCost.toFixed(2)) + ' net cost'];
+            }}}
+          },
+          scales: {
+            x: { beginAtZero: true, ticks: { ...tickStyle, callback: v => v + '%' }, grid: gridStyle },
+            y: { ticks: tickStyle, grid: gridStyle },
+          }
+        }
+      });
+    } else {
+      // Single asset: stacked absolute bar — netCost + reduction = costBasis
+      const assetColor = ACLR[lotBars[0].asset];
+      cNc = new Chart(nc, {
+        type: 'bar',
+        data: {
+          labels: lotBars.map(l => l.label),
+          datasets: [
+            {
+              label: 'Net Cost',
+              data: lotBars.map(l => +l.netCost.toFixed(2)),
+              backgroundColor: assetColor + '66',
+              borderColor: assetColor,
+              borderWidth: 1, stack: 'basis',
+            },
+            {
+              label: 'Premium Reduction',
+              data: lotBars.map(l => +l.reduction.toFixed(2)),
+              backgroundColor: themeGreen + 'bb',
+              borderColor: themeGreen,
+              borderWidth: 1, borderRadius: 4, stack: 'basis',
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true, labels: { color: themeMu, font:{ family:'DM Mono', size:10 }, boxWidth:10, padding:12 } },
+            tooltip: { ...ttBase, callbacks: { label: ctx => {
+              const l = lotBars[ctx.dataIndex];
+              if (ctx.dataset.label === 'Net Cost') return ' Net cost: $' + fmt(l.netCost.toFixed(2)) + '/token';
+              return ' Reduced by: -$' + fmt(l.reduction.toFixed(2)) + '/token (' + l.pct + '%)';
+            }}}
+          },
+          scales: {
+            x: { stacked: true, beginAtZero: true, ticks: { ...tickStyle, callback: v => '$'+sk(v) }, grid: gridStyle },
+            y: { stacked: true, ticks: tickStyle, grid: gridStyle },
+          }
+        }
+      });
+    }
+  } else {
+    cNc = new Chart(nc, {
+      type: 'bar',
+      data: { labels: ['—'], datasets: [{ data: [0], backgroundColor: 'transparent' }] },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: {
+          x: { ticks: tickStyle, grid: gridStyle },
+          y: { ticks: tickStyle, grid: gridStyle },
+        }
+      }
+    });
+  }
+}
+
+function cOpts(ttFmt, yFmt) {
+  return {
+    responsive: true, maintainAspectRatio: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#131923', borderColor: '#232f47', borderWidth: 1,
+        titleColor: '#cdd5e8', bodyColor: '#8090b0',
+        titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 },
+        callbacks: { label: ctx => ' ' + ttFmt(ctx.raw) }
+      }
+    },
+    scales: {
+      x: { ticks: { color:'#5a6680', font:{family:'DM Mono',size:10} }, grid: { color:'rgba(28,37,56,.8)' } },
+      y: { ticks: { color:'#5a6680', font:{family:'DM Mono',size:10}, callback: yFmt }, grid: { color:'rgba(28,37,56,.8)' } }
+    }
+  };
+}
+
+// ── UTILS
+function focusForm() {
+  document.getElementById('aform').scrollIntoView({ behavior:'smooth', block:'start' });
+  setTimeout(() => document.getElementById('f-expiry').focus(), 400);
+}
+function showReset()  { document.getElementById('rovl').classList.add('open'); }
+function closeReset() { document.getElementById('rovl').classList.remove('open'); }
+function doReset()    { trades = []; save(); render(); closeReset(); }
+document.getElementById('rovl').addEventListener('click', function(e) { if(e.target===this) closeReset(); });
+
+// exportCSV moved to IO section above
+
+// ═══════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ═══════════════════════════════════════════════════════════
+let pendingImport = null;
+
+function showIO() {
+  // Update export count
+  const cnt = document.getElementById('export-count');
+  if (cnt) cnt.textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' in tracker';
+  // Reset import state
+  pendingImport = null;
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('io-status').style.display = 'none';
+  const fileInput = document.getElementById('import-file');
+  if (fileInput) fileInput.value = '';
+  switchIOTab('export');
+  document.getElementById('io-overlay').classList.add('open');
+}
+
+function closeIO() {
+  document.getElementById('io-overlay').classList.remove('open');
+}
+
+function switchIOTab(tab) {
+  ['export','import'].forEach(t => {
+    const tabEl   = document.getElementById('io-tab-'   + t);
+    const panelEl = document.getElementById('io-panel-' + t);
+    if (tabEl)   tabEl.classList.toggle('active',   t === tab);
+    if (panelEl) panelEl.classList.toggle('active', t === tab);
+  });
+  // Refresh count when switching to export
+  if (tab === 'export') {
+    const cnt = document.getElementById('export-count');
+    if (cnt) cnt.textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' in tracker';
+  }
+}
+
+// ── EXPORT JSON ────────────────────────────────────────────
+function exportJSON() {
+  if (!trades.length) {
+    showIOStatus('No trades to export.', 'err');
+    switchIOTab('export');
+    return;
+  }
+  const payload = {
+    version: 1,
+    app: 'rysk-wheel-tracker',
+    exported: new Date().toISOString(),
+    tradeCount: trades.length,
+    trades: trades
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().split('T')[0];
+  a.download = 'rysk-wheel-backup-' + dateStr + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  // Show success feedback
+  const cnt = document.getElementById('export-count');
+  if (cnt) cnt.textContent = '✓ Exported ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' — ' + dateStr;
+}
+
+// ── EXPORT CSV (moved here, still works from old call) ──────
+function exportCSV() {
+  if (!trades.length) return;
+  const rows = compute('ALL').allRows;
+  const cols = ['#','Asset','Date','Expiry','DTE','Type','Strike','Size','Premium','Outcome','Asset P&L','Net Cost/Token','Notes'];
+  const lines = [cols.join(','), ...rows.map(r => [
+    r.idx, r.asset, r.date, r.expiry, r.dte||'', r.type,
+    r.strike, r.size, r.premium, r.outcome,
+    Math.round(r.pnl), r.nc ? Math.round(r.nc) : '',
+    '"' + (r.notes||'').replace(/"/g, '""') + '"'
+  ].join(','))];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  const dateStr = new Date().toISOString().split('T')[0];
+  a.download = 'rysk-wheel-' + dateStr + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── IMPORT: file selection / drag-drop ────────────────────
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) readImportFile(file);
+}
+
+// Wire up drag-and-drop after DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  const dz = document.getElementById('drop-zone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) readImportFile(file);
+  });
+});
+
+function readImportFile(file) {
+  if (!file.name.endsWith('.json')) {
+    showIOStatus('Please select a .json file exported from this tracker.', 'err');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      validateAndPreviewImport(data);
+    } catch(err) {
+      showIOStatus('Invalid file — could not parse JSON. Make sure you are using a file exported from this tracker.', 'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function validateAndPreviewImport(data) {
+  // Accept both formats: { version, trades: [...] } or raw array
+  let importedTrades = [];
+  if (Array.isArray(data)) {
+    importedTrades = data;
+  } else if (data.trades && Array.isArray(data.trades)) {
+    importedTrades = data.trades;
+  } else {
+    showIOStatus('Unrecognised format. Make sure you are using a JSON file exported from this tracker.', 'err');
+    return;
+  }
+
+  // Validate each trade has required fields
+  const required = ['id','asset','type','date','strike','size','premium','outcome'];
+  const invalid = importedTrades.filter(t => required.some(f => t[f] === undefined));
+  if (invalid.length) {
+    showIOStatus('File contains ' + invalid.length + ' invalid trade record(s). Export may be corrupted.', 'err');
+    return;
+  }
+
+  // Check for duplicates with existing trades
+  const existingIds = new Set(trades.map(t => t.id));
+  const newTrades   = importedTrades.filter(t => !existingIds.has(t.id));
+  const dupTrades   = importedTrades.filter(t =>  existingIds.has(t.id));
+
+  // Assets breakdown
+  const btcCount = importedTrades.filter(t => t.asset === 'BTC').length;
+  const ethCount = importedTrades.filter(t => t.asset === 'ETH').length;
+  const otherCount = importedTrades.length - btcCount - ethCount;
+
+  pendingImport = importedTrades;
+
+  // Show preview
+  const preview = document.getElementById('import-preview');
+  const previewText = document.getElementById('import-preview-text');
+  previewText.innerHTML =
+    '<strong style="color:var(--text)">' + importedTrades.length + ' trades found in file</strong><br>' +
+    (btcCount  ? '&#9654; BTC: ' + btcCount + ' trade' + (btcCount !== 1 ? 's' : '') + '<br>' : '') +
+    (ethCount  ? '&#9670; ETH: ' + ethCount + ' trade' + (ethCount !== 1 ? 's' : '') + '<br>' : '') +
+    (otherCount ? '&#9632; Other: ' + otherCount + '<br>' : '') +
+    '<br>' +
+    '<span style="color:var(--green)">New: ' + newTrades.length + '</span>' +
+    ' &nbsp;|&nbsp; ' +
+    '<span style="color:var(--mu2)">Duplicates (will skip on merge): ' + dupTrades.length + '</span>' +
+    '<br><span style="color:var(--mu)">Currently in tracker: ' + trades.length + ' trades</span>';
+
+  preview.style.display = 'flex';
+  showIOStatus('', ''); // clear any previous error
+}
+
+function doImport(mode) {
+  if (!pendingImport) return;
+
+  if (mode === 'replace') {
+    trades = pendingImport;
+  } else {
+    // Merge: add only trades with new IDs
+    const existingIds = new Set(trades.map(t => t.id));
+    const toAdd = pendingImport.filter(t => !existingIds.has(t.id));
+    trades = [...trades, ...toAdd];
+    // Sort by date after merge
+    trades.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+    showIOStatus('Merged ' + toAdd.length + ' new trade' + (toAdd.length !== 1 ? 's' : '') + '. ' + (pendingImport.length - toAdd.length) + ' duplicate(s) skipped.', 'ok');
+  }
+
+  save();
+  render();
+
+  if (mode === 'replace') {
+    showIOStatus('Replaced all trades. ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' loaded.', 'ok');
+  }
+
+  pendingImport = null;
+  document.getElementById('import-preview').style.display = 'none';
+  // Reset file input
+  const fi = document.getElementById('import-file');
+  if (fi) fi.value = '';
+}
+
+function showIOStatus(msg, type) {
+  const el = document.getElementById('io-status');
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; return; }
+  el.textContent = msg;
+  el.className = 'io-status ' + type;
+  el.style.display = 'block';
+}
+
+// Close IO modal on overlay click
+document.getElementById('io-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeIO();
+});
+
+
+
+// ═══════════════════════════════════════════════════════════
+// THEME SWITCHER
+// ═══════════════════════════════════════════════════════════
+const THEMES = {
+  abyss:    { label: 'Abyss',           swatch: '#00e5a0', dark: true  },
+  gold:     { label: 'Obsidian Gold',   swatch: '#c9a84c', dark: true  },
+  ocean:    { label: 'Deep Ocean',      swatch: '#38bdf8', dark: true  },
+  terminal: { label: 'Terminal',        swatch: '#00ff88', dark: true  },
+  matrix:   { label: 'Matrix',          swatch: '#00ff88', dark: true  },
+  charcoal: { label: 'Warm Charcoal',   swatch: '#ff8c5a', dark: true  },
+  crimson:  { label: 'Steel & Crimson', swatch: '#e84040', dark: true  },
+  paper:    { label: 'Paper',           swatch: '#c07020', dark: false },
+  arctic:   { label: 'Arctic',          swatch: '#1e6bb8', dark: false },
+};
+
+const THEME_KEY = 'rysk_theme_v1';
+let currentTheme = localStorage.getItem(THEME_KEY) || 'abyss';
+
+function applyTheme(id) {
+  if (!THEMES[id]) return;
+  currentTheme = id;
+  localStorage.setItem(THEME_KEY, id);
+  document.documentElement.setAttribute('data-theme', id);
+
+  // Update button
+  const t = THEMES[id];
+  document.getElementById('theme-swatch').style.background = t.swatch;
+  document.getElementById('theme-btn-label').textContent = t.label;
+
+  // Update active state in dropdown
+  Object.keys(THEMES).forEach(k => {
+    const el = document.getElementById('tdi-' + k);
+    if (el) el.classList.toggle('active', k === id);
+  });
+
+  // Rebuild charts to pick up new colors
+  if (typeof render === 'function') render();
+
+  closeThemeDropdown();
+}
+
+function toggleThemeDropdown() {
+  const dd = document.getElementById('theme-dropdown');
+  dd.classList.toggle('open');
+}
+
+function closeThemeDropdown() {
+  document.getElementById('theme-dropdown').classList.remove('open');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const wrap = document.querySelector('.theme-picker-wrap');
+  if (wrap && !wrap.contains(e.target)) closeThemeDropdown();
+});
+
+// Apply saved theme on load
+(function() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved && THEMES[saved]) applyTheme(saved);
+})();
+
+
+
+// ═══════════════════════════════════════════════════════════
+// EDIT TRADE MODAL
+// ═══════════════════════════════════════════════════════════
+let editingId = null;
+
+function openEditModal(id) {
+  const t = trades.find(t => t.id === id);
+  if (!t) return;
+  editingId = id;
+
+  document.getElementById('e-platform').value = t.platform || 'RYSK';
+  document.getElementById('e-asset').value   = t.asset   || 'BTC';
+  document.getElementById('e-type').value    = t.type    || 'PUT';
+  document.getElementById('e-outcome').value = t.outcome || 'OPEN';
+  document.getElementById('e-date').value    = t.date    || '';
+  document.getElementById('e-expiry').value  = t.expiry  || '';
+  document.getElementById('e-dte').value     = t.dte     || '';
+  document.getElementById('e-strike').value  = t.strike  || '';
+  document.getElementById('e-size').value    = t.size    || '';
+  document.getElementById('e-premium').value = t.premium != null ? t.premium : '';
+  document.getElementById('e-closecost').value = t.closeCost != null ? t.closeCost : '';
+  document.getElementById('e-notes').value   = t.notes   || '';
+  document.getElementById('e-err').style.display = 'none';
+
+  onEditTypeChange(); // adjust field visibility for HOLDING
+  onEditOutcomeChange(); // adjust close cost visibility
+  onEditPlatformChange(); // adjust CLOSED option visibility
+  const ov = document.getElementById('edit-overlay');
+  ov.style.display = 'flex';
+  requestAnimationFrame(() => ov.classList.add('open'));
+}
+
+function closeEditModal() {
+  const ov = document.getElementById('edit-overlay');
+  ov.classList.remove('open');
+  setTimeout(() => { ov.style.display = 'none'; }, 180);
+  editingId = null;
+}
+
+function onEditAssetChange() {
+  // nothing needed — asset change doesn't affect field visibility
+}
+
+function onEditPlatformChange() {
+  const plat = document.getElementById('e-platform').value;
+  const outcomeEl = document.getElementById('e-outcome');
+  const closedOpt = outcomeEl.querySelector('option[value="CLOSED"]');
+  if (plat === 'RYSK') {
+    if (closedOpt) closedOpt.style.display = 'none';
+    if (outcomeEl.value === 'CLOSED') outcomeEl.value = 'OPEN';
+  } else {
+    if (closedOpt) closedOpt.style.display = '';
+  }
+  onEditOutcomeChange();
+}
+
+function onEditOutcomeChange() {
+  const outcome = document.getElementById('e-outcome').value;
+  const ccWrap = document.getElementById('e-closecost-wrap');
+  if (ccWrap) ccWrap.style.display = (outcome === 'CLOSED') ? '' : 'none';
+}
+
+function onEditTypeChange() {
+  const type = document.getElementById('e-type').value;
+  const isHolding = type === 'HOLDING';
+  document.getElementById('e-expiry-wrap').style.display  = isHolding ? 'none' : '';
+  document.getElementById('e-dte-wrap').style.display     = isHolding ? 'none' : '';
+  document.getElementById('e-premium-wrap').style.display = isHolding ? 'none' : '';
+  document.getElementById('e-closecost-wrap').style.display = isHolding ? 'none' : '';
+  document.getElementById('e-strike-label').textContent   = isHolding ? 'Cost Basis' : 'Strike';
+}
+
+function saveEdit() {
+  const errEl = document.getElementById('e-err');
+  errEl.style.display = 'none';
+
+  function err(msg) {
+    errEl.textContent = '⚠ ' + msg;
+    errEl.style.display = 'block';
+  }
+
+  const platform  = document.getElementById('e-platform').value;
+  const asset     = document.getElementById('e-asset').value;
+  const type      = document.getElementById('e-type').value;
+  const outcome   = document.getElementById('e-outcome').value;
+  const date      = document.getElementById('e-date').value;
+  const expiry    = document.getElementById('e-expiry').value;
+  const dte       = parseInt(document.getElementById('e-dte').value);
+  const strike    = parseFloat(document.getElementById('e-strike').value);
+  const size      = parseFloat(document.getElementById('e-size').value);
+  const premium   = parseFloat(document.getElementById('e-premium').value);
+  const closeCost = parseFloat(document.getElementById('e-closecost').value) || 0;
+  const notes     = document.getElementById('e-notes').value.trim();
+  const isHolding = type === 'HOLDING';
+
+  if (!date)                            return err('Open date required.');
+  if (!isHolding && !expiry)            return err('Expiry date required.');
+  if (!strike || strike <= 0)           return err(isHolding ? 'Cost basis required.' : 'Strike required.');
+  if (!size || size <= 0)               return err('Size required.');
+  if (platform === 'RYSK' && size < MIN_SIZE[asset]) return err('Minimum size for ' + asset + ' is ' + MIN_SIZE[asset] + '.');
+  if (!isHolding && (isNaN(premium) || premium < 0)) return err('Premium required (enter 0 if none).');
+  if (outcome === 'CLOSED' && closeCost < 0) return err('Close cost cannot be negative.');
+
+  const idx = trades.findIndex(t => t.id === editingId);
+  if (idx === -1) return err('Trade not found.');
+
+  const updated = {
+    ...trades[idx],
+    platform, asset, type, outcome, date,
+    expiry:  isHolding ? '' : expiry,
+    dte:     isHolding ? null : (isNaN(dte) ? null : dte),
+    strike, size,
+    premium: isHolding ? 0 : (isNaN(premium) ? 0 : premium),
+    notes,
+  };
+  if (outcome === 'CLOSED') updated.closeCost = closeCost;
+  else delete updated.closeCost;
+  trades[idx] = updated;
+
+  save();
+  render();
+  closeEditModal();
+}
+
+// Close on overlay backdrop click
+document.addEventListener('DOMContentLoaded', function() {
+  const ov = document.getElementById('edit-overlay');
+  if (ov) ov.addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+});
+
+// ── MERGE LOTS ───────────────────────────────────────────────
+let mergeAsset = null;
+
+function openMergeModal(asset) {
+  mergeAsset = asset;
+  document.getElementById('merge-title').textContent = 'Merge ' + asset + ' Lots';
+
+  // Run compute to get current lot state
+  const result = compute('ALL');
+  const assetLots = (result.lots[asset] || []).filter(l => l.open);
+  if (assetLots.length < 2) return;
+
+  // Calculate merged values
+  let totalSize = 0, weightedCost = 0, totalCCPrem = 0;
+  assetLots.forEach(l => {
+    totalSize += l.size;
+    weightedCost += l.costBasis * l.size;
+    totalCCPrem += l.lotPremiums;
+  });
+  const avgCost = weightedCost / totalSize;
+  const mergedNC = avgCost - (totalCCPrem / totalSize);
+
+  let html = '<div class="merge-preview">';
+  html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Lots being merged</div>';
+  assetLots.forEach(l => {
+    const nc = l.costBasis - (l.lotPremiums / l.size);
+    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(nc) + ')</span></div>';
+  });
+  html += '<div style="border-top:1px solid var(--bd2);margin:8px 0"></div>';
+  html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Merged result</div>';
+  html += '<div class="mp-row"><span class="mp-lbl">Size</span><span class="mp-val">' + totalSize + ' ' + asset + '</span></div>';
+  html += '<div class="mp-row"><span class="mp-lbl">Avg Cost Basis</span><span class="mp-val">$' + fmt(avgCost) + '</span></div>';
+  html += '<div class="mp-row"><span class="mp-lbl">CC Premiums</span><span class="mp-val green">$' + fmt(totalCCPrem) + '</span></div>';
+  html += '<div class="mp-row"><span class="mp-lbl">Net Cost / ' + asset + '</span><span class="mp-val orange">$' + fmt(mergedNC) + '</span></div>';
+  html += '</div>';
+
+  document.getElementById('merge-preview').innerHTML = html;
+  document.getElementById('merge-overlay').classList.add('open');
+}
+
+function closeMergeModal() {
+  document.getElementById('merge-overlay').classList.remove('open');
+  mergeAsset = null;
+}
+
+function confirmMerge() {
+  if (!mergeAsset) return;
+  const asset = mergeAsset;
+
+  // Find all lot-opening trades (HOLDING or ASSIGNED) for this asset that lead to open lots
+  // We need to run compute to know which lots are open
+  const result = compute('ALL');
+  const openLots = (result.lots[asset] || []).filter(l => l.open);
+  if (openLots.length < 2) { closeMergeModal(); return; }
+
+  // Calculate merged values
+  let totalSize = 0, weightedCost = 0, totalCCPrem = 0;
+  const allTradeIds = [];
+  openLots.forEach(l => {
+    totalSize += l.size;
+    weightedCost += l.costBasis * l.size;
+    totalCCPrem += l.lotPremiums;
+    allTradeIds.push(...l.tradeIds);
+  });
+  const avgCost = weightedCost / totalSize;
+
+  // Find the lot-opening trade IDs (HOLDING or ASSIGNED outcomes)
+  const lotOpenIds = new Set();
+  openLots.forEach(l => {
+    // First trade in each lot's tradeIds is the lot opener
+    if (l.tradeIds.length) lotOpenIds.add(l.tradeIds[0]);
+  });
+
+  // Keep the earliest lot opener, remove the rest
+  const lotOpeners = trades.filter(t => lotOpenIds.has(t.id) && t.asset === asset);
+  lotOpeners.sort((a, b) => a.id - b.id);
+  const keepTrade = lotOpeners[0];
+  const removeIds = new Set(lotOpeners.slice(1).map(t => t.id));
+
+  // Update the kept trade to have merged values
+  keepTrade.strike = avgCost;
+  keepTrade.size = totalSize;
+  keepTrade.notes = 'Merged from ' + openLots.length + ' lots';
+
+  // Reassign all CALL trades from other lots to have no explicit lotNum
+  // (they'll naturally attach to the single remaining lot via compute)
+  trades.forEach(t => {
+    if (t.asset === asset && t.type === 'CALL' && t.lotNum != null) {
+      // Clear lotNum so compute assigns to the single open lot
+      delete t.lotNum;
+    }
+  });
+
+  // Remove the extra lot-opening trades
+  trades = trades.filter(t => !removeIds.has(t.id));
+
+  save();
+  render();
+  closeMergeModal();
+}
+
+// Close merge modal on backdrop click
+document.addEventListener('DOMContentLoaded', function() {
+  const mov = document.getElementById('merge-overlay');
+  if (mov) mov.addEventListener('click', function(e) {
+    if (e.target === this) closeMergeModal();
+  });
+});
+
+// ── CLOSE ALERTS (Hypersurface 50% profit monitor)
+const ALERT_THRESH_KEY = 'rysk_alert_thresh_v1';
+let alertInterval = null;
+
+function getAlertThreshold() {
+  const saved = localStorage.getItem(ALERT_THRESH_KEY);
+  return saved ? parseInt(saved, 10) : 50;
+}
+
+function saveAlertThreshold() {
+  const el = document.getElementById('alert-pct');
+  if (!el) return;
+  let v = parseInt(el.value, 10);
+  if (isNaN(v) || v < 1) v = 1;
+  if (v > 99) v = 99;
+  el.value = v;
+  localStorage.setItem(ALERT_THRESH_KEY, String(v));
+}
+
+function tradeToHSFCSymbol(t) {
+  if (!t.expiry) return null;
+  var parts = t.expiry.split('-');
+  var y = parts[0], m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+  var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  var dd = (d < 10 ? '0' : '') + d;
+  var yy = y.slice(2);
+  var asset = t.asset;
+  var cp = t.type === 'PUT' ? 'P' : 'C';
+  var strike = Number(t.strike);
+  var strikeStr = strike % 1 === 0 ? String(strike) : String(strike);
+  return asset + '-' + dd + months[m - 1] + yy + '-' + strikeStr + '-' + cp;
+}
+
+function getOpenHSFCTrades() {
+  return trades.filter(function(t) {
+    return t.platform === 'HSFC' && t.outcome === 'OPEN' && (t.type === 'PUT' || t.type === 'CALL') && t.expiry;
+  });
+}
+
+function setAlertStatus(msg, showSpinner) {
+  var el = document.getElementById('alert-status');
+  if (!el) return;
+  el.innerHTML = (showSpinner ? '<span class="alert-spinner"></span> ' : '') + msg;
+}
+
+function checkAlerts() {
+  var openTrades = getOpenHSFCTrades();
+  var bar = document.getElementById('alert-bar');
+  if (!bar) return;
+
+  if (openTrades.length === 0) {
+    bar.classList.remove('has-alerts');
+    return;
+  }
+
+  bar.classList.add('has-alerts');
+  setAlertStatus('Fetching prices...', true);
+
+  var symbolMap = {};
+  var symbols = [];
+  openTrades.forEach(function(t) {
+    var sym = tradeToHSFCSymbol(t);
+    if (sym) {
+      symbolMap[sym] = t;
+      symbols.push(sym);
+    }
+  });
+
+  if (symbols.length === 0) {
+    setAlertStatus('No valid symbols to check', false);
+    return;
+  }
+
+  fetch('https://market-api-sh.hypersurface.io/optionsPrices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbols: symbols })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    renderAlerts(data.result || data, symbolMap);
+  })
+  .catch(function(err) {
+    setAlertStatus('Error: ' + err.message, false);
+  });
+}
+
+function renderAlerts(priceData, symbolMap) {
+  var container = document.getElementById('alert-items');
+  var bar = document.getElementById('alert-bar');
+  if (!container || !bar) return;
+
+  var threshold = getAlertThreshold() / 100;
+  var html = '';
+  var alertCount = 0;
+  var checkedCount = 0;
+
+  Object.keys(symbolMap).forEach(function(sym) {
+    var t = symbolMap[sym];
+    var priceInfo = priceData[sym];
+    if (!priceInfo) return;
+    checkedCount++;
+
+    var markPrem = parseFloat(priceInfo.mark_premium || priceInfo.mark || 0);
+    var entryPrem = t.premium / t.size;
+    var targetPrice = entryPrem * (1 - threshold);
+    var currentProfitPct = entryPrem > 0 ? ((entryPrem - markPrem) / entryPrem * 100) : 0;
+    var closeCostTotal = markPrem * t.size;
+    var netProfit = t.premium - closeCostTotal;
+    var isAlert = markPrem <= targetPrice && markPrem > 0;
+
+    if (isAlert) {
+      alertCount++;
+      html += '<div class="alert-item">'
+        + '<div class="alert-item-info">'
+        + '<div class="alert-item-title">' + t.asset + ' ' + t.type + ' $' + fmt(t.strike) + ' (' + t.expiry + ')</div>'
+        + '<div class="alert-item-detail">Entry: $' + fmt(entryPrem) + '/unit &middot; Mark: $' + fmt(markPrem) + '/unit &middot; Close cost: $' + fmt(closeCostTotal) + ' &middot; Net profit: $' + fmt(netProfit) + '</div>'
+        + '</div>'
+        + '<div class="alert-item-pct">' + currentProfitPct.toFixed(1) + '% profit</div>'
+        + '<div class="alert-item-actions">'
+        + '<button class="btn-close-pos" onclick="quickClose(' + t.id + ',' + closeCostTotal.toFixed(2) + ')">Close Position</button>'
+        + '</div>'
+        + '</div>';
+    }
+  });
+
+  container.innerHTML = html;
+
+  if (alertCount > 0) {
+    bar.classList.add('has-alerts');
+    setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; ' + alertCount + ' at target', false);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Rysk Tracker: ' + alertCount + ' position' + (alertCount !== 1 ? 's' : '') + ' at ' + getAlertThreshold() + '% profit target');
+    }
+  } else {
+    setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; none at target yet', false);
+  }
+}
+
+function quickClose(tradeId, closeCost) {
+  var t = trades.find(function(x) { return x.id === tradeId; });
+  if (!t) return;
+  t.outcome = 'CLOSED';
+  t.closeCost = closeCost;
+  save();
+  render();
+  checkAlerts();
+}
+
+function startAlertPolling() {
+  var openTrades = getOpenHSFCTrades();
+  var bar = document.getElementById('alert-bar');
+  if (!bar) return;
+
+  var threshEl = document.getElementById('alert-pct');
+  if (threshEl) threshEl.value = getAlertThreshold();
+
+  if (openTrades.length > 0) {
+    bar.classList.add('has-alerts');
+    checkAlerts();
+  }
+
+  if (alertInterval) clearInterval(alertInterval);
+  alertInterval = setInterval(function() {
+    if (getOpenHSFCTrades().length > 0) checkAlerts();
+  }, 5 * 60 * 1000);
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  startAlertPolling();
+});
+
+</script>
+
+<!-- EDIT TRADE MODAL -->
+<div class="overlay" id="edit-overlay" style="display:none">
+  <div class="edit-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3>Edit Trade</h3>
+      <button onclick="closeEditModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+
+    <!-- Platform + Asset + Type row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:90px">
+        <label class="fl">Platform</label>
+        <select id="e-platform" class="finput" onchange="onEditPlatformChange()">
+          <option value="RYSK">RYSK</option>
+          <option value="HSFC">HSFC</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:100px">
+        <label class="fl">Asset</label>
+        <select id="e-asset" class="finput" onchange="onEditAssetChange()">
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="HYPE">HYPE</option>
+          <option value="SOL">SOL</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:100px">
+        <label class="fl">Type</label>
+        <select id="e-type" class="finput" onchange="onEditTypeChange()">
+          <option value="PUT">PUT</option>
+          <option value="CALL">CALL</option>
+          <option value="HOLDING">HOLDING</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:100px">
+        <label class="fl">Outcome</label>
+        <select id="e-outcome" class="finput" onchange="onEditOutcomeChange()">
+          <option value="OPEN">OPEN</option>
+          <option value="EXPIRED">EXPIRED</option>
+          <option value="ASSIGNED">ASSIGNED</option>
+          <option value="CALLED">CALLED</option>
+          <option value="CLOSED">CLOSED</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Date + Expiry row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:140px">
+        <label class="fl">Open Date</label>
+        <input id="e-date" type="date" class="finput">
+      </div>
+      <div style="flex:1;min-width:140px" id="e-expiry-wrap">
+        <label class="fl">Expiry Date</label>
+        <input id="e-expiry" type="date" class="finput">
+      </div>
+      <div style="flex:1;min-width:80px" id="e-dte-wrap">
+        <label class="fl">DTE</label>
+        <input id="e-dte" type="number" class="finput" min="1" max="365" placeholder="21">
+      </div>
+    </div>
+
+    <!-- Strike + Size + Premium -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px">
+        <label class="fl" id="e-strike-label">Strike</label>
+        <input id="e-strike" type="number" class="finput" min="0" step="any">
+      </div>
+      <div style="flex:1;min-width:100px">
+        <label class="fl">Size</label>
+        <input id="e-size" type="number" class="finput" min="0" step="any">
+      </div>
+      <div style="flex:1;min-width:100px" id="e-premium-wrap">
+        <label class="fl">Premium (USD)</label>
+        <input id="e-premium" type="number" class="finput" min="0" step="any">
+      </div>
+      <div style="flex:1;min-width:100px" id="e-closecost-wrap">
+        <label class="fl">Close Cost (USD)</label>
+        <input id="e-closecost" type="number" class="finput" min="0" step="any">
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div>
+      <label class="fl">Notes</label>
+      <input id="e-notes" type="text" class="finput" placeholder="Optional notes" maxlength="200">
+    </div>
+
+    <div id="e-err" style="display:none;color:var(--red);font-family:var(--mono);font-size:.7rem;padding:6px 10px;background:var(--rd);border:1px solid var(--rb);border-radius:6px"></div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-g" onclick="closeEditModal()">Cancel</button>
+      <button class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MERGE LOTS MODAL -->
+<div class="merge-overlay" id="merge-overlay">
+  <div class="merge-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 id="merge-title" style="font-size:.95rem">Merge Lots</h3>
+      <button onclick="closeMergeModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+    <p style="font-size:.72rem;color:var(--mu2);margin-bottom:10px">
+      Combines all open lots into a single lot with a weighted average cost basis. All call history is preserved and reassigned to the merged lot.
+    </p>
+    <div id="merge-preview"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-g" onclick="closeMergeModal()">Cancel</button>
+      <button class="btn" style="background:var(--orange);color:var(--bg);border:none;font-weight:700" onclick="confirmMerge()">Merge Lots</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
