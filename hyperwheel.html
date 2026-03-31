@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rysk Wheel &mdash; P&L Tracker</title>
+<title>HyperWheel &mdash; Options Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -843,7 +843,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="hl">
     <div class="hlogo">&#9881;</div>
     <div>
-      <div class="htitle">Rysk Wheel Tracker</div>
+      <div class="htitle">HyperWheel</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;gap:8px">
@@ -2110,7 +2110,7 @@ function exportJSON() {
   }
   const payload = {
     version: 1,
-    app: 'rysk-wheel-tracker',
+    app: 'hyperwheel-tracker',
     exported: new Date().toISOString(),
     tradeCount: trades.length,
     trades: trades
@@ -2119,7 +2119,7 @@ function exportJSON() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const dateStr = new Date().toISOString().split('T')[0];
-  a.download = 'rysk-wheel-backup-' + dateStr + '.json';
+  a.download = 'hyperwheel-backup-' + dateStr + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
   // Show success feedback
@@ -2141,7 +2141,7 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   const dateStr = new Date().toISOString().split('T')[0];
-  a.download = 'rysk-wheel-' + dateStr + '.csv';
+  a.download = 'hyperwheel-' + dateStr + '.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -2715,7 +2715,7 @@ function renderAlerts(priceData, symbolMap) {
     bar.classList.add('has-alerts');
     setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; ' + alertCount + ' at target', false);
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Rysk Tracker: ' + alertCount + ' position' + (alertCount !== 1 ? 's' : '') + ' at ' + getAlertThreshold() + '% profit target');
+      new Notification('HyperWheel: ' + alertCount + ' position' + (alertCount !== 1 ? 's' : '') + ' at ' + getAlertThreshold() + '% profit target');
     }
   } else {
     setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; none at target yet', false);

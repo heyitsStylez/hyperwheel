@@ -1,5 +1,5 @@
 {
-  "buildCommand": "mkdir -p public && cp rysk-pnl-tracker.html public/index.html",
+  "buildCommand": "mkdir -p public && cp hyperwheel.html public/index.html",
   "outputDirectory": "public",
   "headers": [
     {
