@@ -1070,6 +1070,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
       <div class="alert-hd-left"><span class="alert-pulse"></span> Close Alerts</div>
       <div class="alert-hd-right">
         <div class="alert-threshold">Target: <input type="number" id="alert-pct" value="50" min="1" max="99" step="1" onchange="saveAlertThreshold()">%</div>
+        <span id="alert-last" style="font-size:.58rem;font-family:var(--mono);color:var(--mu)"></span>
         <button class="btn" style="font-size:.6rem;padding:3px 8px" onclick="checkAlerts()">Refresh</button>
       </div>
     </div>
@@ -2719,6 +2720,12 @@ function renderAlerts(priceData, symbolMap) {
   } else {
     setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; none at target yet', false);
   }
+  var now = new Date();
+  var hh = String(now.getHours()).padStart(2, '0');
+  var mm = String(now.getMinutes()).padStart(2, '0');
+  var ss = String(now.getSeconds()).padStart(2, '0');
+  var lastEl = document.getElementById('alert-last');
+  if (lastEl) lastEl.textContent = 'Last check: ' + hh + ':' + mm + ':' + ss;
 }
 
 function quickClose(tradeId, closeCost) {
