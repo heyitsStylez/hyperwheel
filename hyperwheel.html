@@ -1298,14 +1298,20 @@ function setType(t) {
   const hint = document.getElementById('holding-hint');
   if (hint) hint.style.display = isHolding ? 'block' : 'none';
 
-  // If switching to holding, force premium to 0 and outcome to OPEN internally
+  // Hide size hint for holdings (no min size), show for options
+  const sizeHintEl = document.getElementById('f-size-hint');
+  if (sizeHintEl) sizeHintEl.style.display = isHolding ? 'none' : '';
+
+  // If switching to holding, force premium to 0, clear size default, outcome to OPEN
   if (isHolding) {
     document.getElementById('f-prem').value = '0';
+    document.getElementById('f-size').value = '';
     setOut('OPEN'); // internal state — compute() handles holding specially
   } else {
     if (document.getElementById('f-prem').value === '0') {
       document.getElementById('f-prem').value = '';
     }
+    document.getElementById('f-size').value = MIN_SIZE[sAsset];
   }
   refreshLotPicker();
 }
