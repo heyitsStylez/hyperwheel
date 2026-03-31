@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="abyss">
+<html lang="en" data-theme="matrix">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -855,7 +855,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
       </button>
       <div class="theme-dropdown" id="theme-dropdown">
         <div class="td-section">Dark Themes</div>
-        <div class="td-item active" id="tdi-abyss" onclick="applyTheme('abyss')">
+        <div class="td-item" id="tdi-abyss" onclick="applyTheme('abyss')">
           <div class="td-swatch" style="background:#0e1219;border:1px solid #232f47">&#127759;</div>
           <div class="td-info"><div class="td-name">Abyss</div><div class="td-desc">Deep navy · Mint green</div></div>
           <span class="td-check">&#10003;</span>
@@ -875,7 +875,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
           <div class="td-info"><div class="td-name">Terminal</div><div class="td-desc">Pitch black · Neon green</div></div>
           <span class="td-check">&#10003;</span>
         </div>
-        <div class="td-item" id="tdi-matrix" onclick="applyTheme('matrix')">
+        <div class="td-item active" id="tdi-matrix" onclick="applyTheme('matrix')">
           <div class="td-swatch" style="background:#040d05;border:1px solid #16381a">&#9651;</div>
           <div class="td-info"><div class="td-name">Matrix</div><div class="td-desc">Pure black · Phosphor green</div></div>
           <span class="td-check">&#10003;</span>
@@ -2295,7 +2295,7 @@ const THEMES = {
 };
 
 const THEME_KEY = 'rysk_theme_v1';
-let currentTheme = localStorage.getItem(THEME_KEY) || 'abyss';
+let currentTheme = localStorage.getItem(THEME_KEY) || 'matrix';
 
 function applyTheme(id) {
   if (!THEMES[id]) return;
