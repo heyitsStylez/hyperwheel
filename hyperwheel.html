@@ -1088,7 +1088,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="twrap">
       <table>
         <thead><tr>
-          <th>Asset</th><th>Lot</th><th>Opened</th><th>Expiry</th><th>DTE</th><th>Type</th>
+          <th>Asset</th><th>Platform</th><th>Lot</th><th>Opened</th><th>Expiry</th><th>DTE</th><th>Type</th>
           <th>Strike</th><th>Size</th><th>Coll.</th><th>Premium</th>
           <th>Outcome</th><th>APR</th><th>Lot Premium</th><th></th>
         </tr></thead>
@@ -1832,12 +1832,13 @@ function rTable(displayRows, streams, lots) {
       if (r.type === 'HOLDING' || r.outcome === 'ASSIGNED') rowCls = `lot-head la-${assetLo}`;
       else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
     }
-    const platBadge = (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '';
+    const platBadge = (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
     const notesTitle = r.notes ? ` title="${r.notes.replace(/"/g,'&quot;')}"` : '';
     const notesIcon = r.notes ? ' <span style="color:var(--mu);font-size:.65rem;cursor:default" title="' + r.notes.replace(/"/g,'&quot;') + '">&#128196;</span>' : '';
     const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
     html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}${notesTitle}>
-      <td><span class="badge ${assetCls}">${r.asset}</span>${platBadge}${notesIcon}</td>
+      <td><span class="badge ${assetCls}">${r.asset}</span>${notesIcon}</td>
+      <td>${platBadge}</td>
       <td class="mu" style="font-size:.72rem">${r.lotNum ? 'L'+r.lotNum : '&mdash;'}</td>
       <td>${r.date}</td>
       <td class="mu">${isHoldingRow ? '&mdash;' : r.expiry}</td>
