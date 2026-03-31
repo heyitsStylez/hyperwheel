@@ -1,14 +1,12 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/rysk-pnl-tracker.html" }
-  ],
+  "buildCommand": "mkdir -p public && cp rysk-pnl-tracker.html public/index.html",
+  "outputDirectory": "public",
   "headers": [
     {
-      "source": "/rysk-pnl-tracker.html",
+      "source": "/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache" }
       ]
     }
-  ],
-  "cleanUrls": true
+  ]
 }
