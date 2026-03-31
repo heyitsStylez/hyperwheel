@@ -998,7 +998,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
         </div>
       </div>
       <!-- Platform -->
-      <div class="field fi-full">
+      <div class="field fi-full" id="field-platform">
         <label>Platform</label>
         <div class="tg">
           <button class="tb te active" id="tog-RYSK" onclick="setPlatform('RYSK')">RYSK</button>
@@ -1031,14 +1031,14 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
 
     <div class="holding-hint" id="holding-hint">
-      <strong>Spot / Manual Entry</strong> &mdash; Use this to log ETH or BTC you already hold from spot purchases.<br>
-      Enter your <strong>cost basis</strong> (what you paid per token) as the Strike, your <strong>quantity</strong> as Size, and set Premium to <strong>0</strong>.<br>
+      <strong>Spot / Manual Entry</strong> &mdash; Use this to log assets you already hold from spot purchases.<br>
+      Enter your <strong>cost basis</strong> (what you paid per token) under Cost Basis, your <strong>quantity</strong> as Size.<br>
       The tracker will treat this as an open position so you can start selling covered calls against it immediately.
     </div>
     <div class="fb">
       <div class="field"><label id="f-strike-lbl">Strike ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
       <div class="field"><label>Size</label><input type="number" id="f-size" value="0.05" step="0.01"><span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span></div>
-      <div class="field"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
+      <div class="field" id="field-premium"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
       <div class="field fi-full" id="field-outcome">
         <label>Outcome</label>
         <div class="tg">
@@ -1281,10 +1281,15 @@ function setType(t) {
   const isHolding = t === 'HOLDING';
 
   // Show/hide fields that don't apply to spot holding entries
-  ['field-expiry','field-dte','field-outcome'].forEach(id => {
+  ['field-expiry','field-dte'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.opacity = isHolding ? '0.3' : '1';
     if (el) el.style.pointerEvents = isHolding ? 'none' : 'auto';
+  });
+  // Fully hide platform, premium, and outcome for spot holdings
+  ['field-platform','field-premium','field-outcome'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isHolding ? 'none' : '';
   });
 
   // Update strike label and placeholder
@@ -1299,15 +1304,11 @@ function setType(t) {
   const hint = document.getElementById('holding-hint');
   if (hint) hint.style.display = isHolding ? 'block' : 'none';
 
-  // If switching to holding, force premium to 0 and outcome to HOLDING internally
+  // If switching to holding, force premium to 0 and outcome to OPEN internally
   if (isHolding) {
     document.getElementById('f-prem').value = '0';
-    document.getElementById('f-prem').style.opacity = '0.4';
-    document.getElementById('f-prem').readOnly = true;
     setOut('OPEN'); // internal state — compute() handles holding specially
   } else {
-    document.getElementById('f-prem').style.opacity = '1';
-    document.getElementById('f-prem').readOnly = false;
     if (document.getElementById('f-prem').value === '0') {
       document.getElementById('f-prem').value = '';
     }
@@ -1832,7 +1833,7 @@ function rTable(displayRows, streams, lots) {
       if (r.type === 'HOLDING' || r.outcome === 'ASSIGNED') rowCls = `lot-head la-${assetLo}`;
       else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
     }
-    const platBadge = (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
+    const platBadge = isHoldingRow ? '<span class="mu" style="font-size:.65rem">&mdash;</span>' : (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
     const notesTitle = r.notes ? ` title="${r.notes.replace(/"/g,'&quot;')}"` : '';
     const notesIcon = r.notes ? ' <span style="color:var(--mu);font-size:.65rem;cursor:default" title="' + r.notes.replace(/"/g,'&quot;') + '">&#128196;</span>' : '';
     const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
