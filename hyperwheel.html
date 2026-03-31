@@ -2644,28 +2644,39 @@ function checkAlerts() {
   setAlertStatus('Fetching prices...', true);
 
   var symbolMap = {};
-  var symbols = [];
+  var assetBuckets = {};
   openTrades.forEach(function(t) {
     var sym = tradeToHSFCSymbol(t);
     if (sym) {
       symbolMap[sym] = t;
-      symbols.push(sym);
+      var asset = t.asset;
+      if (!assetBuckets[asset]) assetBuckets[asset] = [];
+      assetBuckets[asset].push(sym);
     }
   });
 
-  if (symbols.length === 0) {
+  if (Object.keys(assetBuckets).length === 0) {
     setAlertStatus('No valid symbols to check', false);
     return;
   }
 
-  fetch('https://market-api-sh.hypersurface.io/optionsPrices', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ symbols: symbols })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    renderAlerts(data.result || data, symbolMap);
+  // HSFC API errors when mixing different assets in one request — batch per asset
+  var fetches = Object.keys(assetBuckets).map(function(asset) {
+    return fetch('https://market-api-sh.hypersurface.io/optionsPrices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbols: assetBuckets[asset] })
+    }).then(function(r) { return r.json(); });
+  });
+
+  Promise.all(fetches)
+  .then(function(results) {
+    var merged = {};
+    results.forEach(function(data) {
+      var r = data.result || data;
+      Object.keys(r).forEach(function(k) { merged[k] = r[k]; });
+    });
+    renderAlerts(merged, symbolMap);
   })
   .catch(function(err) {
     setAlertStatus('Error: ' + err.message, false);
