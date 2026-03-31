@@ -5,10 +5,6 @@ A single-file HTML/JS/CSS options trading tracker for the **Wheel strategy** on
 [Rysk Finance](https://v12.rysk.finance) — a DeFi options platform on HyperEVM
 (HyperLiquid L2, chainId 999). The user trades BTC, ETH, HYPE, and SOL.
 
-## User wallet
-**EVM wallet address:** `0xe94a312B9e8B4B5117aEB485dd749c3547aC06C2`
-Use this address when querying on-chain balances, positions, or any blockchain data.
-
 **Output file:** `rysk-pnl-tracker.html` (~143 KB, single file, no build step)
 
 ---
