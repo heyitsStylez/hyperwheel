@@ -46,21 +46,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .ad-hype{background:var(--hype)}
 .ad-sol{background:var(--sol)}
 
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.sc-puts{border-top:3px solid var(--blb)}
-.sc-hold{border-top:3px solid var(--ob)}
-.sc-inc {border-top:3px solid var(--gb)}
-.sc-ph{font-size:.6rem;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
-.sc-det{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:5px}
-.sc-det-row{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-family:var(--mono)}
-.sc-det-lbl{color:var(--mu)}
-.sc-det-val{color:var(--text);font-weight:600}
-.sc{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
-.slbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--mu);margin-bottom:6px;font-family:var(--mono)}
-.sval{font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-.5px;font-family:var(--mono)}
-.sval.green{color:var(--green)}.sval.red{color:var(--red)}.sval.orange{color:var(--orange)}.sval.blue{color:var(--blue)}.sval.btc{color:var(--btc)}.sval.eth{color:var(--eth)}
-.ssub{font-size:.7rem;color:var(--mu);margin-top:3px;font-family:var(--mono)}
+/* EXPIRY WATCH */
+.expiry-section{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:0}
+.expiry-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.expiry-ttl{font-size:.6rem;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;font-family:var(--mono);color:var(--mu2)}
+.expiry-refresh{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--mu);cursor:pointer;font-size:.85rem;padding:2px 7px;line-height:1;transition:color .15s,border-color .15s}
+.expiry-refresh:hover{color:var(--text);border-color:var(--bd2)}
+.expiry-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.72rem}
+.expiry-tbl th{color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:.58rem;padding:4px 8px;text-align:left;border-bottom:1px solid var(--bd)}
+.expiry-tbl td{padding:7px 8px;border-bottom:1px solid var(--bd2)}
+.expiry-tbl tbody tr:last-child td{border-bottom:none}
+.expiry-tbl tbody tr:hover td{background:var(--s2)}
+.exp-otm{color:var(--green);font-weight:600}
+.exp-itm{color:var(--red);font-weight:600}
+.exp-empty{color:var(--mu);font-style:italic;padding:10px 4px;font-family:var(--mono);font-size:.72rem}
 
 /* SECTION */
 .sec{background:var(--surface);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
@@ -198,7 +197,6 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
 @media(max-width:720px){
-  .stats{grid-template-columns:1fr}
   .fi{grid-template-columns:1fr 1fr}
   .fb{grid-template-columns:1fr 1fr}
   .cgrid{grid-template-columns:1fr}
@@ -458,8 +456,6 @@ a, button, input, select { transition: none; }
 [data-theme="arctic"] .reg-label,
 [data-theme="paper"] .reco-action,
 [data-theme="arctic"] .reco-action,
-[data-theme="paper"] .sval,
-[data-theme="arctic"] .sval,
 [data-theme="paper"] .ncv,
 [data-theme="arctic"] .ncv,
 [data-theme="paper"] .td-name,
@@ -483,11 +479,6 @@ a, button, input, select { transition: none; }
   background: var(--s2);
 }
 
-/* Stat card values */
-[data-theme="paper"] .sval,
-[data-theme="arctic"] .sval {
-  color: var(--text) !important;
-}
 
 /* Table header text */
 [data-theme="paper"] .ttable th,
@@ -934,40 +925,13 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="top-row">
   <div class="top-left">
 
-  <!-- STATS: Wheel Phases -->
-  <div class="stats">
-    <!-- Phase 1: Selling Puts -->
-    <div class="sc sc-puts">
-      <div class="sc-ph" style="color:var(--blue)">&#9654;&nbsp; Selling Puts</div>
-      <div class="slbl">Capital Locked</div>
-      <div class="sval blue" id="s-lk">$0</div>
-      <div class="ssub" id="s-lk-s">no open puts</div>
-      <div class="sc-det">
-        <div class="sc-det-row"><span class="sc-det-lbl">Assets</span><span class="sc-det-val" id="s-lk-assets">&mdash;</span></div>
-      </div>
+  <!-- EXPIRY WATCH -->
+  <div class="expiry-section">
+    <div class="expiry-hd">
+      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week</span>
+      <button class="expiry-refresh" onclick="fetchExpiryPrices()" title="Refresh live prices">&#8635; Refresh</button>
     </div>
-    <!-- Phase 2: Holding Tokens -->
-    <div class="sc sc-hold">
-      <div class="sc-ph" style="color:var(--orange)">&#9670;&nbsp; Holding Tokens</div>
-      <div class="slbl">Net Cost / Token</div>
-      <div class="sval orange" id="s-nc">&mdash;</div>
-      <div class="ssub" id="s-nc-s">no position held</div>
-      <div class="sc-det">
-        <div class="sc-det-row"><span class="sc-det-lbl">Tokens held</span><span class="sc-det-val" id="s-held">&mdash;</span></div>
-        <div class="sc-det-row"><span class="sc-det-lbl">Open lots</span><span class="sc-det-val" id="s-lots">0</span></div>
-      </div>
-    </div>
-    <!-- Phase 3: Income -->
-    <div class="sc sc-inc">
-      <div class="sc-ph" style="color:var(--green)">&#36;&nbsp; Income</div>
-      <div class="slbl">Total Premiums</div>
-      <div class="sval green" id="s-pr">$0</div>
-      <div class="ssub" id="s-pr-s">0 trades completed</div>
-      <div class="sc-det">
-        <div class="sc-det-row"><span class="sc-det-lbl">Avg APR</span><span class="sc-det-val" id="s-apr">&mdash;</span></div>
-        <div class="sc-det-row"><span class="sc-det-lbl">Based on</span><span class="sc-det-val" id="s-apr-s">completed trades only</span></div>
-      </div>
-    </div>
+    <div id="expiry-table-wrap"><div class="exp-empty">No trades expiring this week</div></div>
   </div>
 
   <!-- CHARTS -->
@@ -1233,6 +1197,7 @@ const KEY = 'rysk_wheel_v4';
 let trades = [];
 let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts';
 let cPnl = null, cNc = null;
+let livePrices = {};
 
 const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
 const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9945ff' };
@@ -1246,6 +1211,7 @@ const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9
   document.getElementById('f-date').addEventListener('change', autoDTE);
   document.getElementById('f-expiry').addEventListener('change', autoDTE);
   render();
+  fetchExpiryPrices();
 })();
 
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -1685,97 +1651,92 @@ function refreshAlertBar() {
 }
 
 function rStats(streams, lots, displayRows) {
-  // Totals across displayed rows
-  const last = displayRows[displayRows.length - 1];
-  const allPr = displayRows.reduce((s,r) => s + r.premium - (r.closeCost || 0), 0);
-
-  // Combined P&L = sum of each asset's final P&L
-  let combPnl = 0;
-  ['BTC','ETH','HYPE','SOL'].forEach(a => {
-    if (sFilter === 'ALL' || sFilter === a) {
-      const s = streams[a];
-      if (s.length) combPnl += s[s.length-1].pnl;
-    }
-  });
-
-  // Net cost: lot-aware — show open lots per asset
-  let ncText = '&mdash;', ncCls = 'orange', ncSub = 'no position held';
-  {
-    const assetsToCheck = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
-    const lotParts = [];
-    assetsToCheck.forEach(a => {
-      const openLots = (lots[a] || []).filter(l => l.open);
-      openLots.forEach(l => {
-        const nc = l.costBasis - (l.lotPremiums / l.size);
-        lotParts.push(a + ' Lot ' + l.lotNum + ': $' + fmt(nc));
-      });
-    });
-    if (lotParts.length === 1) {
-      ncText = '$' + fmt(
-        (() => { const a = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
-          for (const asset of a) { const ol = (lots[asset]||[]).filter(l=>l.open); if(ol.length) return ol[0].costBasis - ol[0].lotPremiums/ol[0].size; }
-          return 0; })()
-      );
-      ncSub = lotParts[0].split(':')[0] + ' breakeven';
-      ncCls = 'orange';
-    } else if (lotParts.length > 1) {
-      ncText = lotParts.length + ' open lots';
-      ncSub = 'see lot cards below';
-      ncCls = 'orange';
-    }
-  }
-
-  // Capital locked (open positions)
-  const openTrades = trades.filter(t => t.outcome === 'OPEN' && (sFilter === 'ALL' || t.asset === sFilter));
-  const locked = openTrades.reduce((s,t) => s + (t.type === 'PUT' ? t.strike*t.size : 0), 0);
-
-  const done = displayRows.filter(r => r.outcome !== 'OPEN').length;
-
-  // Phase 1: Selling Puts details
-  const openPutsList = trades.filter(t => t.type === 'PUT' && t.outcome === 'OPEN' && (sFilter === 'ALL' || t.asset === sFilter));
-  const putAssetsList = [...new Set(openPutsList.map(t => t.asset))];
-  sv('s-lk', locked > 0 ? '$' + fmt(locked) : '$0', locked > 0 ? 'blue' : '');
-  st('s-lk-s', locked > 0 ? 'USDC locked in ' + openPutsList.length + ' put' + (openPutsList.length !== 1 ? 's' : '') : 'no open puts');
-  st('s-lk-count', openPutsList.length > 0 ? openPutsList.length + ' open put' + (openPutsList.length !== 1 ? 's' : '') : 'none active');
-  st('s-lk-assets', putAssetsList.length > 0 ? putAssetsList.join(' · ') : '—');
-
-  // Phase 2: Holding Tokens details
-  const heldAssets = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
-  const heldParts = [];
-  let openLotsCount = 0;
-  heldAssets.forEach(a => {
-    (lots[a] || []).filter(l => l.open).forEach(l => {
-      heldParts.push(fmt(l.size) + ' ' + a);
-      openLotsCount++;
-    });
-  });
-  svh('s-nc', ncText, ncCls);
-  st('s-nc-s', ncSub);
-  st('s-held', heldParts.length > 0 ? heldParts.join(' · ') : '—');
-  st('s-lots', openLotsCount > 0 ? openLotsCount + ' open lot' + (openLotsCount !== 1 ? 's' : '') : 'none held');
-
-  // Phase 3: Income
-  sv('s-pr', '$' + Number(allPr).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}), 'green');
-  st('s-pr-s', done + ' trade' + (done!==1?'s':'') + ' completed');
-
-  // Weighted average annualized return across all trades with DTE (open + completed)
-  // Weight = collateral × DTE (bigger, longer trades count more)
-  const completedWithDTE = displayRows.filter(r => r.annual !== null && r.dte > 0);
-  let weightedAnnSum = 0, weightSum = 0;
-  completedWithDTE.forEach(r => {
-    const w = (r.strike * r.size) * r.dte;
-    weightedAnnSum += r.annual * w;
-    weightSum += w;
-  });
-  const avgAnnual = weightSum > 0 ? weightedAnnSum / weightSum : null;
-  svh('s-apr', avgAnnual !== null ? avgAnnual.toFixed(1) + '%' : '&mdash;', avgAnnual !== null ? 'green' : '');
-  st('s-apr-s', avgAnnual !== null ? completedWithDTE.length + ' trade' + (completedWithDTE.length !== 1 ? 's' : '') + ' with DTE' : 'completed trades only');
-
+  renderExpiryTable();
 }
 
-function sv(id, text, cls='')  { const el=document.getElementById(id); if(!el) return; el.textContent=text; el.className='sval'+(cls?' '+cls:''); }
-function svh(id, html, cls='') { const el=document.getElementById(id); if(!el) return; el.innerHTML=html; el.className='sval'+(cls?' '+cls:''); }
-function st(id, t)             { const el=document.getElementById(id); if(el) el.textContent=t; }
+function renderExpiryTable() {
+  const wrap = document.getElementById('expiry-table-wrap');
+  if (!wrap) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekOut = new Date(today);
+  weekOut.setDate(weekOut.getDate() + 7);
+
+  const expiring = trades.filter(t => {
+    if (t.outcome !== 'OPEN') return false;
+    if (t.type !== 'PUT' && t.type !== 'CALL') return false;
+    if (sFilter !== 'ALL' && t.asset !== sFilter) return false;
+    if (!t.expiry) return false;
+    const exp = new Date(t.expiry + 'T00:00:00');
+    return exp <= weekOut;
+  }).sort((a, b) => new Date(a.expiry) - new Date(b.expiry) || a.asset.localeCompare(b.asset));
+
+  if (!expiring.length) {
+    wrap.innerHTML = '<div class="exp-empty">No trades expiring this week</div>';
+    return;
+  }
+
+  const assetCol = { BTC: 'btc', ETH: 'eth', HYPE: 'hype', SOL: 'sol' };
+
+  const rows = expiring.map(t => {
+    const exp = new Date(t.expiry + 'T00:00:00');
+    const daysLeft = Math.round((exp - today) / (1000 * 60 * 60 * 24));
+    const dteLabel = daysLeft <= 0
+      ? '<span style="color:var(--red);font-weight:700">today</span>'
+      : daysLeft + 'd';
+
+    // APR using original DTE at entry
+    let aprHtml = '—';
+    if (t.dte > 0 && t.strike > 0 && t.size > 0) {
+      const ann = (t.premium / (t.strike * t.size)) * (365 / t.dte) * 100;
+      aprHtml = ann.toFixed(1) + '%';
+    }
+
+    // Status: OTM / ITM using live prices if available
+    let statusHtml = '<span style="color:var(--mu)">—</span>';
+    const spot = livePrices[t.asset];
+    if (spot) {
+      const isPut = t.type === 'PUT';
+      const isOTM = isPut ? spot > t.strike : spot < t.strike;
+      const pct = Math.abs((spot - t.strike) / spot * 100).toFixed(1);
+      statusHtml = isOTM
+        ? '<span class="exp-otm">OTM ' + pct + '%</span>'
+        : '<span class="exp-itm">ITM ' + pct + '%</span>';
+    }
+
+    const col = assetCol[t.asset] || 'mu2';
+    return '<tr>'
+      + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
+      + '<td>' + t.type + '</td>'
+      + '<td>$' + fmt(t.strike) + '</td>'
+      + '<td>' + dteLabel + '</td>'
+      + '<td>$' + fmt(t.premium) + '</td>'
+      + '<td>' + aprHtml + '</td>'
+      + '<td>' + statusHtml + '</td>'
+      + '</tr>';
+  }).join('');
+
+  wrap.innerHTML = '<table class="expiry-tbl">'
+    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>';
+}
+
+function fetchExpiryPrices() {
+  fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,hyperliquid,solana&vs_currencies=usd')
+    .then(r => r.json())
+    .then(data => {
+      livePrices = {
+        BTC:  data.bitcoin     && data.bitcoin.usd,
+        ETH:  data.ethereum    && data.ethereum.usd,
+        HYPE: data.hyperliquid && data.hyperliquid.usd,
+        SOL:  data.solana      && data.solana.usd,
+      };
+      renderExpiryTable();
+    })
+    .catch(() => { /* silently fail — table shows — for status */ });
+}
 
 function rTable(displayRows, streams, lots) {
   const tbody  = document.getElementById('ttbody');
