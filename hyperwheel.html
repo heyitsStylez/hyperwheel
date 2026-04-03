@@ -1037,7 +1037,16 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
     <div class="fb">
       <div class="field"><label id="f-strike-lbl">Strike ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
-      <div class="field"><label>Size</label><input type="number" id="f-size" value="0.05" step="0.01"><span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span></div>
+      <div class="field" id="field-size-wrap">
+        <label>Size
+          <span id="field-size-unit-toggle" style="display:none;margin-left:8px">
+            <button class="tb active" id="szu-contracts" onclick="setSizeUnit('contracts')" style="font-size:.55rem;padding:2px 7px">Contracts</button>
+            <button class="tb" id="szu-usdc" onclick="setSizeUnit('usdc')" style="font-size:.55rem;padding:2px 7px">USDC</button>
+          </span>
+        </label>
+        <input type="number" id="f-size" value="0.05" step="0.01">
+        <span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span>
+      </div>
       <div class="field" id="field-premium"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
       <div class="field fi-full" id="field-outcome">
         <label>Outcome</label>
@@ -1222,7 +1231,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 <script>
 const KEY = 'rysk_wheel_v4';
 let trades = [];
-let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK';
+let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts';
 let cPnl = null, cNc = null;
 
 const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
@@ -1314,6 +1323,8 @@ function setType(t) {
     document.getElementById('f-size').value = MIN_SIZE[sAsset];
   }
   refreshLotPicker();
+  refreshSizeUnitToggle();
+  if (t !== 'PUT') setSizeUnit('contracts');
 }
 function setPlatform(p) {
   sPlatform = p;
@@ -1331,6 +1342,32 @@ function setPlatform(p) {
   if (sizeHint) sizeHint.textContent = p === 'HSFC' ? 'no minimum' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
   const sizeEl = document.getElementById('f-size');
   if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
+  // Show/hide size unit toggle (only for HSFC puts)
+  refreshSizeUnitToggle();
+  // Reset to contracts when switching away from HSFC
+  if (p !== 'HSFC') setSizeUnit('contracts');
+}
+
+function refreshSizeUnitToggle() {
+  const tog = document.getElementById('field-size-unit-toggle');
+  if (tog) tog.style.display = (sPlatform === 'HSFC' && sType === 'PUT') ? 'inline-flex' : 'none';
+}
+
+function setSizeUnit(unit) {
+  sSizeUnit = unit;
+  ['contracts','usdc'].forEach(u => {
+    const btn = document.getElementById('szu-' + u);
+    if (btn) btn.classList.toggle('active', u === unit);
+  });
+  const sizeEl = document.getElementById('f-size');
+  const sizeHint = document.getElementById('f-size-hint');
+  if (unit === 'usdc') {
+    if (sizeEl) { sizeEl.placeholder = '3400'; sizeEl.value = ''; }
+    if (sizeHint) sizeHint.textContent = 'USDC collateral';
+  } else {
+    if (sizeEl) { sizeEl.placeholder = ''; sizeEl.value = ''; }
+    if (sizeHint) sizeHint.textContent = 'no minimum';
+  }
 }
 function setOut(o) {
   sOut = o;
@@ -1422,7 +1459,13 @@ function addTrade() {
     : null;
   const closeCost = parseFloat(document.getElementById('f-closecost').value) || 0;
   if (sOut === 'CLOSED' && closeCost < 0) return err('Close cost cannot be negative.');
-  const tradeObj = { id: Date.now(), asset: sAsset, type: sType, date, expiry, dte: isNaN(dte)?null:dte, strike, size, premium: prem, outcome: sOut, notes, platform: sPlatform };
+  // If size was entered in USDC, convert to token count
+  let finalSize = size;
+  if (sSizeUnit === 'usdc') {
+    if (!strike || strike <= 0) return err('Strike required to convert USDC size to token count.');
+    finalSize = size / strike;
+  }
+  const tradeObj = { id: Date.now(), asset: sAsset, type: sType, date, expiry, dte: isNaN(dte)?null:dte, strike, size: finalSize, premium: prem, outcome: sOut, notes, platform: sPlatform };
   if (sOut === 'CLOSED') tradeObj.closeCost = closeCost;
   if (lotNumVal !== null) tradeObj.lotNum = lotNumVal;
   trades.push(tradeObj);
