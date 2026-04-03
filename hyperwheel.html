@@ -24,12 +24,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 .page-wrap{max-width:1440px;margin:0 auto;padding:28px 24px 80px;display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
 .content-col{display:flex;flex-direction:column;gap:24px;min-width:0}
-.top-row{display:grid;grid-template-columns:1fr 460px;gap:24px;align-items:start}
 .top-left{display:flex;flex-direction:column;gap:24px;min-width:0}
-.top-right{display:flex;flex-direction:column;min-width:0}
-.top-right .sec{height:100%}
-@media(max-width:960px){.top-row{grid-template-columns:1fr}}
 @media(max-width:720px){.page-wrap{padding:18px 12px 60px}.hbtns{display:none!important}}
+
+/* TRADE DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+#trade-drawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100vw;background:var(--surface);border-left:1px solid var(--bd);z-index:201;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+#trade-drawer.open{transform:translateX(0)}
+.drawer-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--surface);z-index:1}
+.drawer-close{background:none;border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;font-size:.85rem;padding:4px 10px;line-height:1.4;transition:all .15s}
+.drawer-close:hover{color:var(--text);border-color:var(--bd2)}
+@media(max-width:720px){
+  #trade-drawer{top:auto;right:0;left:0;bottom:0;width:100%;max-height:90vh;border-left:none;border-top:1px solid var(--bd);border-radius:14px 14px 0 0;transform:translateY(110%)}
+  #trade-drawer.open{transform:translateY(0)}
+}
 
 /* ASSET TABS */
 .asset-tabs{display:flex;gap:10px;align-items:center}
@@ -602,7 +611,9 @@ a, button, input, select { transition: none; }
 [data-theme="paper"] .form-wrap,
 [data-theme="arctic"] .form-wrap,
 [data-theme="paper"] .sec,
-[data-theme="arctic"] .sec {
+[data-theme="arctic"] .sec,
+[data-theme="paper"] #trade-drawer,
+[data-theme="arctic"] #trade-drawer {
   background: var(--surface);
 }
 
@@ -896,7 +907,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
     <button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
     <button class="btn btn-g" onclick="showReset()">Reset</button>
-    <button class="btn btn-p" onclick="focusForm()">+ Add Trade</button>
+    <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
   </div>
 </header>
 
@@ -922,7 +933,6 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
   </div>
 
-  <div class="top-row">
   <div class="top-left">
 
   <!-- EXPIRY WATCH -->
@@ -947,9 +957,13 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 
   </div><!-- end top-left -->
 
-  <div class="top-right">
-  <div class="sec" id="aform">
-    <div class="sec-hd"><div class="sec-ttl"><span class="dot dp"></span>Log New Trade</div></div>
+  <!-- TRADE DRAWER -->
+  <div class="drawer-overlay" id="trade-drawer-overlay" onclick="closeTradeDrawer()"></div>
+  <div id="trade-drawer">
+    <div class="drawer-hd">
+      <div class="sec-ttl"><span class="dot dp"></span>Log New Trade</div>
+      <button class="drawer-close" onclick="closeTradeDrawer()">&#10005; Close</button>
+    </div>
     <div class="fi">
       <!-- Asset -->
       <div class="field fi-full">
@@ -1033,9 +1047,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
       <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add Trade &rarr;</button>
     </div>
     <div class="ferr" id="ferr"></div>
-  </div>
-  </div><!-- end top-right -->
-  </div><!-- end top-row -->
+  </div><!-- end trade-drawer -->
 
   <!-- CLOSE ALERTS -->
   <div class="alert-bar" id="alert-bar">
@@ -1436,6 +1448,7 @@ function addTrade() {
   if (lotNumVal !== null) tradeObj.lotNum = lotNumVal;
   trades.push(tradeObj);
   save(); render(); clearForm();
+  closeTradeDrawer();
   document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2059,10 +2072,20 @@ function cOpts(ttFmt, yFmt) {
 }
 
 // ── UTILS
-function focusForm() {
-  document.getElementById('aform').scrollIntoView({ behavior:'smooth', block:'start' });
-  setTimeout(() => document.getElementById('f-expiry').focus(), 400);
+function openTradeDrawer() {
+  document.getElementById('trade-drawer').classList.add('open');
+  document.getElementById('trade-drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('f-expiry').focus(), 350);
 }
+
+function closeTradeDrawer() {
+  document.getElementById('trade-drawer').classList.remove('open');
+  document.getElementById('trade-drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function focusForm() { openTradeDrawer(); }
 function showReset()  { document.getElementById('rovl').classList.add('open'); }
 function closeReset() { document.getElementById('rovl').classList.remove('open'); }
 function doReset()    { trades = []; save(); render(); closeReset(); }
@@ -2780,6 +2803,13 @@ function startAlertPolling() {
 
 document.addEventListener('DOMContentLoaded', function() {
   startAlertPolling();
+});
+
+// Close trade drawer on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('trade-drawer').classList.contains('open')) {
+    closeTradeDrawer();
+  }
 });
 
 </script>
