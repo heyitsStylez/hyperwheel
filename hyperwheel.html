@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HyperWheel &mdash; Options Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root { color-scheme: light dark; }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -182,9 +181,18 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 .alert-spinner{display:inline-block;width:8px;height:8px;border:1.5px solid var(--bd2);border-top-color:var(--orange);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* CHARTS */
-.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px}
-.clbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono);margin-bottom:12px}
+/* PREMIUM PNL */
+.ppnl-body{padding:16px 20px 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.ppnl-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
+.ppnl-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--mu);font-family:var(--mono);margin-bottom:10px}
+.ppnl-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ppnl-col-hd{font-size:.56rem;color:var(--mu);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;opacity:.7}
+.ppnl-main{font-size:1rem;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1.1}
+.ppnl-sub{font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:4px}
+.ppnl-divider{width:1px;background:var(--bd);align-self:stretch}
+@media(max-width:1100px){.ppnl-body{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.ppnl-body{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.ppnl-body{grid-template-columns:1fr}}
 
 /* EMPTY */
 .empty{text-align:center;padding:52px 24px}
@@ -944,15 +952,12 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div id="expiry-table-wrap"><div class="exp-empty">No trades expiring this week</div></div>
   </div>
 
-  <!-- CHARTS -->
+  <!-- PREMIUM PNL -->
   <div class="sec">
     <div class="sec-hd">
-      <div class="sec-ttl"><span class="dot dg"></span>Charts</div>
+      <div class="sec-ttl"><span class="dot dg"></span>Premium P&amp;L</div>
     </div>
-    <div class="cgrid">
-      <div><div class="clbl">Monthly Premium Income</div><canvas id="pnlChart" style="max-height:220px"></canvas></div>
-      <div><div class="clbl">Cost Basis vs Net Cost per Lot</div><canvas id="ncChart" style="max-height:220px"></canvas></div>
-    </div>
+    <div id="ppnl-body" class="ppnl-body"></div>
   </div>
 
   </div><!-- end top-left -->
@@ -1208,7 +1213,6 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 const KEY = 'rysk_wheel_v4';
 let trades = [];
 let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts';
-let cPnl = null, cNc = null;
 let livePrices = {};
 
 const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
@@ -1646,7 +1650,7 @@ function render() {
   const { streams, lots, allRows, displayRows } = compute(sFilter);
   rStats(streams, lots, displayRows);
   rTable(displayRows, streams, lots);
-  rCharts(displayRows, streams, lots);
+  rCharts(displayRows);
   refreshAlertBar();
 }
 
@@ -1879,177 +1883,98 @@ function rTable(displayRows, streams, lots) {
   tbody.innerHTML = html;
 }
 
-function rCharts(displayRows, streams, lots) {
-  const cs = getComputedStyle(document.documentElement);
-  const themeGreen = cs.getPropertyValue('--green').trim() || '#00e5a0';
-  const themeMu    = cs.getPropertyValue('--mu').trim()    || '#5a6680';
-  const ACLR = {
-    BTC:  cs.getPropertyValue('--btc').trim()  || '#f7931a',
-    ETH:  cs.getPropertyValue('--eth').trim()  || '#627eea',
-    HYPE: cs.getPropertyValue('--hype').trim() || '#00e5a0',
-    SOL:  cs.getPropertyValue('--sol').trim()  || '#9945ff',
-  };
-  const ttBase = {
-    backgroundColor:'#131923', borderColor:'#232f47', borderWidth:1,
-    titleColor:'#cdd5e8', bodyColor:'#8090b0',
-    titleFont:{family:'DM Mono',size:11}, bodyFont:{family:'DM Mono',size:11},
-  };
-  const tickStyle = { color: themeMu, font: { family: 'DM Mono', size: 10 } };
-  const gridStyle = { color: 'rgba(28,37,56,.8)' };
+function rCharts(displayRows) {
+  const el = document.getElementById('ppnl-body');
+  if (!el) return;
 
-  // ── CHART 1: Monthly Premium Income ──────────────────────────
-  if (cPnl) cPnl.destroy();
-  const pc = document.getElementById('pnlChart').getContext('2d');
+  const currentMonth = new Date().toISOString().slice(0, 7);
 
-  const monthMap = {};
-  displayRows.forEach(r => {
-    if (!r.premium || r.type === 'HOLDING') return;
-    const month = r.date.substring(0, 7);
-    if (!monthMap[month]) monthMap[month] = { BTC:0, ETH:0, HYPE:0, SOL:0 };
-    monthMap[month][r.asset] += r.premium - (r.closeCost || 0);
-  });
-  const monthKeys = Object.keys(monthMap).sort();
-  const monthLabels = monthKeys.map(k => {
-    const [y, m] = k.split('-');
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1] + " '" + y.slice(2);
-  });
-  const activeAssets = ['BTC','ETH','HYPE','SOL'].filter(
-    a => (sFilter === 'ALL' || a === sFilter) && monthKeys.some(m => (monthMap[m][a] || 0) > 0)
-  );
-  const monthDatasets = activeAssets.map(a => ({
-    label: a,
-    data: monthKeys.map(m => +(monthMap[m][a] || 0).toFixed(2)),
-    backgroundColor: ACLR[a] + 'bb',
-    borderColor: ACLR[a],
-    borderWidth: 1,
-    borderRadius: 3,
-    stack: 'income',
-  }));
-
-  cPnl = new Chart(pc, {
-    type: 'bar',
-    data: { labels: monthLabels.length ? monthLabels : ['—'], datasets: monthDatasets.length ? monthDatasets : [{ label:'', data:[0], backgroundColor:'transparent', stack:'income' }] },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      plugins: {
-        legend: { display: activeAssets.length > 1, labels: { color: themeMu, font:{ family:'DM Mono', size:10 }, boxWidth:10, padding:12 } },
-        tooltip: {
-          ...ttBase,
-          callbacks: {
-            label: ctx => ' ' + ctx.dataset.label + ': +$' + fmt(ctx.raw),
-            footer: items => items.length > 1 ? [' Total: +$' + fmt(items.reduce((s,i) => s + i.raw, 0))] : [],
-          }
-        }
-      },
-      scales: {
-        x: { stacked: true, ticks: tickStyle, grid: gridStyle },
-        y: { stacked: true, beginAtZero: true, ticks: { ...tickStyle, callback: v => '$'+sk(v) }, grid: gridStyle },
-      }
-    }
-  });
-
-  // ── CHART 2: Cost Basis vs Net Cost per Lot ──────────────────
-  if (cNc) cNc.destroy();
-  const nc = document.getElementById('ncChart').getContext('2d');
-
-  const checkAssets = sFilter === 'ALL' ? ['BTC','ETH','HYPE','SOL'] : [sFilter];
-  const lotBars = [];
-  checkAssets.forEach(a => {
-    (lots[a] || []).forEach(lot => {
-      if (lot.lotPremiums <= 0) return;
-      const netCost  = lot.costBasis - (lot.lotPremiums / lot.size);
-      const reduction = lot.costBasis - netCost;
-      const pct = (reduction / lot.costBasis * 100).toFixed(1);
-      lotBars.push({ label: a + ' L' + lot.lotNum + (lot.open ? '' : ' ✓'), asset: a, costBasis: lot.costBasis, netCost, reduction, pct });
-    });
-  });
-
-  if (lotBars.length) {
-    const multiAsset = sFilter === 'ALL' && new Set(lotBars.map(l => l.asset)).size > 1;
-
-    if (multiAsset) {
-      // Multi-asset: % reduction per lot (avoids scale mismatch between BTC/ETH)
-      cNc = new Chart(nc, {
-        type: 'bar',
-        data: {
-          labels: lotBars.map(l => l.label),
-          datasets: [{
-            data: lotBars.map(l => +l.pct),
-            backgroundColor: lotBars.map(l => ACLR[l.asset] + 'bb'),
-            borderColor:     lotBars.map(l => ACLR[l.asset]),
-            borderWidth: 1, borderRadius: 4,
-          }]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: { ...ttBase, callbacks: { label: ctx => {
-              const l = lotBars[ctx.dataIndex];
-              return [' ' + l.pct + '% reduced', ' -$' + fmt(l.reduction.toFixed(2)) + '/token', ' $' + fmt(l.netCost.toFixed(2)) + ' net cost'];
-            }}}
-          },
-          scales: {
-            x: { beginAtZero: true, ticks: { ...tickStyle, callback: v => v + '%' }, grid: gridStyle },
-            y: { ticks: tickStyle, grid: gridStyle },
-          }
-        }
-      });
-    } else {
-      // Single asset: stacked absolute bar — netCost + reduction = costBasis
-      const assetColor = ACLR[lotBars[0].asset];
-      cNc = new Chart(nc, {
-        type: 'bar',
-        data: {
-          labels: lotBars.map(l => l.label),
-          datasets: [
-            {
-              label: 'Net Cost',
-              data: lotBars.map(l => +l.netCost.toFixed(2)),
-              backgroundColor: assetColor + '66',
-              borderColor: assetColor,
-              borderWidth: 1, stack: 'basis',
-            },
-            {
-              label: 'Premium Reduction',
-              data: lotBars.map(l => +l.reduction.toFixed(2)),
-              backgroundColor: themeGreen + 'bb',
-              borderColor: themeGreen,
-              borderWidth: 1, borderRadius: 4, stack: 'basis',
-            }
-          ]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: true,
-          plugins: {
-            legend: { display: true, labels: { color: themeMu, font:{ family:'DM Mono', size:10 }, boxWidth:10, padding:12 } },
-            tooltip: { ...ttBase, callbacks: { label: ctx => {
-              const l = lotBars[ctx.dataIndex];
-              if (ctx.dataset.label === 'Net Cost') return ' Net cost: $' + fmt(l.netCost.toFixed(2)) + '/token';
-              return ' Reduced by: -$' + fmt(l.reduction.toFixed(2)) + '/token (' + l.pct + '%)';
-            }}}
-          },
-          scales: {
-            x: { stacked: true, beginAtZero: true, ticks: { ...tickStyle, callback: v => '$'+sk(v) }, grid: gridStyle },
-            y: { stacked: true, ticks: tickStyle, grid: gridStyle },
-          }
-        }
-      });
-    }
-  } else {
-    cNc = new Chart(nc, {
-      type: 'bar',
-      data: { labels: ['—'], datasets: [{ data: [0], backgroundColor: 'transparent' }] },
-      options: {
-        responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { ticks: tickStyle, grid: gridStyle },
-          y: { ticks: tickStyle, grid: gridStyle },
-        }
+  function calcStats(rows) {
+    let totalPrem = 0, totalCount = 0;
+    let otmPrem = 0, otmCount = 0;
+    let itmPrem = 0, itmCount = 0;
+    let assignedNotional = 0;
+    rows.forEach(r => {
+      if (r.type === 'HOLDING' || r.outcome === 'OPEN') return;
+      const net = (r.premium || 0) - (r.closeCost || 0);
+      totalPrem += net;
+      totalCount++;
+      if (r.outcome === 'EXPIRED') {
+        otmPrem += net;
+        otmCount++;
+      } else if (r.outcome === 'ASSIGNED' || r.outcome === 'CALLED') {
+        itmPrem += net;
+        itmCount++;
+        if (r.outcome === 'ASSIGNED') assignedNotional += (r.strike || 0) * (r.size || 0);
       }
     });
+    const settled = otmCount + itmCount;
+    const returnRate = settled > 0 ? otmCount / settled * 100 : null;
+    return { totalPrem, totalCount, otmPrem, otmCount, itmPrem, itmCount, assignedNotional, returnRate, settled };
   }
+
+  const all = calcStats(displayRows);
+  const mon = calcStats(displayRows.filter(r => r.date && r.date.startsWith(currentMonth)));
+
+  function card(label, allMain, allSub, monMain, monSub) {
+    return '<div class="ppnl-card">' +
+      '<div class="ppnl-lbl">' + label + '</div>' +
+      '<div class="ppnl-cols">' +
+        '<div>' +
+          '<div class="ppnl-col-hd">All Time</div>' +
+          '<div class="ppnl-main">' + allMain + '</div>' +
+          (allSub ? '<div class="ppnl-sub">' + allSub + '</div>' : '') +
+        '</div>' +
+        '<div>' +
+          '<div class="ppnl-col-hd">This Month</div>' +
+          '<div class="ppnl-main">' + monMain + '</div>' +
+          (monSub ? '<div class="ppnl-sub">' + monSub + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  const pos = n => n === 1 ? '1 position' : n + ' positions';
+  const asgn = n => n === 1 ? '1 assignment' : n + ' assignments';
+  const dash = '&mdash;';
+
+  el.innerHTML = [
+    card(
+      'Total Premium Collected',
+      all.totalCount > 0 ? '$' + fmt(all.totalPrem) : dash,
+      all.totalCount > 0 ? pos(all.totalCount) : '',
+      mon.totalCount > 0 ? '$' + fmt(mon.totalPrem) : dash,
+      mon.totalCount > 0 ? pos(mon.totalCount) : ''
+    ),
+    card(
+      'Premium Expired OTM',
+      all.otmCount > 0 ? '$' + fmt(all.otmPrem) : dash,
+      all.otmCount > 0 ? pos(all.otmCount) : '',
+      mon.otmCount > 0 ? '$' + fmt(mon.otmPrem) : dash,
+      mon.otmCount > 0 ? pos(mon.otmCount) : ''
+    ),
+    card(
+      'Premium Expired ITM',
+      all.itmCount > 0 ? '$' + fmt(all.itmPrem) : dash,
+      all.itmCount > 0 ? pos(all.itmCount) : '',
+      mon.itmCount > 0 ? '$' + fmt(mon.itmPrem) : dash,
+      mon.itmCount > 0 ? pos(mon.itmCount) : ''
+    ),
+    card(
+      'Return Rate',
+      all.returnRate !== null ? all.returnRate.toFixed(1) + '%' : dash,
+      all.settled > 0 ? all.otmCount + ' / ' + all.settled + ' exp OTM' : '',
+      mon.returnRate !== null ? mon.returnRate.toFixed(1) + '%' : dash,
+      mon.settled > 0 ? mon.otmCount + ' / ' + mon.settled + ' exp OTM' : ''
+    ),
+    card(
+      'Assigned Notional',
+      all.assignedNotional > 0 ? '$' + fmt(all.assignedNotional) : dash,
+      all.itmCount > 0 ? asgn(all.itmCount) : '',
+      mon.assignedNotional > 0 ? '$' + fmt(mon.assignedNotional) : dash,
+      mon.itmCount > 0 ? asgn(mon.itmCount) : ''
+    ),
+  ].join('');
 }
 
 function cOpts(ttFmt, yFmt) {
