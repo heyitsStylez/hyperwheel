@@ -157,29 +157,6 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 .merge-preview .mp-lbl{color:var(--mu2)}.merge-preview .mp-val{color:var(--text);font-weight:600}
 .merge-preview .mp-val.green{color:var(--green)}.merge-preview .mp-val.orange{color:var(--orange)}
 
-/* CLOSE ALERTS */
-.alert-bar{background:var(--surface);border:1px solid var(--ob);border-radius:12px;overflow:hidden;display:none}
-.alert-bar.has-alerts{display:block}
-.alert-hd{padding:10px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
-.alert-hd-left{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;color:var(--orange)}
-.alert-hd-right{display:flex;align-items:center;gap:10px}
-.alert-pulse{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:alertPulse 1.5s ease-in-out infinite}
-@keyframes alertPulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--orange)}50%{opacity:.4;box-shadow:0 0 12px var(--orange)}}
-.alert-threshold{font-size:.62rem;font-family:var(--mono);color:var(--mu2);display:flex;align-items:center;gap:4px}
-.alert-threshold input{width:40px;background:var(--s2);border:1px solid var(--bd2);border-radius:4px;padding:2px 4px;color:var(--text);font-family:var(--mono);font-size:.62rem;text-align:center}
-.alert-threshold input:focus{outline:none;border-color:var(--orange)}
-.alert-list{padding:8px 18px}
-.alert-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;background:var(--od);border:1px solid var(--ob);border-radius:8px;gap:12px;flex-wrap:wrap}
-.alert-item-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:200px}
-.alert-item-title{font-size:.75rem;font-weight:700;font-family:var(--mono);color:var(--text)}
-.alert-item-detail{font-size:.65rem;font-family:var(--mono);color:var(--mu2)}
-.alert-item-pct{font-size:.82rem;font-weight:800;font-family:var(--mono);color:var(--green)}
-.alert-item-actions{display:flex;gap:6px}
-.btn-close-pos{font-size:.65rem;font-family:var(--mono);font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--gb);color:var(--green);background:var(--gd);transition:all .15s;white-space:nowrap}
-.btn-close-pos:hover{filter:brightness(1.15)}
-.alert-status{font-size:.6rem;font-family:var(--mono);color:var(--mu);padding:4px 18px 8px;display:flex;align-items:center;gap:6px}
-.alert-spinner{display:inline-block;width:8px;height:8px;border:1.5px solid var(--bd2);border-top-color:var(--orange);border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 /* PREMIUM PNL */
 .ppnl-tabs{display:flex;gap:4px}
@@ -1067,19 +1044,6 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="ferr" id="ferr"></div>
   </div><!-- end trade-drawer -->
 
-  <!-- CLOSE ALERTS -->
-  <div class="alert-bar" id="alert-bar">
-    <div class="alert-hd">
-      <div class="alert-hd-left"><span class="alert-pulse"></span> Close Alerts</div>
-      <div class="alert-hd-right">
-        <div class="alert-threshold">Target: <input type="number" id="alert-pct" value="50" min="1" max="99" step="1" onchange="saveAlertThreshold()">%</div>
-        <span id="alert-last" style="font-size:.58rem;font-family:var(--mono);color:var(--mu)"></span>
-        <button class="btn" style="font-size:.6rem;padding:3px 8px" onclick="checkAlerts()">Refresh</button>
-      </div>
-    </div>
-    <div id="alert-items" style="padding:6px 12px"></div>
-    <div class="alert-status" id="alert-status"></div>
-  </div>
 
   <!-- TRADE LOG -->
   <div class="sec" id="tlog">
@@ -1669,20 +1633,6 @@ function render() {
   rStats(streams, lots, displayRows);
   rTable(displayRows, streams, lots);
   rCharts(displayRows);
-  refreshAlertBar();
-}
-
-function refreshAlertBar() {
-  var bar = document.getElementById('alert-bar');
-  if (!bar) return;
-  var openTrades = getOpenHSFCTrades();
-  if (openTrades.length > 0) {
-    bar.classList.add('has-alerts');
-  } else {
-    bar.classList.remove('has-alerts');
-    document.getElementById('alert-items').innerHTML = '';
-    setAlertStatus('', false);
-  }
 }
 
 function rStats(streams, lots, displayRows) {
@@ -1741,6 +1691,9 @@ function renderExpiryTable() {
     }
 
     const col = assetCol[t.asset] || 'mu2';
+    const platBadge = (t.platform === 'HSFC')
+      ? '<span class="bplat bplat-hsfc">HSFC</span>'
+      : '<span class="bplat bplat-rysk">RYSK</span>';
     return '<tr>'
       + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
       + '<td>' + t.type + '</td>'
@@ -1749,11 +1702,12 @@ function renderExpiryTable() {
       + '<td>$' + fmt(t.premium) + '</td>'
       + '<td>' + aprHtml + '</td>'
       + '<td>' + statusHtml + '</td>'
+      + '<td>' + platBadge + '</td>'
       + '</tr>';
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
-    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th></tr></thead>'
+    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table>';
 }
@@ -2570,198 +2524,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// ── CLOSE ALERTS (Hypersurface 50% profit monitor)
-const ALERT_THRESH_KEY = 'rysk_alert_thresh_v1';
-let alertInterval = null;
-
-function getAlertThreshold() {
-  const saved = localStorage.getItem(ALERT_THRESH_KEY);
-  return saved ? parseInt(saved, 10) : 50;
-}
-
-function saveAlertThreshold() {
-  const el = document.getElementById('alert-pct');
-  if (!el) return;
-  let v = parseInt(el.value, 10);
-  if (isNaN(v) || v < 1) v = 1;
-  if (v > 99) v = 99;
-  el.value = v;
-  localStorage.setItem(ALERT_THRESH_KEY, String(v));
-}
-
-function tradeToHSFCSymbol(t) {
-  if (!t.expiry) return null;
-  var parts = t.expiry.split('-');
-  var y = parts[0], m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
-  var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  var dd = (d < 10 ? '0' : '') + d;
-  var yy = y.slice(2);
-  var asset = t.asset;
-  var cp = t.type === 'PUT' ? 'P' : 'C';
-  var strike = Number(t.strike);
-  var strikeStr = strike % 1 === 0 ? String(strike) : String(strike);
-  return asset + '-' + dd + months[m - 1] + yy + '-' + strikeStr + '-' + cp;
-}
-
-function getOpenHSFCTrades() {
-  return trades.filter(function(t) {
-    return t.platform === 'HSFC' && t.outcome === 'OPEN' && (t.type === 'PUT' || t.type === 'CALL') && t.expiry;
-  });
-}
-
-function setAlertStatus(msg, showSpinner) {
-  var el = document.getElementById('alert-status');
-  if (!el) return;
-  el.innerHTML = (showSpinner ? '<span class="alert-spinner"></span> ' : '') + msg;
-}
-
-function checkAlerts() {
-  var openTrades = getOpenHSFCTrades();
-  var bar = document.getElementById('alert-bar');
-  if (!bar) return;
-
-  if (openTrades.length === 0) {
-    bar.classList.remove('has-alerts');
-    return;
-  }
-
-  bar.classList.add('has-alerts');
-  setAlertStatus('Fetching prices...', true);
-
-  var symbolMap = {};
-  var assetBuckets = {};
-  openTrades.forEach(function(t) {
-    var sym = tradeToHSFCSymbol(t);
-    if (sym) {
-      symbolMap[sym] = t;
-      var asset = t.asset;
-      if (!assetBuckets[asset]) assetBuckets[asset] = [];
-      assetBuckets[asset].push(sym);
-    }
-  });
-
-  if (Object.keys(assetBuckets).length === 0) {
-    setAlertStatus('No valid symbols to check', false);
-    return;
-  }
-
-  // HSFC API errors when mixing different assets in one request — batch per asset
-  var fetches = Object.keys(assetBuckets).map(function(asset) {
-    return fetch('https://market-api-sh.hypersurface.io/optionsPrices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbols: assetBuckets[asset] })
-    }).then(function(r) { return r.json(); });
-  });
-
-  Promise.all(fetches)
-  .then(function(results) {
-    var merged = {};
-    results.forEach(function(data) {
-      var r = data.result || data;
-      Object.keys(r).forEach(function(k) { merged[k] = r[k]; });
-    });
-    renderAlerts(merged, symbolMap);
-  })
-  .catch(function(err) {
-    setAlertStatus('Error: ' + err.message, false);
-  });
-}
-
-function renderAlerts(priceData, symbolMap) {
-  var container = document.getElementById('alert-items');
-  var bar = document.getElementById('alert-bar');
-  if (!container || !bar) return;
-
-  var threshold = getAlertThreshold() / 100;
-  var html = '';
-  var alertCount = 0;
-  var checkedCount = 0;
-
-  Object.keys(symbolMap).forEach(function(sym) {
-    var t = symbolMap[sym];
-    var priceInfo = priceData[sym];
-    if (!priceInfo) return;
-    checkedCount++;
-
-    var markPrem = parseFloat(priceInfo.mark_premium || priceInfo.mark || 0);
-    var entryPrem = t.premium / t.size;
-    var targetPrice = entryPrem * (1 - threshold);
-    var currentProfitPct = entryPrem > 0 ? ((entryPrem - markPrem) / entryPrem * 100) : 0;
-    var closeCostTotal = markPrem * t.size;
-    var netProfit = t.premium - closeCostTotal;
-    var isAlert = markPrem <= targetPrice && markPrem > 0;
-
-    if (isAlert) {
-      alertCount++;
-      html += '<div class="alert-item">'
-        + '<div class="alert-item-info">'
-        + '<div class="alert-item-title">' + t.asset + ' ' + t.type + ' $' + fmt(t.strike) + ' (' + t.expiry + ')</div>'
-        + '<div class="alert-item-detail">Entry: $' + fmt(entryPrem) + '/unit &middot; Mark: $' + fmt(markPrem) + '/unit &middot; Close cost: $' + fmt(closeCostTotal) + ' &middot; Net profit: $' + fmt(netProfit) + '</div>'
-        + '</div>'
-        + '<div class="alert-item-pct">' + currentProfitPct.toFixed(1) + '% profit</div>'
-        + '<div class="alert-item-actions">'
-        + '<button class="btn-close-pos" onclick="quickClose(' + t.id + ',' + closeCostTotal.toFixed(2) + ')">Close Position</button>'
-        + '</div>'
-        + '</div>';
-    }
-  });
-
-  container.innerHTML = html;
-
-  if (alertCount > 0) {
-    bar.classList.add('has-alerts');
-    setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; ' + alertCount + ' at target', false);
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('HyperWheel: ' + alertCount + ' position' + (alertCount !== 1 ? 's' : '') + ' at ' + getAlertThreshold() + '% profit target');
-    }
-  } else {
-    setAlertStatus('Checked ' + checkedCount + ' position' + (checkedCount !== 1 ? 's' : '') + ' &middot; none at target yet', false);
-  }
-  var now = new Date();
-  var hh = String(now.getHours()).padStart(2, '0');
-  var mm = String(now.getMinutes()).padStart(2, '0');
-  var ss = String(now.getSeconds()).padStart(2, '0');
-  var lastEl = document.getElementById('alert-last');
-  if (lastEl) lastEl.textContent = 'Last check: ' + hh + ':' + mm + ':' + ss;
-}
-
-function quickClose(tradeId, closeCost) {
-  var t = trades.find(function(x) { return x.id === tradeId; });
-  if (!t) return;
-  t.outcome = 'CLOSED';
-  t.closeCost = closeCost;
-  save();
-  render();
-  checkAlerts();
-}
-
-function startAlertPolling() {
-  var openTrades = getOpenHSFCTrades();
-  var bar = document.getElementById('alert-bar');
-  if (!bar) return;
-
-  var threshEl = document.getElementById('alert-pct');
-  if (threshEl) threshEl.value = getAlertThreshold();
-
-  if (openTrades.length > 0) {
-    bar.classList.add('has-alerts');
-    checkAlerts();
-  }
-
-  if (alertInterval) clearInterval(alertInterval);
-  alertInterval = setInterval(function() {
-    if (getOpenHSFCTrades().length > 0) checkAlerts();
-  }, 5 * 60 * 1000);
-
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  startAlertPolling();
-});
 
 // Close trade drawer on Escape
 document.addEventListener('keydown', function(e) {
