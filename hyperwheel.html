@@ -182,17 +182,26 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* PREMIUM PNL */
-.ppnl-body{padding:16px 20px 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.ppnl-tabs{display:flex;gap:4px}
+.ppnl-tab{font-size:.68rem;font-family:var(--mono);font-weight:600;padding:4px 12px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--mu);cursor:pointer;transition:background .15s,color .15s}
+.ppnl-tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.ppnl-cards{padding:16px 20px 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
 .ppnl-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
 .ppnl-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--mu);font-family:var(--mono);margin-bottom:10px}
-.ppnl-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ppnl-col-hd{font-size:.56rem;color:var(--mu);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;opacity:.7}
-.ppnl-main{font-size:1rem;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1.1}
+.ppnl-main{font-size:1.05rem;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1.1}
 .ppnl-sub{font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:4px}
-.ppnl-divider{width:1px;background:var(--bd);align-self:stretch}
-@media(max-width:1100px){.ppnl-body{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){.ppnl-body{grid-template-columns:1fr 1fr}}
-@media(max-width:420px){.ppnl-body{grid-template-columns:1fr}}
+.ppnl-mtbl-wrap{overflow-x:auto}
+.ppnl-mtbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.75rem}
+.ppnl-mtbl th{color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.8px;font-size:.6rem;padding:8px 16px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
+.ppnl-mtbl th:first-child{text-align:left}
+.ppnl-mtbl td{padding:9px 16px;border-bottom:1px solid var(--bd);text-align:right;color:var(--text2)}
+.ppnl-mtbl td:first-child{text-align:left;color:var(--mu2);font-weight:600}
+.ppnl-mtbl tr:last-child td{border-bottom:none}
+.ppnl-mtbl .rate-hi{color:var(--green)}
+.ppnl-mtbl .rate-lo{color:var(--red)}
+@media(max-width:1100px){.ppnl-cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.ppnl-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.ppnl-cards{grid-template-columns:1fr}}
 
 /* EMPTY */
 .empty{text-align:center;padding:52px 24px}
@@ -956,8 +965,12 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-ttl"><span class="dot dg"></span>Premium P&amp;L</div>
+      <div class="ppnl-tabs">
+        <button class="ppnl-tab active" id="ppnl-tab-total" onclick="setPpnlTab('total')">Total</button>
+        <button class="ppnl-tab" id="ppnl-tab-monthly" onclick="setPpnlTab('monthly')">Monthly</button>
+      </div>
     </div>
-    <div id="ppnl-body" class="ppnl-body"></div>
+    <div id="ppnl-body"></div>
   </div>
 
   </div><!-- end top-left -->
@@ -1212,7 +1225,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 <script>
 const KEY = 'rysk_wheel_v4';
 let trades = [];
-let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts';
+let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts', sPpnlTab = 'total';
 let livePrices = {};
 
 const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
@@ -1408,6 +1421,11 @@ function autoFillFromLot() {
 function setFilter(f) {
   sFilter = f;
   ['ALL','BTC','ETH','HYPE','SOL'].forEach(x => { const el = document.getElementById('fb-'+x); if(el) el.classList.toggle('active', x===f); });
+  render();
+}
+function setPpnlTab(t) {
+  sPpnlTab = t;
+  ['total','monthly'].forEach(x => { const el = document.getElementById('ppnl-tab-'+x); if(el) el.classList.toggle('active', x===t); });
   render();
 }
 function autoDTE() {
@@ -1887,8 +1905,6 @@ function rCharts(displayRows) {
   const el = document.getElementById('ppnl-body');
   if (!el) return;
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
-
   function calcStats(rows) {
     let totalPrem = 0, totalCount = 0;
     let otmPrem = 0, otmCount = 0;
@@ -1913,68 +1929,85 @@ function rCharts(displayRows) {
     return { totalPrem, totalCount, otmPrem, otmCount, itmPrem, itmCount, assignedNotional, returnRate, settled };
   }
 
-  const all = calcStats(displayRows);
-  const mon = calcStats(displayRows.filter(r => r.date && r.date.startsWith(currentMonth)));
-
-  function card(label, allMain, allSub, monMain, monSub) {
-    return '<div class="ppnl-card">' +
-      '<div class="ppnl-lbl">' + label + '</div>' +
-      '<div class="ppnl-cols">' +
-        '<div>' +
-          '<div class="ppnl-col-hd">All Time</div>' +
-          '<div class="ppnl-main">' + allMain + '</div>' +
-          (allSub ? '<div class="ppnl-sub">' + allSub + '</div>' : '') +
-        '</div>' +
-        '<div>' +
-          '<div class="ppnl-col-hd">This Month</div>' +
-          '<div class="ppnl-main">' + monMain + '</div>' +
-          (monSub ? '<div class="ppnl-sub">' + monSub + '</div>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }
-
   const pos = n => n === 1 ? '1 position' : n + ' positions';
   const asgn = n => n === 1 ? '1 assignment' : n + ' assignments';
   const dash = '&mdash;';
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmtMonth(ym) {
+    const [y, m] = ym.split('-');
+    return MONTHS[+m - 1] + " '" + y.slice(2);
+  }
 
-  el.innerHTML = [
-    card(
-      'Total Premium Collected',
-      all.totalCount > 0 ? '$' + fmt(all.totalPrem) : dash,
-      all.totalCount > 0 ? pos(all.totalCount) : '',
-      mon.totalCount > 0 ? '$' + fmt(mon.totalPrem) : dash,
-      mon.totalCount > 0 ? pos(mon.totalCount) : ''
-    ),
-    card(
-      'Premium Expired OTM',
-      all.otmCount > 0 ? '$' + fmt(all.otmPrem) : dash,
-      all.otmCount > 0 ? pos(all.otmCount) : '',
-      mon.otmCount > 0 ? '$' + fmt(mon.otmPrem) : dash,
-      mon.otmCount > 0 ? pos(mon.otmCount) : ''
-    ),
-    card(
-      'Premium Expired ITM',
-      all.itmCount > 0 ? '$' + fmt(all.itmPrem) : dash,
-      all.itmCount > 0 ? pos(all.itmCount) : '',
-      mon.itmCount > 0 ? '$' + fmt(mon.itmPrem) : dash,
-      mon.itmCount > 0 ? pos(mon.itmCount) : ''
-    ),
-    card(
-      'Return Rate',
-      all.returnRate !== null ? all.returnRate.toFixed(1) + '%' : dash,
-      all.settled > 0 ? all.otmCount + ' / ' + all.settled + ' exp OTM' : '',
-      mon.returnRate !== null ? mon.returnRate.toFixed(1) + '%' : dash,
-      mon.settled > 0 ? mon.otmCount + ' / ' + mon.settled + ' exp OTM' : ''
-    ),
-    card(
-      'Assigned Notional',
-      all.assignedNotional > 0 ? '$' + fmt(all.assignedNotional) : dash,
-      all.itmCount > 0 ? asgn(all.itmCount) : '',
-      mon.assignedNotional > 0 ? '$' + fmt(mon.assignedNotional) : dash,
-      mon.itmCount > 0 ? asgn(mon.itmCount) : ''
-    ),
-  ].join('');
+  if (sPpnlTab === 'total') {
+    const s = calcStats(displayRows);
+    function card(label, main, sub) {
+      return '<div class="ppnl-card">' +
+        '<div class="ppnl-lbl">' + label + '</div>' +
+        '<div class="ppnl-main">' + main + '</div>' +
+        (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
+      '</div>';
+    }
+    el.className = 'ppnl-cards';
+    el.innerHTML = [
+      card('Total Premium Collected',
+        s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
+        s.totalCount > 0 ? pos(s.totalCount) : ''),
+      card('Premium Expired OTM',
+        s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash,
+        s.otmCount > 0 ? pos(s.otmCount) : ''),
+      card('Premium Expired ITM',
+        s.itmCount > 0 ? '$' + fmt(s.itmPrem) : dash,
+        s.itmCount > 0 ? pos(s.itmCount) : ''),
+      card('Return Rate',
+        s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
+        s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : ''),
+      card('Assigned Notional',
+        s.assignedNotional > 0 ? '$' + fmt(s.assignedNotional) : dash,
+        s.itmCount > 0 ? asgn(s.itmCount) : ''),
+    ].join('');
+
+  } else {
+    // Group settled trades by expiry month
+    const monthMap = {};
+    displayRows.forEach(r => {
+      if (r.type === 'HOLDING' || r.outcome === 'OPEN' || !r.expiry) return;
+      const ym = r.expiry.slice(0, 7);
+      if (!monthMap[ym]) monthMap[ym] = [];
+      monthMap[ym].push(r);
+    });
+    const months = Object.keys(monthMap).sort().reverse();
+
+    el.className = 'ppnl-mtbl-wrap';
+    if (!months.length) {
+      el.innerHTML = '<div class="empty" style="padding:32px"><div class="eico">&#128200;</div><p>No settled trades yet</p></div>';
+      return;
+    }
+
+    const rows = months.map(ym => {
+      const s = calcStats(monthMap[ym]);
+      const rateClass = s.returnRate === null ? '' : s.returnRate >= 70 ? ' class="rate-hi"' : s.returnRate < 50 ? ' class="rate-lo"' : '';
+      return '<tr>' +
+        '<td>' + fmtMonth(ym) + '</td>' +
+        '<td>' + (s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash) + '</td>' +
+        '<td>' + (s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash) + '</td>' +
+        '<td>' + (s.itmCount > 0 ? '$' + fmt(s.itmPrem) : dash) + '</td>' +
+        '<td' + rateClass + '>' + (s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash) + '<span class="ppnl-sub" style="display:block">' + (s.settled > 0 ? s.otmCount + '/' + s.settled : '') + '</span></td>' +
+        '<td>' + (s.assignedNotional > 0 ? '$' + fmt(s.assignedNotional) : dash) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    el.innerHTML = '<table class="ppnl-mtbl">' +
+      '<thead><tr>' +
+        '<th>Month</th>' +
+        '<th>Premium</th>' +
+        '<th>Exp OTM</th>' +
+        '<th>Exp ITM</th>' +
+        '<th>Return Rate</th>' +
+        '<th>Asgn Notional</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+  }
 }
 
 function cOpts(ttFmt, yFmt) {
