@@ -900,7 +900,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .cpnl-canvas-wrap {
   position: relative;
   padding: 12px 0 0;
-  height: 160px;
+  height: 186px;
 }
 .cpnl-canvas-wrap canvas {
   display: block;
@@ -2102,7 +2102,7 @@ function rCpnlChart() {
   // Render canvas
   const DPR = window.devicePixelRatio || 1;
   const W = area.clientWidth || 800;
-  const H = 160;
+  const H = 186;
 
   area.innerHTML = '<div class="cpnl-canvas-wrap"><canvas id="cpnl-canvas"></canvas><div class="cpnl-dot" id="cpnl-dot" style="display:none"></div></div>';
   const canvas = document.getElementById('cpnl-canvas');
@@ -2120,7 +2120,7 @@ function rCpnlChart() {
   const muColor    = cs.getPropertyValue('--mu').trim()    || '#5a6680';
   const bdColor    = cs.getPropertyValue('--bd').trim()    || '#1c2538';
 
-  const pad = { top: 14, right: 24, bottom: 28, left: 56 };
+  const pad = { top: 14, right: 24, bottom: 36, left: 56 };
   const cW = W - pad.left - pad.right;
   const cH = H - pad.top - pad.bottom;
 
@@ -2257,7 +2257,7 @@ function rCpnlChart() {
     const x = toX(dates[i]);
     if (!shownX.has(lbl)) {
       shownX.add(lbl);
-      ctx.fillText(lbl, x, pad.top + cH + 18);
+      ctx.fillText(lbl, x, pad.top + cH + 22);
     }
   }
   ctx.restore();
