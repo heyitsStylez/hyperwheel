@@ -58,6 +58,9 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .hlogo{width:34px;height:34px;border-radius:8px;background:var(--gd);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;font-size:1rem}
 .htitle{font-size:1rem;font-weight:700;color:var(--text);letter-spacing:-.3px}
 .hsub{font-size:.7rem;color:var(--mu);font-family:var(--mono)}
+.utc-clock{font-family:var(--mono);font-size:.72rem;color:var(--mu2);letter-spacing:.5px;text-align:right;line-height:1.5;padding-left:16px;border-left:1px solid var(--bd2)}
+.utc-clock .utc-time{font-size:.82rem;font-weight:600;color:var(--text)}
+.utc-clock .utc-date{font-size:.65rem;color:var(--mu2);letter-spacing:1px;text-transform:uppercase}
 .btn{font-family:var(--sans);font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .btn-p{background:var(--green);color:#040d08}.btn-p:hover{background:#00ffc0}
 .btn-g{background:transparent;color:var(--mu2);border:1px solid var(--bd2)}.btn-g:hover{color:var(--text);border-color:var(--mu)}
@@ -666,13 +669,13 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v0.9.2</div>
+      <div class="hsub">v0.9.3</div>
     </div>
   </div>
-  <div class="hbtns" style="display:flex;gap:8px">
-<button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
-    <button class="btn btn-g" onclick="showReset()">Reset</button>
+  <div class="hbtns" style="display:flex;align-items:center;gap:16px">
+    <button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
     <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
+    <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
   </div>
 </header>
 
@@ -2288,6 +2291,27 @@ document.getElementById('io-overlay').addEventListener('click', function(e) {
 
 
 
+
+// ═══════════════════════════════════════════════════════════
+// UTC CLOCK
+// ═══════════════════════════════════════════════════════════
+(function() {
+  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  function tickClock() {
+    const now = new Date();
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    const ss = String(now.getUTCSeconds()).padStart(2,'0');
+    const day = DAYS[now.getUTCDay()];
+    const date = String(now.getUTCDate()).padStart(2,'0');
+    const month = MONTHS[now.getUTCMonth()];
+    document.getElementById('utc-time').textContent = hh+':'+mm+':'+ss;
+    document.getElementById('utc-date').textContent = day+' '+date+' '+month+' · UTC';
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+})();
 
 // ═══════════════════════════════════════════════════════════
 // EDIT TRADE MODAL
