@@ -1,15 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="matrix">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HyperWheel &mdash; Options Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-:root { color-scheme: light dark; }
+:root {
+  /* ── Layout ── */
+  --bg:      #05050a;
+  --surface: #0b0b12;
+  --s2:      #10101a;
+  --s3:      #161622;
+  --bd:      #18182a;
+  --bd2:     #2a2a44;
+
+  /* ── Semantic / accent ── */
+  --green:   #00d68f;
+  --gd:      rgba(0,214,143,.10);
+  --gb:      rgba(0,214,143,.25);
+  --red:     #ff4b5c;
+  --rd:      rgba(255,75,92,.10);
+  --rb:      rgba(255,75,92,.25);
+  --blue:    #5ab4ff;
+  --bld:     rgba(90,180,255,.10);
+  --blb:     rgba(90,180,255,.25);
+  --orange:  #ff8c72;
+  --od:      rgba(255,140,114,.10);
+  --ob:      rgba(255,140,114,.25);
+  --purple:  #f0a500;
+  --pd:      rgba(240,165,0,.10);
+  --pb:      rgba(240,165,0,.22);
+  --accent:  #f0a500;
+
+  /* ── Text ── */
+  --text:  #e0e0f0;
+  --text2: #8080a8;
+  --mu:    #44446a;
+  --mu2:   #8080a8;
+
+  /* ── Asset colors ── */
+  --btc:   #f7931a; --btcd: rgba(247,147,26,.10); --btcb: rgba(247,147,26,.25);
+  --eth:   #627eea; --ethd: rgba(98,126,234,.10);  --ethb: rgba(98,126,234,.25);
+  --hype:  #00e5a0; --hyped:rgba(0,229,160,.10);   --hypeb:rgba(0,229,160,.25);
+  --sol:   #9945ff; --sold: rgba(153,69,255,.10);   --solb: rgba(153,69,255,.25);
+
+  /* ── Typography ── */
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'JetBrains Mono', monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
 
 .header{border-bottom:1px solid var(--bd);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:100}
 .hl{display:flex;align-items:center;gap:14px}
@@ -21,7 +63,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-g{background:transparent;color:var(--mu2);border:1px solid var(--bd2)}.btn-g:hover{color:var(--text);border-color:var(--mu)}
 .btn-d{background:var(--rd);color:var(--red);border:1px solid var(--rb);font-size:.7rem;padding:4px 9px;border-radius:5px;cursor:pointer;font-family:var(--sans);font-weight:700;transition:all .15s}.btn-d:hover{background:rgba(240,80,80,.15)}
 
-.page-wrap{max-width:1440px;margin:0 auto;padding:28px 24px 80px;display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
+.page-wrap{padding:28px 32px 80px;display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
 .content-col{display:flex;flex-direction:column;gap:24px;min-width:0}
 .top-left{display:flex;flex-direction:column;gap:24px;min-width:0}
 @media(max-width:720px){.page-wrap{padding:18px 12px 60px}.hbtns{display:none!important}}
@@ -196,9 +238,7 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 .mbtns{display:flex;gap:8px;justify-content:flex-end}
 .ferr{padding:0 20px 14px;color:var(--red);font-size:.78rem;font-family:var(--mono);display:none}
 
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+
 @media(max-width:720px){
   .fi{grid-template-columns:1fr 1fr}
   .fb{grid-template-columns:1fr 1fr}
@@ -240,378 +280,31 @@ tr.lot-child > td:first-child{border-left:2px solid var(--bd2)}
 .export-btn-sub{font-size:.7rem;color:var(--mu);font-family:var(--mono)}
 .export-btn-ico{font-size:1.2rem;opacity:.6}
 
-/* ─── THEME SYSTEM ─────────────────────────────────────────── */
-*, *::before, *::after { transition: background-color 0.25s ease, border-color 0.2s ease, color 0.15s ease; }
-a, button, input, select { transition: none; }
+/* ── Global shape reset ── */
+*, *::before, *::after { border-radius: 0 !important; }
+.cpnl-dot, .cpnl-dot::before, .cpnl-dot::after,
+.asset-dot, .dot, .ad-btc, .ad-eth, .ad-hype, .ad-sol { border-radius: 50% !important; }
 
-/* THEME DROPDOWN */
-.theme-picker-wrap { position: relative; }
-.theme-btn {
-  font-family: var(--sans); font-size:.78rem; font-weight:600;
-  padding:7px 14px; border-radius:7px; border:1px solid var(--bd2);
-  background:transparent; color:var(--mu2); cursor:pointer;
-  display:flex; align-items:center; gap:7px; transition:none;
-  white-space:nowrap;
-}
-.theme-btn:hover { color:var(--text); border-color:var(--mu); }
-.theme-btn .swatch { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.theme-dropdown {
-  position:absolute; top:calc(100% + 8px); right:0;
-  background:var(--surface); border:1px solid var(--bd2);
-  border-radius:12px; padding:8px; min-width:220px;
-  box-shadow:0 16px 48px rgba(0,0,0,0.5);
-  z-index:300; display:none; flex-direction:column; gap:2px;
-}
-.theme-dropdown.open { display:flex; }
-.td-section { font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--mu); font-family:var(--mono); padding:6px 10px 4px; }
-.td-item {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 10px; border-radius:8px; cursor:pointer;
-  transition:none;
-}
-.td-item:hover { background:var(--s2); }
-.td-item.active { background:var(--gd); }
-.td-swatch { width:28px; height:28px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.7rem; }
-.td-info { display:flex; flex-direction:column; gap:1px; }
-.td-name { font-size:.78rem; font-weight:600; color:var(--text); }
-.td-item.active .td-name { color:var(--green); }
-.td-desc { font-size:.65rem; color:var(--mu); font-family:var(--mono); }
-.td-check { margin-left:auto; color:var(--green); font-size:.8rem; opacity:0; }
-.td-item.active .td-check { opacity:1; }
-
-/* ─── DARK THEMES ───────────────────────────────────────────── */
-
-/* 1. Abyss (current default) */
-[data-theme="abyss"] {
-  --bg:#07090f; --surface:#0e1219; --s2:#131923; --s3:#181f2e;
-  --bd:#1c2538; --bd2:#232f47;
-  --green:#00e5a0; --gd:rgba(0,229,160,0.08); --gb:rgba(0,229,160,0.18);
-  --blue:#3d8ef0; --bld:rgba(61,142,240,0.08); --blb:rgba(61,142,240,0.18);
-  --orange:#f0924a; --od:rgba(240,146,74,0.08); --ob:rgba(240,146,74,0.18);
-  --red:#f05050; --rd:rgba(240,80,80,0.08); --rb:rgba(240,80,80,0.18);
-  --purple:#9b72f5; --pd:rgba(155,114,245,0.08); --pb:rgba(155,114,245,0.18);
-  --btc:#f7931a; --btcd:rgba(247,147,26,0.08); --btcb:rgba(247,147,26,0.18);
-  --eth:#627eea; --ethd:rgba(98,126,234,0.08); --ethb:rgba(98,126,234,0.18);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#cdd5e8; --mu:#5a6680; --mu2:#8090b0;
-  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+/* ── Scanlines ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,.018) 0px,
+    rgba(0,0,0,.018) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
 }
 
-/* 2. Obsidian Gold */
-[data-theme="gold"] {
-  --bg:#0d0c0a; --surface:#141210; --s2:#1a1710; --s3:#201d14;
-  --bd:#2a2418; --bd2:#352e20;
-  --green:#c9a84c; --gd:rgba(201,168,76,0.09); --gb:rgba(201,168,76,0.22);
-  --blue:#c9a84c; --bld:rgba(201,168,76,0.09); --blb:rgba(201,168,76,0.22);
-  --orange:#e07840; --od:rgba(224,120,64,0.09); --ob:rgba(224,120,64,0.22);
-  --red:#e05a3a; --rd:rgba(224,90,58,0.09); --rb:rgba(224,90,58,0.22);
-  --purple:#b8956a; --pd:rgba(184,149,106,0.09); --pb:rgba(184,149,106,0.22);
-  --btc:#c9a84c; --btcd:rgba(201,168,76,0.09); --btcb:rgba(201,168,76,0.22);
-  --eth:#9b8060; --ethd:rgba(155,128,96,0.09); --ethb:rgba(155,128,96,0.22);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#e8e0d0; --mu:#5a5040; --mu2:#8a7860;
-  --mono:'DM Mono',monospace; --sans:'Fraunces',serif;
-}
-
-/* 3. Deep Ocean */
-[data-theme="ocean"] {
-  --bg:#060d18; --surface:#0a1628; --s2:#0d1e36; --s3:#102444;
-  --bd:#0e2040; --bd2:#162e58;
-  --green:#34d399; --gd:rgba(52,211,153,0.08); --gb:rgba(52,211,153,0.18);
-  --blue:#38bdf8; --bld:rgba(56,189,248,0.08); --blb:rgba(56,189,248,0.18);
-  --orange:#fb923c; --od:rgba(251,146,60,0.08); --ob:rgba(251,146,60,0.18);
-  --red:#f87171; --rd:rgba(248,113,113,0.08); --rb:rgba(248,113,113,0.18);
-  --purple:#a78bfa; --pd:rgba(167,139,250,0.08); --pb:rgba(167,139,250,0.18);
-  --btc:#fbbf24; --btcd:rgba(251,191,36,0.08); --btcb:rgba(251,191,36,0.18);
-  --eth:#60a5fa; --ethd:rgba(96,165,250,0.08); --ethb:rgba(96,165,250,0.18);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#e2f0ff; --mu:#1e4060; --mu2:#4080a0;
-  --mono:'JetBrains Mono',monospace; --sans:'Rajdhani',sans-serif;
-}
-
-/* 4. Terminal */
-[data-theme="terminal"] {
-  --bg:#030a03; --surface:#050f05; --s2:#071207; --s3:#0a160a;
-  --bd:#0d2010; --bd2:#123018;
-  --green:#00ff88; --gd:rgba(0,255,136,0.06); --gb:rgba(0,255,136,0.15);
-  --blue:#00e5ff; --bld:rgba(0,229,255,0.06); --blb:rgba(0,229,255,0.15);
-  --orange:#ffc800; --od:rgba(255,200,0,0.06); --ob:rgba(255,200,0,0.15);
-  --red:#ff4444; --rd:rgba(255,68,68,0.06); --rb:rgba(255,68,68,0.15);
-  --purple:#00ff88; --pd:rgba(0,255,136,0.06); --pb:rgba(0,255,136,0.15);
-  --btc:#ffc800; --btcd:rgba(255,200,0,0.06); --btcb:rgba(255,200,0,0.15);
-  --eth:#00e5ff; --ethd:rgba(0,229,255,0.06); --ethb:rgba(0,229,255,0.15);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#80ff80; --mu:#1a4020; --mu2:#3a7a4a;
-  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Mono',monospace;
-}
-
-/* 5. Matrix */
-[data-theme="matrix"] {
-  --bg:#010603; --surface:#040d05; --s2:#071209; --s3:#0b1a0d;
-  --bd:#0e2612; --bd2:#16381a;
-  --green:#00ff88; --gd:rgba(0,255,136,0.07); --gb:rgba(0,255,136,0.18);
-  --blue:#00e5ff; --bld:rgba(0,229,255,0.07); --blb:rgba(0,229,255,0.18);
-  --orange:#ffcc00; --od:rgba(255,204,0,0.07); --ob:rgba(255,204,0,0.18);
-  --red:#ff4455; --rd:rgba(255,68,85,0.07); --rb:rgba(255,68,85,0.18);
-  --purple:#cc66ff; --pd:rgba(204,102,255,0.07); --pb:rgba(204,102,255,0.18);
-  --btc:#ffcc00; --btcd:rgba(255,204,0,0.07); --btcb:rgba(255,204,0,0.18);
-  --eth:#00e5ff; --ethd:rgba(0,229,255,0.07); --ethb:rgba(0,229,255,0.18);
-  --hype:#00ff88; --hyped:rgba(0,255,136,0.07); --hypeb:rgba(0,255,136,0.18);
-  --sol:#cc66ff;  --sold:rgba(204,102,255,0.07); --solb:rgba(204,102,255,0.18);
-  --text:#00e878; --mu:#5aaa65; --mu2:#7dd688;
-  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Mono',monospace;
-}
-
-/* 6. Warm Charcoal */
-[data-theme="charcoal"] {
-  --bg:#111010; --surface:#1a1816; --s2:#211f1c; --s3:#282420;
-  --bd:#2e2a26; --bd2:#3a342e;
-  --green:#64c88c; --gd:rgba(100,200,140,0.08); --gb:rgba(100,200,140,0.2);
-  --blue:#60a8e0; --bld:rgba(96,168,224,0.08); --blb:rgba(96,168,224,0.2);
-  --orange:#ff8c5a; --od:rgba(255,140,90,0.08); --ob:rgba(255,140,90,0.22);
-  --red:#ff5a5a; --rd:rgba(255,90,90,0.08); --rb:rgba(255,90,90,0.22);
-  --purple:#c08cdc; --pd:rgba(192,140,220,0.08); --pb:rgba(192,140,220,0.22);
-  --btc:#ffc850; --btcd:rgba(255,200,80,0.08); --btcb:rgba(255,200,80,0.22);
-  --eth:#60a8e0; --ethd:rgba(96,168,224,0.08); --ethb:rgba(96,168,224,0.22);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#f0ece6; --mu:#4a4038; --mu2:#7a6e62;
-  --mono:'DM Mono',monospace; --sans:'Outfit',sans-serif;
-}
-
-/* 6. Steel & Crimson */
-[data-theme="crimson"] {
-  --bg:#0a0c0e; --surface:#10151a; --s2:#151c24; --s3:#1a242e;
-  --bd:#1c2530; --bd2:#243040;
-  --green:#50c8a0; --gd:rgba(80,200,160,0.08); --gb:rgba(80,200,160,0.2);
-  --blue:#6090c0; --bld:rgba(96,144,192,0.08); --blb:rgba(96,144,192,0.2);
-  --orange:#fac850; --od:rgba(250,200,80,0.08); --ob:rgba(250,200,80,0.2);
-  --red:#e84040; --rd:rgba(232,64,64,0.08); --rb:rgba(232,64,64,0.2);
-  --purple:#c070c0; --pd:rgba(192,112,192,0.08); --pb:rgba(192,112,192,0.2);
-  --btc:#fac850; --btcd:rgba(250,200,80,0.08); --btcb:rgba(250,200,80,0.2);
-  --eth:#6090c0; --ethd:rgba(96,144,192,0.08); --ethb:rgba(96,144,192,0.2);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#e8edf2; --mu:#2a3540; --mu2:#5a6e80;
-  --mono:'IBM Plex Mono',monospace; --sans:'Bebas Neue',cursive;
-}
-
-/* ─── LIGHT THEMES ──────────────────────────────────────────── */
-
-/* 7. Paper */
-[data-theme="paper"] {
-  --bg:#f5f2ec; --surface:#fdfaf6; --s2:#f0ece4; --s3:#e8e2d8;
-  --bd:#ddd8ce; --bd2:#ccc6ba;
-  --green:#1a7a4a; --gd:rgba(26,122,74,0.08); --gb:rgba(26,122,74,0.2);
-  --blue:#1a5a9a; --bld:rgba(26,90,154,0.08); --blb:rgba(26,90,154,0.2);
-  --orange:#c05a20; --od:rgba(192,90,32,0.08); --ob:rgba(192,90,32,0.2);
-  --red:#b03030; --rd:rgba(176,48,48,0.08); --rb:rgba(176,48,48,0.2);
-  --purple:#6a3a9a; --pd:rgba(106,58,154,0.08); --pb:rgba(106,58,154,0.2);
-  --btc:#c07020; --btcd:rgba(192,112,32,0.08); --btcb:rgba(192,112,32,0.2);
-  --eth:#1a5a9a; --ethd:rgba(26,90,154,0.08); --ethb:rgba(26,90,154,0.2);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#1a1208; --mu:#5a4e42; --mu2:#3d3228;
-  --mono:'DM Mono',monospace; --sans:'Lora',serif;
-}
-
-/* 8. Arctic */
-[data-theme="arctic"] {
-  --bg:#f0f4f8; --surface:#ffffff; --s2:#f5f8fc; --s3:#eaf0f8;
-  --bd:#d8e4f0; --bd2:#c4d4e8;
-  --green:#0d9460; --gd:rgba(13,148,96,0.08); --gb:rgba(13,148,96,0.2);
-  --blue:#1e6bb8; --bld:rgba(30,107,184,0.08); --blb:rgba(30,107,184,0.2);
-  --orange:#d4600a; --od:rgba(212,96,10,0.08); --ob:rgba(212,96,10,0.2);
-  --red:#c0342c; --rd:rgba(192,52,44,0.08); --rb:rgba(192,52,44,0.2);
-  --purple:#6040b8; --pd:rgba(96,64,184,0.08); --pb:rgba(96,64,184,0.2);
-  --btc:#d4600a; --btcd:rgba(212,96,10,0.08); --btcb:rgba(212,96,10,0.2);
-  --eth:#1e6bb8; --ethd:rgba(30,107,184,0.08); --ethb:rgba(30,107,184,0.2);
-  --hype:#00e5a0; --hyped:rgba(0,229,160,0.08); --hypeb:rgba(0,229,160,0.18);
-  --sol:#9945ff;  --sold:rgba(153,69,255,0.08);  --solb:rgba(153,69,255,0.18);
-  --text:#1a2838; --mu:#8aa0b8; --mu2:#4a6880;
-  --mono:'JetBrains Mono',monospace; --sans:'Nunito',sans-serif;
-}
-
-/* ─── LIGHT THEME TEXT/BORDER OVERRIDES ─────────────────────── */
-[data-theme="paper"] .header,
-[data-theme="arctic"] .header {
-  box-shadow: 0 1px 0 var(--bd);
-}
-[data-theme="paper"] .scan-refresh,
-[data-theme="arctic"] .scan-refresh {
-  color: var(--mu2);
-}
-
-/* ── Light theme: fix all hardcoded white text ─────────────── */
-[data-theme="paper"] .sec-ttl,
-[data-theme="arctic"] .sec-ttl,
-[data-theme="paper"] .htitle,
-[data-theme="arctic"] .htitle,
-[data-theme="paper"] .scan-title,
-[data-theme="arctic"] .scan-title,
-[data-theme="paper"] .asset-name,
-[data-theme="arctic"] .asset-name,
-[data-theme="paper"] .reg-label,
-[data-theme="arctic"] .reg-label,
-[data-theme="paper"] .reco-action,
-[data-theme="arctic"] .reco-action,
-[data-theme="paper"] .ncv,
-[data-theme="arctic"] .ncv,
-[data-theme="paper"] .td-name,
-[data-theme="arctic"] .td-name,
-[data-theme="paper"] .theme-btn,
-[data-theme="arctic"] .theme-btn,
-[data-theme="paper"] .io-modal h3,
-[data-theme="arctic"] .io-modal h3,
-[data-theme="paper"] .export-btn-title,
-[data-theme="arctic"] .export-btn-title,
-[data-theme="paper"] .modal h3,
-[data-theme="arctic"] .modal h3,
-[data-theme="paper"] label,
-[data-theme="arctic"] label {
-  color: var(--text) !important;
-}
-
-/* Section header background for light themes */
-[data-theme="paper"] .sec-hd,
-[data-theme="arctic"] .sec-hd {
-  background: var(--s2);
-}
-
-
-/* Table header text */
-[data-theme="paper"] .ttable th,
-[data-theme="arctic"] .ttable th {
-  color: var(--mu2) !important;
-}
-
-/* Table body text */
-[data-theme="paper"] .ttable td,
-[data-theme="arctic"] .ttable td {
-  color: var(--text);
-}
-
-/* Header area */
-[data-theme="paper"] .header,
-[data-theme="arctic"] .header {
-  background: var(--surface);
-}
-
-/* Form labels and inputs */
-[data-theme="paper"] input,
-[data-theme="arctic"] input,
-[data-theme="paper"] textarea,
-[data-theme="arctic"] textarea {
-  color: var(--text);
-  background: var(--surface);
-  border-color: var(--bd2);
-}
-
-/* Asset filter tabs */
-[data-theme="paper"] .ftab,
-[data-theme="arctic"] .ftab {
-  color: var(--mu2);
-}
-[data-theme="paper"] .ftab.active,
-[data-theme="arctic"] .ftab.active {
-  color: var(--text);
-}
-
-/* Toggle buttons */
-[data-theme="paper"] .tb,
-[data-theme="arctic"] .tb {
-  color: var(--mu2);
-}
-[data-theme="paper"] .tb.active,
-[data-theme="arctic"] .tb.active {
-  color: var(--text);
-}
-
-/* Net cost banner text */
-[data-theme="paper"] .ncl,
-[data-theme="arctic"] .ncl {
-  color: var(--mu2) !important;
-}
-
-
-/* Modal overlay background */
-[data-theme="paper"] .overlay,
-[data-theme="arctic"] .overlay {
-  background: rgba(0,0,0,0.35);
-}
-
-/* Modal surface */
-[data-theme="paper"] .modal,
-[data-theme="arctic"] .modal,
-[data-theme="paper"] .io-modal,
-[data-theme="arctic"] .io-modal {
-  background: var(--surface);
-  border-color: var(--bd2);
-  color: var(--text);
-}
-
-/* IO info box */
-[data-theme="paper"] .io-info,
-[data-theme="arctic"] .io-info {
-  color: var(--text);
-  background: var(--s2);
-}
-
-/* Drop zone */
-[data-theme="paper"] .drop-zone,
-[data-theme="arctic"] .drop-zone {
-  border-color: var(--bd2);
-}
-[data-theme="paper"] .drop-zone-lbl,
-[data-theme="arctic"] .drop-zone-lbl {
-  color: var(--mu2);
-}
-
-/* Export buttons */
-[data-theme="paper"] .export-btn,
-[data-theme="arctic"] .export-btn {
-  background: var(--s2);
-  border-color: var(--bd2);
-}
-[data-theme="paper"] .export-btn:hover,
-[data-theme="arctic"] .export-btn:hover {
-  background: var(--s3);
-}
-
-/* Theme dropdown */
-[data-theme="paper"] .theme-dropdown,
-[data-theme="arctic"] .theme-dropdown {
-  background: var(--surface);
-  border-color: var(--bd2);
-}
-[data-theme="paper"] .td-item:hover,
-[data-theme="arctic"] .td-item:hover {
-  background: var(--s2);
-}
-
-/* Section separators in table */
-[data-theme="paper"] .asset-sep td,
-[data-theme="arctic"] .asset-sep td,
-[data-theme="paper"] .psep td,
-[data-theme="arctic"] .psep td {
-  color: var(--mu2);
-}
-
-/* Form field background */
-[data-theme="paper"] .form-wrap,
-[data-theme="arctic"] .form-wrap,
-[data-theme="paper"] .sec,
-[data-theme="arctic"] .sec,
-[data-theme="paper"] #trade-drawer,
-[data-theme="arctic"] #trade-drawer {
-  background: var(--surface);
-}
-
-
+/* ── Scrollbars ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #05050a; }
+::-webkit-scrollbar-thumb { background: #2a2a44; }
 
 /* ─── WALLET / RYSK IMPORT ──────────────────────────────── */
 .wallet-card {
@@ -962,68 +655,12 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="hl">
     <div class="hlogo">&#9881;</div>
     <div>
-      <div class="htitle">HyperWheel</div>
-      <div class="hsub">v0.8.1</div>
+      <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
+      <div class="hsub">v0.9.0</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;gap:8px">
-    <div class="theme-picker-wrap">
-      <button class="theme-btn" id="theme-btn" onclick="toggleThemeDropdown()">
-        <span class="swatch" id="theme-swatch" style="background:#00e5a0"></span>
-        <span id="theme-btn-label">Abyss</span>
-        <span style="opacity:.5;font-size:.7rem">&#9660;</span>
-      </button>
-      <div class="theme-dropdown" id="theme-dropdown">
-        <div class="td-section">Dark Themes</div>
-        <div class="td-item" id="tdi-abyss" onclick="applyTheme('abyss')">
-          <div class="td-swatch" style="background:#0e1219;border:1px solid #232f47">&#127759;</div>
-          <div class="td-info"><div class="td-name">Abyss</div><div class="td-desc">Deep navy · Mint green</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-gold" onclick="applyTheme('gold')">
-          <div class="td-swatch" style="background:#141210;border:1px solid #352e20">&#127774;</div>
-          <div class="td-info"><div class="td-name">Obsidian Gold</div><div class="td-desc">Dark warm · Gold accent</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-ocean" onclick="applyTheme('ocean')">
-          <div class="td-swatch" style="background:#0a1628;border:1px solid #162e58">&#127754;</div>
-          <div class="td-info"><div class="td-name">Deep Ocean</div><div class="td-desc">Dark blue · Sky accent</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-terminal" onclick="applyTheme('terminal')">
-          <div class="td-swatch" style="background:#050f05;border:1px solid #123018">&#128187;</div>
-          <div class="td-info"><div class="td-name">Terminal</div><div class="td-desc">Pitch black · Neon green</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item active" id="tdi-matrix" onclick="applyTheme('matrix')">
-          <div class="td-swatch" style="background:#040d05;border:1px solid #16381a">&#9651;</div>
-          <div class="td-info"><div class="td-name">Matrix</div><div class="td-desc">Pure black · Phosphor green</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-charcoal" onclick="applyTheme('charcoal')">
-          <div class="td-swatch" style="background:#1a1816;border:1px solid #3a342e">&#128293;</div>
-          <div class="td-info"><div class="td-name">Warm Charcoal</div><div class="td-desc">Warm dark · Coral accent</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-crimson" onclick="applyTheme('crimson')">
-          <div class="td-swatch" style="background:#10151a;border:1px solid #243040">&#128308;</div>
-          <div class="td-info"><div class="td-name">Steel &amp; Crimson</div><div class="td-desc">Cool dark · Red accent</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-section" style="margin-top:4px">Light Themes</div>
-        <div class="td-item" id="tdi-paper" onclick="applyTheme('paper')">
-          <div class="td-swatch" style="background:#fdfaf6;border:1px solid #ddd8ce">&#128220;</div>
-          <div class="td-info"><div class="td-name">Paper</div><div class="td-desc">Warm ivory · Serif fonts</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-        <div class="td-item" id="tdi-arctic" onclick="applyTheme('arctic')">
-          <div class="td-swatch" style="background:#ffffff;border:1px solid #c4d4e8">&#10052;</div>
-          <div class="td-info"><div class="td-name">Arctic</div><div class="td-desc">Clean white · Cool blue</div></div>
-          <span class="td-check">&#10003;</span>
-        </div>
-      </div>
-    </div>
-    <button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
+<button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
     <button class="btn btn-g" onclick="showReset()">Reset</button>
     <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
   </div>
@@ -2639,67 +2276,6 @@ document.getElementById('io-overlay').addEventListener('click', function(e) {
 
 
 
-// ═══════════════════════════════════════════════════════════
-// THEME SWITCHER
-// ═══════════════════════════════════════════════════════════
-const THEMES = {
-  abyss:    { label: 'Abyss',           swatch: '#00e5a0', dark: true  },
-  gold:     { label: 'Obsidian Gold',   swatch: '#c9a84c', dark: true  },
-  ocean:    { label: 'Deep Ocean',      swatch: '#38bdf8', dark: true  },
-  terminal: { label: 'Terminal',        swatch: '#00ff88', dark: true  },
-  matrix:   { label: 'Matrix',          swatch: '#00ff88', dark: true  },
-  charcoal: { label: 'Warm Charcoal',   swatch: '#ff8c5a', dark: true  },
-  crimson:  { label: 'Steel & Crimson', swatch: '#e84040', dark: true  },
-  paper:    { label: 'Paper',           swatch: '#c07020', dark: false },
-  arctic:   { label: 'Arctic',          swatch: '#1e6bb8', dark: false },
-};
-
-const THEME_KEY = 'rysk_theme_v1';
-let currentTheme = localStorage.getItem(THEME_KEY) || 'matrix';
-
-function applyTheme(id) {
-  if (!THEMES[id]) return;
-  currentTheme = id;
-  localStorage.setItem(THEME_KEY, id);
-  document.documentElement.setAttribute('data-theme', id);
-
-  // Update button
-  const t = THEMES[id];
-  document.getElementById('theme-swatch').style.background = t.swatch;
-  document.getElementById('theme-btn-label').textContent = t.label;
-
-  // Update active state in dropdown
-  Object.keys(THEMES).forEach(k => {
-    const el = document.getElementById('tdi-' + k);
-    if (el) el.classList.toggle('active', k === id);
-  });
-
-  // Rebuild charts to pick up new colors
-  if (typeof render === 'function') render();
-
-  closeThemeDropdown();
-}
-
-function toggleThemeDropdown() {
-  const dd = document.getElementById('theme-dropdown');
-  dd.classList.toggle('open');
-}
-
-function closeThemeDropdown() {
-  document.getElementById('theme-dropdown').classList.remove('open');
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-  const wrap = document.querySelector('.theme-picker-wrap');
-  if (wrap && !wrap.contains(e.target)) closeThemeDropdown();
-});
-
-// Apply saved theme on load
-(function() {
-  const saved = localStorage.getItem(THEME_KEY);
-  if (saved && THEMES[saved]) applyTheme(saved);
-})();
 
 
 
