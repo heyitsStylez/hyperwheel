@@ -538,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.4</div>
+      <div class="hsub">v1.0.5</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -1495,7 +1495,7 @@ function rCpnlChart() {
   events.sort((a, b) => a.date.localeCompare(b.date));
 
   if (!events.length) {
-    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No settled trades yet</div>';
+    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No trades yet</div>';
     const vEl = document.getElementById('cpnl-val');
     if (vEl) vEl.textContent = '—';
     const cEl = document.getElementById('cpnl-change');
@@ -1569,7 +1569,7 @@ function rCpnlChart() {
       cEl.innerHTML = '<span class="' + cls + '">' + sign + '$' + fmt(Math.abs(periodChange)) + '</span> this period';
     } else {
       const trades_count = events.length;
-      cEl.innerHTML = trades_count + ' settled trade' + (trades_count !== 1 ? 's' : '');
+      cEl.innerHTML = trades_count + ' trade' + (trades_count !== 1 ? 's' : '');
     }
   }
 
