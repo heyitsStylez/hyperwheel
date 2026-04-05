@@ -538,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.2</div>
+      <div class="hsub">v1.0.3</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -1481,14 +1481,16 @@ function rCpnlChart() {
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
-  // Build time series from all settled non-HOLDING trades
+  // Build time series from all non-HOLDING trades
+  // OPEN trades: book premium at open date (already collected)
+  // Settled trades: book at expiry date
   const events = [];
   trades.forEach(t => {
     if (t.type === 'HOLDING') return;
-    if (t.outcome === 'OPEN') return;
-    if (!t.expiry) return;
+    const eventDate = t.outcome === 'OPEN' ? t.date : t.expiry;
+    if (!eventDate) return;
     const prem = (t.premium || 0) - (t.closeCost || 0);
-    events.push({ date: t.expiry, prem });
+    events.push({ date: eventDate, prem });
   });
   events.sort((a, b) => a.date.localeCompare(b.date));
 
