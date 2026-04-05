@@ -268,30 +268,24 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .holding-hint strong{color:var(--orange)}
 .field-hide{opacity:0;pointer-events:none;transition:opacity .2s}
 
-.io-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:480px;width:92%;transform:translateY(10px);transition:transform .18s}
-.overlay.open .io-modal{transform:translateY(0)}
-.io-tabs{display:flex;gap:6px;margin-bottom:18px}
-.io-tab{flex:1;padding:8px;border-radius:7px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
-.io-tab.active{background:var(--gd);border-color:var(--gb);color:var(--green)}
-.io-panel{display:none}.io-panel.active{display:flex;flex-direction:column;gap:14px}
-.io-info{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;font-size:.78rem;color:var(--mu2);line-height:1.6}
-.io-info strong{color:var(--text)}
-.drop-zone{border:2px dashed var(--bd2);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
-.drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);background:var(--gd)}
-.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-zone-ico{font-size:1.8rem;opacity:.4;margin-bottom:8px}
-.drop-zone-lbl{font-size:.8rem;color:var(--mu2);font-family:var(--mono)}
-.drop-zone-sub{font-size:.7rem;color:var(--mu);margin-top:4px}
-.io-status{font-size:.78rem;font-family:var(--mono);padding:8px 12px;border-radius:7px;display:none}
-.io-status.ok{background:var(--gd);border:1px solid var(--gb);color:var(--green)}
-.io-status.err{background:var(--rd);border:1px solid var(--rb);color:var(--red)}
-.export-btns{display:flex;flex-direction:column;gap:8px}
-.export-btn{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:9px;border:1px solid var(--bd2);background:var(--s2);cursor:pointer;transition:all .15s;width:100%}
-.export-btn:hover{border-color:var(--mu);background:var(--s3)}
-.export-btn-left{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
-.export-btn-title{font-size:.82rem;font-weight:700;color:var(--text);font-family:var(--sans)}
-.export-btn-sub{font-size:.7rem;color:var(--mu);font-family:var(--mono)}
-.export-btn-ico{font-size:1.2rem;opacity:.6}
+.sync-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:460px;width:92%;transform:translateY(10px);transition:transform .18s}
+.overlay.open .sync-modal{transform:translateY(0)}
+.sync-code-box{flex:1;font-family:var(--mono);font-size:.72rem;background:var(--s2);border:1px solid var(--bd2);padding:9px 12px;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-btn-copy{flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:transparent;border:1px solid var(--bd2);color:var(--mu2);padding:8px 12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.sync-btn-copy:hover{color:var(--text);border-color:var(--mu)}
+.sync-actions{display:flex;gap:8px;margin-bottom:14px}
+.sync-btn-push{flex:1;padding:10px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.sync-btn-push:hover:not(:disabled){background:var(--gb)}
+.sync-btn-pull{flex:1;padding:10px;border:1px solid var(--bd2);background:var(--s2);color:var(--mu2);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.sync-btn-pull:hover:not(:disabled){border-color:var(--mu);color:var(--text)}
+.sync-btn-push:disabled,.sync-btn-pull:disabled{opacity:.4;cursor:not-allowed}
+.sync-status{font-size:.78rem;font-family:var(--mono);padding:8px 12px;display:none;margin-bottom:14px}
+.sync-status.ok{background:var(--gd);border:1px solid var(--gb);color:var(--green)}
+.sync-status.err{background:var(--rd);border:1px solid var(--rb);color:var(--red)}
+.sync-pull-preview{display:none;flex-direction:column;gap:10px}
+.sync-code-change{display:none;margin-top:8px;gap:7px}
+.sync-code-input{flex:1;font-family:var(--mono);font-size:.7rem;background:var(--s2);border:1px solid var(--bd2);padding:8px 11px;color:var(--text);outline:none}
+.sync-code-input:focus{border-color:var(--mu)}
 
 /* ── Global shape reset ── */
 *, *::before, *::after { border-radius: 0 !important; }
@@ -327,135 +321,6 @@ body::after {
   overflow: hidden;
   margin-bottom: 14px;
 }
-.wallet-hd {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 14px 10px;
-  border-bottom: 1px solid var(--bd);
-}
-.wallet-ttl {
-  font-family: var(--sans); font-size: .72rem; font-weight: 700;
-  color: var(--text); display: flex; align-items: center; gap: 7px;
-}
-.wallet-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
-.wallet-addr-row { display: flex; gap: 7px; align-items: center; }
-.wallet-input {
-  flex: 1; font-family: var(--mono); font-size: .67rem;
-  background: var(--s2); border: 1px solid var(--bd2);
-  border-radius: 7px; padding: 7px 10px; color: var(--text);
-}
-.wallet-input:focus { outline: none; border-color: var(--green); }
-.wallet-input::placeholder { color: var(--mu); }
-.wallet-sync-btn {
-  font-family: var(--sans); font-size: .67rem; font-weight: 700;
-  background: var(--green); color: var(--bg);
-  border: none; border-radius: 7px; padding: 7px 12px;
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
-}
-.wallet-sync-btn:disabled { opacity: .4; cursor: not-allowed; }
-.wallet-status {
-  font-family: var(--mono); font-size: .65rem; color: var(--mu);
-  line-height: 1.5; min-height: 16px;
-}
-.wallet-status.ok  { color: var(--green); }
-.wallet-status.err { color: var(--red); }
-.wallet-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.wallet-chip {
-  font-family: var(--mono); font-size: .63rem;
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 20px; padding: 3px 10px;
-  color: var(--mu2); cursor: default;
-}
-.wallet-chip.active {
-  background: var(--gd); border-color: var(--gb); color: var(--green);
-}
-.wallet-chip.warn {
-  background: var(--od); border-color: var(--ob); color: var(--orange);
-}
-
-/* Rysk Import Modal */
-.rysk-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.65); z-index: 1000;
-  align-items: center; justify-content: center;
-}
-.rysk-overlay.open { display: flex; }
-.rysk-modal {
-  background: var(--surface); border: 1px solid var(--bd2);
-  border-radius: 16px; padding: 22px 24px;
-  width: min(540px, 92vw); max-height: 82vh;
-  overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
-}
-.rysk-modal h3 {
-  font-family: var(--sans); font-size: .95rem; font-weight: 700;
-  color: var(--text); margin: 0;
-}
-.rysk-modal-hd {
-  display: flex; align-items: center; justify-content: space-between;
-}
-.rysk-close-btn {
-  background: transparent; border: none; color: var(--mu2);
-  font-size: 1.2rem; cursor: pointer; padding: 2px 6px;
-}
-.rysk-tabs {
-  display: flex; gap: 4px; border-bottom: 1px solid var(--bd); padding-bottom: 8px;
-}
-.rysk-tab {
-  font-family: var(--sans); font-size: .7rem; font-weight: 700;
-  background: transparent; border: 1px solid transparent;
-  border-radius: 6px; padding: 5px 12px; cursor: pointer;
-  color: var(--mu2);
-}
-.rysk-tab.active {
-  background: var(--s2); border-color: var(--bd2); color: var(--text);
-}
-.rysk-panel { display: none; flex-direction: column; gap: 10px; }
-.rysk-panel.active { display: flex; }
-.rysk-table-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; }
-.rysk-table {
-  width: 100%; border-collapse: collapse;
-  font-family: var(--mono); font-size: .67rem;
-}
-.rysk-table th {
-  font-size: .6rem; text-transform: uppercase; letter-spacing: .8px;
-  color: var(--mu); background: var(--s2);
-  border-bottom: 1px solid var(--bd); padding: 6px 8px;
-  text-align: left; white-space: nowrap; position: sticky; top: 0;
-}
-.rysk-table td {
-  color: var(--text); border-bottom: 1px solid var(--bd);
-  padding: 6px 8px; white-space: nowrap;
-}
-.rysk-table tr:hover td { background: var(--s2); }
-.rysk-table td.new  { color: var(--green); }
-.rysk-table td.dup  { color: var(--mu); }
-.rysk-table td.mismatch { color: var(--orange); }
-.rysk-import-actions {
-  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-}
-.rysk-btn {
-  font-family: var(--sans); font-size: .7rem; font-weight: 700;
-  border-radius: 7px; padding: 7px 14px; cursor: pointer; border: none;
-}
-.rysk-btn.primary { background: var(--green); color: var(--bg); }
-.rysk-btn.ghost {
-  background: transparent; border: 1px solid var(--bd2); color: var(--mu2);
-}
-.rysk-btn:disabled { opacity: .4; cursor: not-allowed; }
-.rysk-summary {
-  font-family: var(--mono); font-size: .68rem; color: var(--mu2);
-  background: var(--s2); border: 1px solid var(--bd);
-  border-radius: 8px; padding: 10px 12px; line-height: 1.7;
-}
-.rysk-summary strong { color: var(--text); }
-.rysk-chain-row {
-  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-}
-.chain-badge {
-  font-family: var(--mono); font-size: .6rem; font-weight: 700;
-  background: var(--pd); border: 1px solid var(--pb); color: var(--purple);
-  border-radius: 4px; padding: 2px 7px;
-}
-
 /* ─── EDIT TRADE MODAL ──────────────────────────────────── */
 .btn-e {
   background: transparent; border: 1px solid var(--bd2);
@@ -673,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
-    <button class="btn btn-g" onclick="showIO()">&#8645; Import / Export</button>
+    <button class="btn btn-g" onclick="showSync()">&#9729; Cloud Sync</button>
     <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
     <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
   </div>
@@ -861,108 +726,59 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 </main>
 
 
-<!-- IMPORT / EXPORT MODAL -->
-<div class="overlay" id="io-overlay">
-  <div class="io-modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0">Import / Export</h3>
-      <button onclick="closeIO()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+<!-- CLOUD SYNC MODAL -->
+<div class="overlay" id="sync-overlay">
+  <div class="sync-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 4px">Cloud Sync</h3>
+        <div id="sync-last-pushed" style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Never synced</div>
+      </div>
+      <button onclick="closeSync()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
     </div>
-    <div class="io-tabs">
-      <button class="io-tab active" id="io-tab-export" onclick="switchIOTab('export')">&#8595; Export</button>
-      <button class="io-tab" id="io-tab-import" onclick="switchIOTab('import')">&#8593; Import</button>
-    </div>
-    <!-- EXPORT PANEL -->
-    <div class="io-panel active" id="io-panel-export">
-      <div class="io-info">
-        Export your trades to move them to another browser or device, or keep an offline backup. <strong>JSON preserves everything</strong> and can be re-imported. CSV is for spreadsheets only.
-      </div>
-      <div class="export-btns">
-        <button class="export-btn" onclick="exportJSON()">
-          <div class="export-btn-left">
-            <div class="export-btn-title">Export JSON</div>
-            <div class="export-btn-sub">Full backup &mdash; reimportable, all fields preserved</div>
-          </div>
-          <div class="export-btn-ico">&#128230;</div>
-        </button>
-        <button class="export-btn" onclick="exportCSV()">
-          <div class="export-btn-left">
-            <div class="export-btn-title">Export CSV</div>
-            <div class="export-btn-sub">Spreadsheet-friendly &mdash; cannot be reimported</div>
-          </div>
-          <div class="export-btn-ico">&#128202;</div>
-        </button>
-      </div>
-      <div style="font-family:var(--mono);font-size:.7rem;color:var(--mu);margin-top:4px" id="export-count"></div>
-    </div>
-    <!-- IMPORT PANEL -->
-    <div class="io-panel" id="io-panel-import">
-      <div class="io-info">
-        Import a <strong>JSON backup</strong> previously exported from this tracker. Choose to <strong>merge</strong> with existing trades or <strong>replace</strong> everything.
-      </div>
-      <div class="drop-zone" id="drop-zone">
-        <input type="file" id="import-file" accept=".json" onchange="handleFileSelect(event)">
-        <div class="drop-zone-ico">&#128228;</div>
-        <div class="drop-zone-lbl">Drop JSON file here or click to browse</div>
-        <div class="drop-zone-sub">Only .json files exported from this tracker</div>
-      </div>
-      <div class="io-status" id="io-status"></div>
-      <div id="import-preview" style="display:none;flex-direction:column;gap:10px">
-        <div style="background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:.75rem;color:var(--text)" id="import-preview-text"></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-p" style="flex:1;justify-content:center" onclick="doImport('merge')">&#43; Merge with existing</button>
-          <button class="btn btn-g" style="flex:1;justify-content:center" onclick="doImport('replace')">&#8635; Replace all</button>
-        </div>
-        <div style="font-size:.7rem;color:var(--mu);font-family:var(--mono)">
-          <strong style="color:var(--mu2)">Merge:</strong> adds imported trades, skips duplicates by ID.<br>
-          <strong style="color:var(--mu2)">Replace:</strong> deletes all current trades, loads imported file.
-        </div>
-      </div>
-    </div>
-      <!-- Wallet address row -->
-      <div style="display:flex;gap:7px;align-items:center;margin-bottom:4px">
-        <input class="wallet-input" id="io-wallet-addr" type="text"
-          placeholder="0x... your wallet address"
-          style="flex:1;font-family:var(--mono);font-size:.7rem;background:var(--s2);border:1px solid var(--bd2);border-radius:7px;padding:8px 11px;color:var(--text)"
-          oninput="syncIOWalletInput(this.value)">
-        <button onclick="syncFromIO()" id="io-sync-btn"
-          style="flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:var(--green);color:var(--bg);border:none;border-radius:7px;padding:8px 14px;cursor:pointer;white-space:nowrap">
-          &#8635; Fetch
-        </button>
-      </div>
-      <div class="io-status" id="io-rysk-status"></div>
 
-      <!-- History preview -->
-      <div id="io-rysk-preview" style="display:none;flex-direction:column;gap:10px">
-        <div class="rysk-summary" id="io-rysk-summary"></div>
-        <div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px">
-          <table class="rysk-table" id="io-rysk-table">
-            <thead>
-              <tr>
-                <th></th><th>Date</th><th>Asset</th><th>Type</th>
-                <th>Strike</th><th>Size</th><th>Premium</th><th>Expiry</th><th>APY</th>
-              </tr>
-            </thead>
-            <tbody id="io-rysk-tbody"></tbody>
-          </table>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="export-btn" id="io-rysk-import-btn" onclick="doIOImport('merge')"
-            style="background:var(--gd);border-color:var(--gb);color:var(--green)">
-            &#10010; Import New Trades
-          </button>
-          <button class="export-btn" onclick="doIOImport('replace')"
-            style="color:var(--mu2)">Replace All</button>
-          <span style="font-family:var(--mono);font-size:.63rem;color:var(--mu)" id="io-rysk-count"></span>
-        </div>
-
-        <!-- Positions mismatch notice -->
-        <div id="io-positions-notice" style="display:none"
-          class="rysk-summary">
-        </div>
+    <!-- Sync code -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Your Sync Code</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="sync-code-box" id="sync-code-display"></div>
+        <button class="sync-btn-copy" id="sync-copy-btn" onclick="copySyncCode()">Copy</button>
+      </div>
+      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:6px">
+        Copy this code to any other browser to sync your data.
+        <button onclick="toggleSyncCodeChange()" style="background:none;border:none;color:var(--blue);font-size:.65rem;font-family:var(--mono);cursor:pointer;padding:0 0 0 6px;text-decoration:underline">Use a different code</button>
+      </div>
+      <div class="sync-code-change" id="sync-code-change">
+        <input class="sync-code-input" id="sync-code-input" type="text" placeholder="Paste sync code from another browser">
+        <button onclick="applySyncCode()" style="flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:var(--green);color:var(--bg);border:none;padding:8px 14px;cursor:pointer">Apply</button>
       </div>
     </div>
 
+    <!-- Push / Pull -->
+    <div class="sync-actions">
+      <button class="sync-btn-push" id="sync-push-btn" onclick="syncPush()">&#8593; Push to Cloud</button>
+      <button class="sync-btn-pull" id="sync-pull-btn" onclick="syncPull()">&#8595; Pull from Cloud</button>
+    </div>
+
+    <!-- Status -->
+    <div class="sync-status" id="sync-status"></div>
+
+    <!-- Pull preview -->
+    <div class="sync-pull-preview" id="sync-pull-preview">
+      <div id="sync-pull-info" style="background:var(--s2);border:1px solid var(--bd2);padding:12px 14px;font-size:.75rem;color:var(--text);font-family:var(--mono);line-height:1.7"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="doCloudImport('merge')" style="flex:1;padding:9px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#43; Merge with existing</button>
+        <button onclick="doCloudImport('replace')" style="flex:1;padding:9px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#8635; Replace all</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--mu);font-family:var(--mono)">
+        <strong style="color:var(--mu2)">Merge:</strong> adds cloud trades, skips duplicates by ID.<br>
+        <strong style="color:var(--mu2)">Replace:</strong> deletes all current trades, loads from cloud.
+      </div>
+    </div>
+
+    <div style="font-size:.67rem;color:var(--mu);font-family:var(--mono);border-top:1px solid var(--bd);padding-top:12px;margin-top:4px;line-height:1.7">
+      Data is stored in the cloud under your sync code. Anyone with your code can access your data, so keep it private.
+    </div>
   </div>
 </div>
 
@@ -2073,218 +1889,185 @@ function closeReset() { document.getElementById('rovl').classList.remove('open')
 function doReset()    { trades = []; save(); render(); closeReset(); }
 document.getElementById('rovl').addEventListener('click', function(e) { if(e.target===this) closeReset(); });
 
-// exportCSV moved to IO section above
-
 // ═══════════════════════════════════════════════════════════
-// IMPORT / EXPORT
+// CLOUD SYNC
 // ═══════════════════════════════════════════════════════════
-let pendingImport = null;
+const SYNC_CODE_KEY = 'rysk_sync_code_v1';
+const SYNC_LAST_KEY = 'rysk_sync_last_v1';
+let cloudPullData = null;
+let syncCodeChangeVisible = false;
 
-function showIO() {
-  // Update export count
-  const cnt = document.getElementById('export-count');
-  if (cnt) cnt.textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' in tracker';
-  // Reset import state
-  pendingImport = null;
-  document.getElementById('import-preview').style.display = 'none';
-  document.getElementById('io-status').style.display = 'none';
-  const fileInput = document.getElementById('import-file');
-  if (fileInput) fileInput.value = '';
-  switchIOTab('export');
-  document.getElementById('io-overlay').classList.add('open');
-}
-
-function closeIO() {
-  document.getElementById('io-overlay').classList.remove('open');
-}
-
-function switchIOTab(tab) {
-  ['export','import'].forEach(t => {
-    const tabEl   = document.getElementById('io-tab-'   + t);
-    const panelEl = document.getElementById('io-panel-' + t);
-    if (tabEl)   tabEl.classList.toggle('active',   t === tab);
-    if (panelEl) panelEl.classList.toggle('active', t === tab);
-  });
-  // Refresh count when switching to export
-  if (tab === 'export') {
-    const cnt = document.getElementById('export-count');
-    if (cnt) cnt.textContent = trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' in tracker';
+function getSyncCode() {
+  let code = localStorage.getItem(SYNC_CODE_KEY);
+  if (!code) {
+    code = crypto.randomUUID();
+    localStorage.setItem(SYNC_CODE_KEY, code);
   }
+  return code;
 }
 
-// ── EXPORT JSON ────────────────────────────────────────────
-function exportJSON() {
-  if (!trades.length) {
-    showIOStatus('No trades to export.', 'err');
-    switchIOTab('export');
+function showSync() {
+  const code = getSyncCode();
+  document.getElementById('sync-code-display').textContent = code;
+  const lastPushed = localStorage.getItem(SYNC_LAST_KEY);
+  document.getElementById('sync-last-pushed').textContent = lastPushed
+    ? 'Last pushed: ' + new Date(lastPushed).toUTCString()
+    : 'Never synced';
+  cloudPullData = null;
+  syncCodeChangeVisible = false;
+  document.getElementById('sync-pull-preview').style.display = 'none';
+  document.getElementById('sync-status').style.display = 'none';
+  document.getElementById('sync-code-change').style.display = 'none';
+  document.getElementById('sync-overlay').classList.add('open');
+}
+
+function closeSync() {
+  document.getElementById('sync-overlay').classList.remove('open');
+}
+
+function copySyncCode() {
+  const code = document.getElementById('sync-code-display').textContent;
+  navigator.clipboard.writeText(code).then(function() {
+    const btn = document.getElementById('sync-copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--gb)';
+    setTimeout(function() {
+      btn.textContent = orig;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 1800);
+  });
+}
+
+function toggleSyncCodeChange() {
+  syncCodeChangeVisible = !syncCodeChangeVisible;
+  const el = document.getElementById('sync-code-change');
+  el.style.display = syncCodeChangeVisible ? 'flex' : 'none';
+  if (syncCodeChangeVisible) document.getElementById('sync-code-input').focus();
+}
+
+function applySyncCode() {
+  const input = document.getElementById('sync-code-input').value.trim().toLowerCase();
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  if (!uuidRe.test(input)) {
+    setSyncMsg('Invalid code — must be a UUID like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'err');
     return;
   }
-  const payload = {
-    version: 1,
-    app: 'hyperwheel-tracker',
-    exported: new Date().toISOString(),
-    tradeCount: trades.length,
-    trades: trades
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  const dateStr = new Date().toISOString().split('T')[0];
-  a.download = 'hyperwheel-backup-' + dateStr + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  // Show success feedback
-  const cnt = document.getElementById('export-count');
-  if (cnt) cnt.textContent = '✓ Exported ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' — ' + dateStr;
+  localStorage.setItem(SYNC_CODE_KEY, input);
+  document.getElementById('sync-code-display').textContent = input;
+  document.getElementById('sync-code-input').value = '';
+  document.getElementById('sync-code-change').style.display = 'none';
+  syncCodeChangeVisible = false;
+  setSyncMsg('Sync code updated. Pull from cloud to load your trades.', 'ok');
 }
 
-// ── EXPORT CSV (moved here, still works from old call) ──────
-function exportCSV() {
-  if (!trades.length) return;
-  const rows = compute('ALL').allRows;
-  const cols = ['#','Asset','Date','Expiry','DTE','Type','Strike','Size','Premium','Outcome','Asset P&L','Net Cost/Token','Notes'];
-  const lines = [cols.join(','), ...rows.map(r => [
-    r.idx, r.asset, r.date, r.expiry, r.dte||'', r.type,
-    r.strike, r.size, r.premium, r.outcome,
-    Math.round(r.pnl), r.nc ? Math.round(r.nc) : '',
-    '"' + (r.notes||'').replace(/"/g, '""') + '"'
-  ].join(','))];
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
-  const dateStr = new Date().toISOString().split('T')[0];
-  a.download = 'hyperwheel-' + dateStr + '.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// ── IMPORT: file selection / drag-drop ────────────────────
-function handleFileSelect(event) {
-  const file = event.target.files[0];
-  if (file) readImportFile(file);
-}
-
-// Wire up drag-and-drop after DOM ready
-document.addEventListener('DOMContentLoaded', function() {
-  const dz = document.getElementById('drop-zone');
-  if (!dz) return;
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-  dz.addEventListener('drop', e => {
-    e.preventDefault();
-    dz.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) readImportFile(file);
-  });
-});
-
-function readImportFile(file) {
-  if (!file.name.endsWith('.json')) {
-    showIOStatus('Please select a .json file exported from this tracker.', 'err');
-    return;
+async function syncPush() {
+  const code = getSyncCode();
+  const btn = document.getElementById('sync-push-btn');
+  btn.disabled = true;
+  btn.textContent = 'Pushing...';
+  setSyncMsg('', '');
+  cloudPullData = null;
+  document.getElementById('sync-pull-preview').style.display = 'none';
+  try {
+    const payload = {
+      version: 1,
+      app: 'hyperwheel-tracker',
+      exported: new Date().toISOString(),
+      tradeCount: trades.length,
+      trades: trades
+    };
+    const res = await fetch('/api/sync?code=' + code, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Push failed');
+    const now = new Date().toISOString();
+    localStorage.setItem(SYNC_LAST_KEY, now);
+    document.getElementById('sync-last-pushed').textContent = 'Last pushed: ' + new Date(now).toUTCString();
+    setSyncMsg('Pushed ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' to cloud.', 'ok');
+  } catch(e) {
+    setSyncMsg('Push failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '\u2191 Push to Cloud';
   }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      validateAndPreviewImport(data);
-    } catch(err) {
-      showIOStatus('Invalid file — could not parse JSON. Make sure you are using a file exported from this tracker.', 'err');
+}
+
+async function syncPull() {
+  const code = getSyncCode();
+  const btn = document.getElementById('sync-pull-btn');
+  btn.disabled = true;
+  btn.textContent = 'Pulling...';
+  setSyncMsg('', '');
+  cloudPullData = null;
+  document.getElementById('sync-pull-preview').style.display = 'none';
+  try {
+    const res = await fetch('/api/sync?code=' + code);
+    if (res.status === 404) {
+      setSyncMsg('No data found in cloud for this sync code. Push first from another browser.', 'err');
+      return;
     }
-  };
-  reader.readAsText(file);
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Pull failed');
+    }
+    const data = await res.json();
+    const importedTrades = Array.isArray(data) ? data : (data.trades || []);
+    if (!Array.isArray(importedTrades) || importedTrades.length === 0) {
+      setSyncMsg('Cloud data is empty.', 'err');
+      return;
+    }
+    cloudPullData = importedTrades;
+    const existingIds = new Set(trades.map(function(t) { return t.id; }));
+    const newCount = importedTrades.filter(function(t) { return !existingIds.has(t.id); }).length;
+    const dupCount = importedTrades.length - newCount;
+    document.getElementById('sync-pull-info').innerHTML =
+      '<strong style="color:var(--text)">' + importedTrades.length + ' trades in cloud</strong><br>' +
+      '<span style="color:var(--green)">' + newCount + ' new</span>' +
+      ' &nbsp;|&nbsp; <span style="color:var(--mu2)">' + dupCount + ' already in tracker</span><br>' +
+      '<span style="color:var(--mu)">Currently in tracker: ' + trades.length + '</span>';
+    document.getElementById('sync-pull-preview').style.display = 'flex';
+  } catch(e) {
+    setSyncMsg('Pull failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '\u2193 Pull from Cloud';
+  }
 }
 
-function validateAndPreviewImport(data) {
-  // Accept both formats: { version, trades: [...] } or raw array
-  let importedTrades = [];
-  if (Array.isArray(data)) {
-    importedTrades = data;
-  } else if (data.trades && Array.isArray(data.trades)) {
-    importedTrades = data.trades;
-  } else {
-    showIOStatus('Unrecognised format. Make sure you are using a JSON file exported from this tracker.', 'err');
-    return;
-  }
-
-  // Validate each trade has required fields
-  const required = ['id','asset','type','date','strike','size','premium','outcome'];
-  const invalid = importedTrades.filter(t => required.some(f => t[f] === undefined));
-  if (invalid.length) {
-    showIOStatus('File contains ' + invalid.length + ' invalid trade record(s). Export may be corrupted.', 'err');
-    return;
-  }
-
-  // Check for duplicates with existing trades
-  const existingIds = new Set(trades.map(t => t.id));
-  const newTrades   = importedTrades.filter(t => !existingIds.has(t.id));
-  const dupTrades   = importedTrades.filter(t =>  existingIds.has(t.id));
-
-  // Assets breakdown
-  const btcCount = importedTrades.filter(t => t.asset === 'BTC').length;
-  const ethCount = importedTrades.filter(t => t.asset === 'ETH').length;
-  const otherCount = importedTrades.length - btcCount - ethCount;
-
-  pendingImport = importedTrades;
-
-  // Show preview
-  const preview = document.getElementById('import-preview');
-  const previewText = document.getElementById('import-preview-text');
-  previewText.innerHTML =
-    '<strong style="color:var(--text)">' + importedTrades.length + ' trades found in file</strong><br>' +
-    (btcCount  ? '&#9654; BTC: ' + btcCount + ' trade' + (btcCount !== 1 ? 's' : '') + '<br>' : '') +
-    (ethCount  ? '&#9670; ETH: ' + ethCount + ' trade' + (ethCount !== 1 ? 's' : '') + '<br>' : '') +
-    (otherCount ? '&#9632; Other: ' + otherCount + '<br>' : '') +
-    '<br>' +
-    '<span style="color:var(--green)">New: ' + newTrades.length + '</span>' +
-    ' &nbsp;|&nbsp; ' +
-    '<span style="color:var(--mu2)">Duplicates (will skip on merge): ' + dupTrades.length + '</span>' +
-    '<br><span style="color:var(--mu)">Currently in tracker: ' + trades.length + ' trades</span>';
-
-  preview.style.display = 'flex';
-  showIOStatus('', ''); // clear any previous error
-}
-
-function doImport(mode) {
-  if (!pendingImport) return;
-
+function doCloudImport(mode) {
+  if (!cloudPullData) return;
   if (mode === 'replace') {
-    trades = pendingImport;
+    trades = cloudPullData;
+    setSyncMsg('Replaced all trades. ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' loaded from cloud.', 'ok');
   } else {
-    // Merge: add only trades with new IDs
-    const existingIds = new Set(trades.map(t => t.id));
-    const toAdd = pendingImport.filter(t => !existingIds.has(t.id));
-    trades = [...trades, ...toAdd];
-    // Sort by date after merge
-    trades.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
-    showIOStatus('Merged ' + toAdd.length + ' new trade' + (toAdd.length !== 1 ? 's' : '') + '. ' + (pendingImport.length - toAdd.length) + ' duplicate(s) skipped.', 'ok');
+    const existingIds = new Set(trades.map(function(t) { return t.id; }));
+    const toAdd = cloudPullData.filter(function(t) { return !existingIds.has(t.id); });
+    trades = trades.concat(toAdd);
+    trades.sort(function(a, b) { return a.date.localeCompare(b.date) || a.id - b.id; });
+    setSyncMsg('Merged ' + toAdd.length + ' new trade' + (toAdd.length !== 1 ? 's' : '') + '. ' + (cloudPullData.length - toAdd.length) + ' duplicate(s) skipped.', 'ok');
   }
-
   save();
   render();
-
-  if (mode === 'replace') {
-    showIOStatus('Replaced all trades. ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' loaded.', 'ok');
-  }
-
-  pendingImport = null;
-  document.getElementById('import-preview').style.display = 'none';
-  // Reset file input
-  const fi = document.getElementById('import-file');
-  if (fi) fi.value = '';
+  cloudPullData = null;
+  document.getElementById('sync-pull-preview').style.display = 'none';
 }
 
-function showIOStatus(msg, type) {
-  const el = document.getElementById('io-status');
-  if (!el) return;
+function setSyncMsg(msg, type) {
+  const el = document.getElementById('sync-status');
   if (!msg) { el.style.display = 'none'; return; }
   el.textContent = msg;
-  el.className = 'io-status ' + type;
+  el.className = 'sync-status ' + type;
   el.style.display = 'block';
 }
 
-// Close IO modal on overlay click
-document.getElementById('io-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeIO();
+document.getElementById('sync-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeSync();
 });
 
 
