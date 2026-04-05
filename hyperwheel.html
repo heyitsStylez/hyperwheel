@@ -131,6 +131,10 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .field label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono)}
 .field input,.field select{background:var(--s2);border:1px solid var(--bd2);color:var(--text);border-radius:7px;padding:8px 11px;font-family:var(--mono);font-size:.82rem;transition:border-color .15s;width:100%}
 .field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,229,160,.07)}
+.date-wrap{position:relative;display:flex;align-items:center}
+.date-wrap input{padding-right:34px;flex:1}
+.cal-btn{position:absolute;right:6px;background:none;border:none;cursor:pointer;font-size:.85rem;padding:2px 3px;line-height:1;opacity:.6;transition:opacity .15s}
+.cal-btn:hover{opacity:1}
 .field select option{background:var(--s2)}
 
 /* TOGGLES */
@@ -534,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.1</div>
+      <div class="hsub">v1.0.2</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -645,9 +649,9 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
         </div>
       </div>
       <!-- Open date -->
-      <div class="field"><label>Open Date</label><input type="date" id="f-date"></div>
+      <div class="field"><label>Open Date</label><div class="date-wrap"><input type="date" id="f-date"><button type="button" class="cal-btn" onclick="document.getElementById('f-date').showPicker()" title="Pick date">&#128197;</button></div></div>
       <!-- Expiry -->
-      <div class="field" id="field-expiry"><label>Expiry Date</label><input type="date" id="f-expiry"></div>
+      <div class="field" id="field-expiry"><label>Expiry Date</label><div class="date-wrap"><input type="date" id="f-expiry"><button type="button" class="cal-btn" onclick="document.getElementById('f-expiry').showPicker()" title="Pick date">&#128197;</button></div></div>
       <!-- DTE -->
       <div class="field" id="field-dte"><label>DTE (auto)</label><input type="number" id="f-dte" placeholder="&mdash;" readonly style="color:var(--mu2)"></div>
     </div>
@@ -841,7 +845,7 @@ function setAsset(a) {
     }
   });
   document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : MIN_SIZE[a];
-  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? 'no minimum' : 'min ' + MIN_SIZE[a] + ' ' + a;
+  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? '' : 'min ' + MIN_SIZE[a] + ' ' + a;
   document.getElementById('f-strike').placeholder = assetVars[a]?.placeholder || '100';
   refreshLotPicker();
 }
@@ -906,7 +910,7 @@ function setPlatform(p) {
   if (p === 'RYSK' && sOut === 'CLOSED') setOut('OPEN');
   // Update size hint and default
   const sizeHint = document.getElementById('f-size-hint');
-  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? 'no minimum' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
+  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
   const sizeEl = document.getElementById('f-size');
   if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
   // Show/hide size unit toggle (only for HSFC puts)
@@ -933,7 +937,7 @@ function setSizeUnit(unit) {
     if (sizeHint) sizeHint.textContent = 'USDC collateral';
   } else {
     if (sizeEl) { sizeEl.placeholder = ''; sizeEl.value = ''; }
-    if (sizeHint) sizeHint.textContent = 'no minimum';
+    if (sizeHint) sizeHint.textContent = '';
   }
 }
 function setOut(o) {
