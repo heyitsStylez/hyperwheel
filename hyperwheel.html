@@ -538,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.3</div>
+      <div class="hsub">v1.0.4</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -1758,10 +1758,11 @@ function rCharts(displayRows) {
     let itmPrem = 0, itmCount = 0;
     let assignedNotional = 0;
     rows.forEach(r => {
-      if (r.type === 'HOLDING' || r.outcome === 'OPEN') return;
+      if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
       totalPrem += net;
       totalCount++;
+      if (r.outcome === 'OPEN') return; // premium collected but not yet settled — skip OTM/ITM buckets
       if (r.outcome === 'EXPIRED') {
         otmPrem += net;
         otmCount++;
@@ -1814,11 +1815,13 @@ function rCharts(displayRows) {
     ].join('');
 
   } else {
-    // Group settled trades by expiry month
+    // Group trades by month — OPEN trades by open date, settled by expiry date
     const monthMap = {};
     displayRows.forEach(r => {
-      if (r.type === 'HOLDING' || r.outcome === 'OPEN' || !r.expiry) return;
-      const ym = r.expiry.slice(0, 7);
+      if (r.type === 'HOLDING') return;
+      const dateKey = r.outcome === 'OPEN' ? r.date : r.expiry;
+      if (!dateKey) return;
+      const ym = dateKey.slice(0, 7);
       if (!monthMap[ym]) monthMap[ym] = [];
       monthMap[ym].push(r);
     });
