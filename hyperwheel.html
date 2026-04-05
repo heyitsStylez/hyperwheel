@@ -538,6 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
+    <span id="auto-sync-status" style="font-size:.68rem;font-family:var(--mono);color:var(--mu)"></span>
     <button class="btn btn-g" onclick="showSync()">&#9729; Cloud Sync</button>
     <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
     <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
@@ -815,7 +816,7 @@ const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9
 })();
 
 function today() { return new Date().toISOString().split('T')[0]; }
-function save()  { localStorage.setItem(KEY, JSON.stringify(trades)); }
+function save()  { localStorage.setItem(KEY, JSON.stringify(trades)); scheduleAutoSync(); }
 function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
 function sk(v)   { return Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/,'')+'K' : fmt(v); }
 
@@ -2344,6 +2345,58 @@ document.addEventListener('keydown', function(e) {
     closeTradeDrawer();
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// AUTO SYNC
+// ═══════════════════════════════════════════════════════════
+let autoSyncTimer = null;
+
+function scheduleAutoSync() {
+  if (!localStorage.getItem(SYNC_LAST_KEY)) return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(autoSyncPush, 2000);
+}
+
+async function autoSyncPush() {
+  const code = localStorage.getItem(SYNC_CODE_KEY);
+  if (!code) return;
+  setAutoSyncStatus('syncing');
+  try {
+    const payload = {
+      version: 1, app: 'hyperwheel-tracker',
+      exported: new Date().toISOString(),
+      tradeCount: trades.length, trades: trades
+    };
+    const res = await fetch('/api/sync?code=' + code, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error();
+    localStorage.setItem(SYNC_LAST_KEY, new Date().toISOString());
+    setAutoSyncStatus('ok');
+  } catch(e) {
+    setAutoSyncStatus('err');
+  }
+}
+
+function setAutoSyncStatus(state) {
+  const el = document.getElementById('auto-sync-status');
+  if (!el) return;
+  clearTimeout(el._hideTimer);
+  if (state === 'syncing') {
+    el.textContent = '\u21bb Syncing';
+    el.style.color = 'var(--mu)';
+  } else if (state === 'ok') {
+    el.textContent = '\u2713 Synced';
+    el.style.color = 'var(--green)';
+    el._hideTimer = setTimeout(function() { el.textContent = ''; }, 3000);
+  } else {
+    el.textContent = '\u26a0 Sync failed';
+    el.style.color = 'var(--red)';
+    el._hideTimer = setTimeout(function() { el.textContent = ''; }, 5000);
+  }
+}
 
 </script>
 
