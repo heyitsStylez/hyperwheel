@@ -538,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.5</div>
+      <div class="hsub">v1.0.6</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -594,6 +594,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="expiry-section">
     <div class="expiry-hd">
       <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week</span>
+      <span id="expiry-last-refreshed" style="font-size:.6rem;font-family:var(--mono);color:var(--mu2);margin-right:6px"></span>
       <button class="expiry-refresh" onclick="fetchExpiryPrices()" title="Refresh live prices">&#8635; Refresh</button>
     </div>
     <div id="expiry-table-wrap"><div class="exp-empty">No trades expiring this week</div></div>
@@ -1334,6 +1335,8 @@ function fetchExpiryPrices() {
         HYPE: data.hyperliquid && data.hyperliquid.usd,
         SOL:  data.solana      && data.solana.usd,
       };
+      const el = document.getElementById('expiry-last-refreshed');
+      if (el) el.textContent = 'refreshed ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
       renderExpiryTable();
     })
     .catch(() => { /* silently fail — table shows — for status */ });
