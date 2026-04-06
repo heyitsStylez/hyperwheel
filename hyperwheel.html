@@ -538,7 +538,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     <div class="hlogo">&#9881;</div>
     <div>
       <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.7</div>
+      <div class="hsub">v1.0.8</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
@@ -1338,7 +1338,7 @@ function fetchExpiryPrices() {
         SOL:  data.solana      && data.solana.usd,
       };
       const el = document.getElementById('expiry-last-refreshed');
-      if (el) el.textContent = 'refreshed ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      if (el) { const n = new Date(); el.textContent = 'refreshed ' + String(n.getUTCHours()).padStart(2,'0') + ':' + String(n.getUTCMinutes()).padStart(2,'0') + ' UTC'; }
       renderExpiryTable();
     })
     .catch(() => { /* silently fail — table shows — for status */ });
