@@ -2506,7 +2506,7 @@ function closeChainSyncModal() {
 
 // ── RYSK SYNC ─────────────────────────────────────────────
 
-function parseRyskTrade(r, openTxHashes) {
+function parseRyskTrade(r) {
   const dec = r.decimals || 18;
   const asset = symbolToAsset(r.symbol);
   if (!['BTC', 'ETH', 'HYPE', 'SOL'].includes(asset)) return null;
@@ -2522,13 +2522,8 @@ function parseRyskTrade(r, openTxHashes) {
   const expiryTs  = r.expiry    || 0;
   const dte = Math.round((expiryTs - createdAt) / 86400);
 
-  const nowTs = Math.floor(Date.now() / 1000);
-  let outcome = 'OPEN';
-  if (r.txHash && openTxHashes.has(r.txHash)) {
-    outcome = 'OPEN';
-  } else if (expiryTs > 0 && expiryTs < nowTs) {
-    outcome = 'EXPIRED';
-  }
+  const nowTs  = Math.floor(Date.now() / 1000);
+  const outcome = (expiryTs > 0 && expiryTs < nowTs) ? 'EXPIRED' : 'OPEN';
 
   return {
     id: Date.now() + Math.floor(Math.random() * 1e6),
@@ -2578,27 +2573,39 @@ async function syncRysk(address) {
     throw e;
   }
 
-  // All returned positions are "open" from the positions endpoint perspective
-  const openTxHashes = new Set((positions || []).map(p => p.txHash).filter(Boolean));
   const synced    = loadSynced();
   const newTrades = [];
+  let   corrected = 0;
 
   for (const r of (positions || [])) {
-    if (r.txHash && synced.has(r.txHash)) continue;
-    const t = parseRyskTrade(r, openTxHashes);
+    if (r.txHash && synced.has(r.txHash)) {
+      // Already imported — but outcome may have been wrong (old bug set all to OPEN).
+      // Correct any expired trades that are still showing as OPEN.
+      const nowTs    = Math.floor(Date.now() / 1000);
+      const expiryTs = r.expiry || 0;
+      if (expiryTs > 0 && expiryTs < nowTs) {
+        const existing = trades.find(t => t.txHash === r.txHash);
+        if (existing && existing.outcome === 'OPEN') {
+          existing.outcome = 'EXPIRED';
+          corrected++;
+        }
+      }
+      continue;
+    }
+    const t = parseRyskTrade(r);
     if (!t) continue;
     newTrades.push(t);
     if (r.txHash) synced.add(r.txHash);
   }
 
-  if (newTrades.length > 0) {
+  if (newTrades.length > 0 || corrected > 0) {
     newTrades.forEach(t => trades.push(t));
     save();
     render();
     saveSynced(synced);
   }
 
-  return { imported: newTrades.length, skipped: (positions || []).length - newTrades.length };
+  return { imported: newTrades.length, corrected, skipped: (positions || []).length - newTrades.length - corrected };
 }
 
 // ── HYPERSURFACE SYNC ─────────────────────────────────────
@@ -2774,11 +2781,12 @@ async function runChainSync() {
   let hasError = false;
 
   if (ryskResult.status === 'fulfilled') {
-    const { imported, skipped } = ryskResult.value;
+    const { imported, corrected, skipped } = ryskResult.value;
     totalImported += imported;
-    ryskEl.textContent = imported > 0
-      ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
-      : '\u2713 ' + skipped + ' already synced';
+    let ryskMsg = imported > 0 ? '\u2713 ' + imported + ' new' : '\u2713';
+    if (corrected > 0) ryskMsg += ', ' + corrected + ' outcomes fixed';
+    if (imported === 0 && corrected === 0) ryskMsg = '\u2713 ' + skipped + ' already synced';
+    ryskEl.textContent = ryskMsg;
     ryskEl.style.color = 'var(--green)';
   } else {
     const msg = ryskResult.reason && ryskResult.reason.message;
