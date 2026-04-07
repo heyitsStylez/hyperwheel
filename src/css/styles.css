@@ -209,7 +209,7 @@ tr.lot-child.la-hype:hover > td{background:rgba(0,229,160,.08)}
 tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 
 /* NET COST BANNER */
-.ncb{margin:16px 20px 0;background:var(--s3);border:1px solid var(--bd2);border-radius:10px;padding:13px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:24px}
+.ncb{margin:16px auto 0;max-width:960px;background:var(--s3);border:1px solid var(--bd2);border-radius:10px;padding:13px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:24px}
 .nci .ncl{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono);margin-bottom:3px}
 .nci .ncv{font-family:var(--mono);font-size:.93rem;font-weight:500;color:var(--text)}
 .ncv.orange{color:var(--orange)}.ncv.green{color:var(--green)}.ncv.btc{color:var(--btc)}.ncv.eth{color:var(--eth)}
