@@ -336,18 +336,15 @@ function rCharts(displayRows) {
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
-      card('Premium Expired OTM',
+      card('Premium Settled OTM',
         s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash,
         s.otmCount > 0 ? pos(s.otmCount) : ''),
-      card('Premium Expired ITM',
-        s.itmCount > 0 ? '$' + fmt(s.itmPrem) : dash,
-        s.itmCount > 0 ? pos(s.itmCount) : ''),
+      card('Premium In Progress',
+        s.openCount > 0 ? '$' + fmt(s.openPrem) : dash,
+        s.openCount > 0 ? pos(s.openCount) + ' open' : ''),
       card('Return Rate',
         s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
         s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : ''),
-      card('Assigned Notional',
-        s.assignedNotional > 0 ? '$' + fmt(s.assignedNotional) : dash,
-        s.itmCount > 0 ? asgn(s.itmCount) : ''),
     ].join('');
 
   } else {
@@ -376,9 +373,8 @@ function rCharts(displayRows) {
         '<td>' + fmtMonth(ym) + '</td>' +
         '<td>' + (s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash) + '</td>' +
         '<td>' + (s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash) + '</td>' +
-        '<td>' + (s.itmCount > 0 ? '$' + fmt(s.itmPrem) : dash) + '</td>' +
+        '<td>' + (s.openCount > 0 ? '$' + fmt(s.openPrem) : dash) + '</td>' +
         '<td' + rateClass + '>' + (s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash) + '<span class="ppnl-sub" style="display:block">' + (s.settled > 0 ? s.otmCount + '/' + s.settled : '') + '</span></td>' +
-        '<td>' + (s.assignedNotional > 0 ? '$' + fmt(s.assignedNotional) : dash) + '</td>' +
       '</tr>';
     }).join('');
 
@@ -386,10 +382,9 @@ function rCharts(displayRows) {
       '<thead><tr>' +
         '<th>Month</th>' +
         '<th>Premium</th>' +
-        '<th>Exp OTM</th>' +
-        '<th>Exp ITM</th>' +
+        '<th>Settled OTM</th>' +
+        '<th>In Progress</th>' +
         '<th>Return Rate</th>' +
-        '<th>Asgn Notional</th>' +
       '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
     '</table>';
