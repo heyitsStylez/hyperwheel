@@ -2425,12 +2425,16 @@ document.addEventListener('keydown', function(e) {
 // Pulls trade history from Rysk (/api/history) and
 // Hypersurface (Goldsky subgraph) for a given wallet address.
 // Deduplicates by txHash; auto-imports new trades.
+//
+// On Vercel: routes through /api/chain-sync proxy (avoids CORS).
+// On file://: falls back to direct fetch (likely CORS-blocked).
 
 const SYMBOL_MAP = {
   UBTC: 'BTC', UETH: 'ETH',
   kHYPE: 'HYPE', WHYPE: 'HYPE', wstHYPE: 'HYPE',
   uSOL: 'SOL', USOL: 'SOL',
 };
+const HSFC_URL_KEY = 'rysk_hsfc_url_v1';
 
 function symbolToAsset(sym) {
   return SYMBOL_MAP[sym] || sym;
@@ -2464,25 +2468,44 @@ function saveWallet(addr) {
   localStorage.setItem(WALLET_KEY, addr);
 }
 
+function loadHsfcUrl() {
+  return localStorage.getItem(HSFC_URL_KEY) || '';
+}
+
+function saveHsfcUrl(url) {
+  localStorage.setItem(HSFC_URL_KEY, url);
+}
+
+// Returns true when running under a real web server (Vercel or local http.server)
+// so the /api/chain-sync proxy is available.
+function hasProxy() {
+  return window.location.protocol !== 'file:';
+}
+
 // ── MODAL ─────────────────────────────────────────────────
 
 function openChainSyncModal() {
   const ov = document.getElementById('chain-sync-overlay');
-  const inp = document.getElementById('chain-wallet-input');
-  const statusEl = document.getElementById('chain-sync-status');
-  const summaryEl = document.getElementById('cs-summary');
   ov.style.display = 'flex';
-  // Restore saved wallet address
+
   const saved = loadWallet();
-  inp.value = saved;
+  const walletInp = document.getElementById('chain-wallet-input');
+  walletInp.value = saved;
   document.getElementById('chain-sync-run-btn').disabled = !saved.startsWith('0x');
+
+  const hsfcInp = document.getElementById('chain-hsfc-url-input');
+  if (hsfcInp) hsfcInp.value = loadHsfcUrl();
+
   // Reset status
-  statusEl.style.display = 'none';
+  const statusEl  = document.getElementById('chain-sync-status');
+  const summaryEl = document.getElementById('cs-summary');
+  statusEl.style.display  = 'none';
   summaryEl.style.display = 'none';
   document.getElementById('cs-rysk-status').textContent = '—';
   document.getElementById('cs-hsfc-status').textContent = '—';
   document.getElementById('cs-rysk-status').style.color = 'var(--mu)';
   document.getElementById('cs-hsfc-status').style.color = 'var(--mu)';
+
   requestAnimationFrame(() => ov.classList.add('open'));
 }
 
@@ -2499,18 +2522,17 @@ function parseRyskTrade(r, openTxHashes) {
   const asset = symbolToAsset(r.symbol);
   if (!['BTC', 'ETH', 'HYPE', 'SOL'].includes(asset)) return null;
 
-  const strike = bigIntToNum(r.strike, dec);
-  const size   = bigIntToNum(r.quantity, dec);
-  const rawPrem = bigIntToNum(r.premium, dec);
+  const strike  = bigIntToNum(r.strike,   dec);
+  const size    = bigIntToNum(r.quantity, dec);
+  const rawPrem = bigIntToNum(r.premium,  dec);
   // isBuy=false → user sold option → received premium (positive)
-  // isBuy=true  → user bought option → paid premium (negative, not typical for wheel)
+  // isBuy=true  → user bought option → paid premium (negative)
   const premium = r.isBuy ? -Math.abs(rawPrem) : Math.abs(rawPrem);
 
   const createdAt = r.createdAt || 0;
   const expiryTs  = r.expiry    || 0;
   const dte = Math.round((expiryTs - createdAt) / 86400);
 
-  // Outcome: OPEN if still in positions list, EXPIRED if past, else OPEN (manual update for ASSIGNED/CALLED)
   const nowTs = Math.floor(Date.now() / 1000);
   let outcome = 'OPEN';
   if (r.txHash && openTxHashes.has(r.txHash)) {
@@ -2522,7 +2544,7 @@ function parseRyskTrade(r, openTxHashes) {
   return {
     id: Date.now() + Math.floor(Math.random() * 1e6),
     asset,
-    type: r.isPut ? 'PUT' : 'CALL',
+    type:   r.isPut ? 'PUT' : 'CALL',
     date:   createdAt ? unixToDate(createdAt) : today(),
     expiry: expiryTs  ? unixToDate(expiryTs)  : '',
     dte:    dte > 0 ? dte : null,
@@ -2536,18 +2558,30 @@ function parseRyskTrade(r, openTxHashes) {
   };
 }
 
+async function fetchRysk(type, address) {
+  if (hasProxy()) {
+    const res = await fetch('/api/chain-sync?source=rysk&type=' + type + '&address=' + encodeURIComponent(address));
+    if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+    return res.json();
+  }
+  // file:// fallback — direct fetch (likely CORS-blocked)
+  const base = 'https://v12.rysk.finance/api';
+  const url  = type === 'history'
+    ? base + '/history?address=' + address
+    : base + '/user/positions?address=' + address;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
 async function syncRysk(address) {
-  const BASE = 'https://v12.rysk.finance/api';
   let history = [], positions = [];
 
   try {
-    const [hRes, pRes] = await Promise.all([
-      fetch(BASE + '/history?address=' + address),
-      fetch(BASE + '/user/positions?address=' + address),
+    [history, positions] = await Promise.all([
+      fetchRysk('history',   address),
+      fetchRysk('positions', address).catch(() => []),
     ]);
-    if (!hRes.ok) throw new Error('HTTP ' + hRes.status);
-    history   = await hRes.json();
-    positions = await pRes.json().catch(() => []);
   } catch (e) {
     const msg = e.message || String(e);
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
@@ -2557,7 +2591,7 @@ async function syncRysk(address) {
   }
 
   const openTxHashes = new Set((positions || []).map(p => p.txHash).filter(Boolean));
-  const synced = loadSynced();
+  const synced    = loadSynced();
   const newTrades = [];
 
   for (const r of (history || [])) {
@@ -2580,26 +2614,20 @@ async function syncRysk(address) {
 
 // ── HYPERSURFACE SYNC ─────────────────────────────────────
 
-const HSFC_GOLDSKY_URL = 'https://api.goldsky.com/api/public/project_cm9e2q1k7000101u19ys2b9ei/subgraphs/hypersurface-sh-subgraph/latest/gn';
-const HSFC_HEDGEDPOOL   = '0x0095aCDD705Cfcc11eAfFb6c19A28C0153ad196F';
-const HYPER_EVM_RPC     = 'https://rpc.hyperliquid.xyz/evm';
-
-// Symbol format: HYPE-28MAR26-25-C / HYPE-28MAR26-25-P
 function parseHsfcSymbol(symbol) {
-  // e.g. "HYPE-28MAR26-25-C"
+  // e.g. "HYPE-28MAR26-25-C" or "HYPE-28MAR26-25000-C" (strike may be large for BTC/ETH)
   const parts = symbol.split('-');
   if (parts.length < 4) return null;
   const asset  = symbolToAsset(parts[0]) || parts[0];
-  const isPut  = parts[3] === 'P';
-  const strike = parseFloat(parts[2]);
-  // Parse expiry date like "28MAR26"
+  const isPut  = parts[parts.length - 1] === 'P';
+  const strike = parseFloat(parts[parts.length - 2]);
   const expiryStr = parts[1];
   const monthMap  = { JAN:0, FEB:1, MAR:2, APR:3, MAY:4, JUN:5, JUL:6, AUG:7, SEP:8, OCT:9, NOV:10, DEC:11 };
-  const day   = parseInt(expiryStr.slice(0, 2));
-  const mon   = expiryStr.slice(2, 5).toUpperCase();
-  const yr    = parseInt('20' + expiryStr.slice(5));
+  const day  = parseInt(expiryStr.slice(0, 2));
+  const mon  = expiryStr.slice(2, 5).toUpperCase();
+  const yr   = parseInt('20' + expiryStr.slice(5));
   const expDate = new Date(Date.UTC(yr, monthMap[mon] ?? 0, day, 8, 0, 0));
-  const expiry = expDate.toISOString().split('T')[0];
+  const expiry  = expDate.toISOString().split('T')[0];
   return { asset, isPut, strike, expiry };
 }
 
@@ -2612,18 +2640,17 @@ function parseHsfcTrade(r) {
   // amount at 1e8; negative = sold (wrote option)
   const amount  = parseFloat(r.amount || '0') / 1e8;
   const size    = Math.abs(amount);
-  // premium in USD (float from API)
   const rawPrem = parseFloat(r.premium || '0');
   // negative amount (sold) → received premium
   const premium = amount < 0 ? Math.abs(rawPrem) : -Math.abs(rawPrem);
 
-  const createdAt = parseInt(r.timestamp || '0');
-  const expiryTs  = r.expiry ? parseInt(r.expiry) : 0;
+  const createdAt  = parseInt(r.timestamp || '0');
+  const expiryTs   = r.expiry ? parseInt(r.expiry) : 0;
   const expiryDate = expiryTs ? unixToDate(expiryTs) : parsed.expiry;
   const openDate   = createdAt ? unixToDate(createdAt) : today();
-  const dte = createdAt && expiryTs ? Math.round((expiryTs - createdAt) / 86400) : null;
+  const dte        = (createdAt && expiryTs) ? Math.round((expiryTs - createdAt) / 86400) : null;
 
-  const nowTs = Math.floor(Date.now() / 1000);
+  const nowTs   = Math.floor(Date.now() / 1000);
   const outcome = (expiryTs > 0 && expiryTs < nowTs) ? 'EXPIRED' : 'OPEN';
 
   return {
@@ -2643,35 +2670,50 @@ function parseHsfcTrade(r) {
   };
 }
 
+async function fetchHsfcGoldsky(goldskyUrl, address) {
+  const gql = JSON.stringify({
+    query: '{ trades(where:{account:"' + address.toLowerCase() + '"}, orderBy:timestamp, orderDirection:desc, first:1000){ id transactionHash symbol amount premium timestamp expiry account } }'
+  });
+
+  if (hasProxy()) {
+    const res = await fetch(
+      '/api/chain-sync?source=hypersurface&url=' + encodeURIComponent(goldskyUrl),
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: gql }
+    );
+    if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+    return res.json();
+  }
+  // file:// fallback
+  const res = await fetch(goldskyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: gql,
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
 async function syncHypersurface(address) {
-  const query = '{"query":"{ trades(where:{account:\\"' + address.toLowerCase() + '\\"}, orderBy:timestamp, orderDirection:desc, first:1000){ id transactionHash symbol amount premium timestamp expiry account } }"}';
+  const goldskyUrl = loadHsfcUrl();
+  if (!goldskyUrl) {
+    return { imported: 0, skipped: 0, noUrl: true };
+  }
 
   let trades_raw = [];
 
   try {
-    const res = await fetch(HSFC_GOLDSKY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: query,
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
+    const json = await fetchHsfcGoldsky(goldskyUrl, address);
+    if (json.errors) throw new Error(json.errors[0].message || 'GraphQL error');
     trades_raw = (json.data && json.data.trades) || [];
   } catch (e) {
     const msg = e.message || String(e);
-    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS') || msg.includes('404')) {
-      // Goldsky failed — try HyperEVM RPC eth_getLogs
-      try {
-        trades_raw = await fetchHsfcViaRpc(address);
-      } catch (e2) {
-        throw new Error('CORS_BLOCKED');
-      }
-    } else {
-      throw e;
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
+      throw new Error('CORS_BLOCKED');
     }
+    throw e;
   }
 
-  const synced = loadSynced();
+  const synced    = loadSynced();
   const newTrades = [];
 
   for (const r of trades_raw) {
@@ -2693,41 +2735,21 @@ async function syncHypersurface(address) {
   return { imported: newTrades.length, skipped: trades_raw.length - newTrades.length };
 }
 
-async function fetchHsfcViaRpc(address) {
-  // eth_getLogs on HedgedPool filtered by user address as topic[1]
-  const paddedAddr = '0x000000000000000000000000' + address.slice(2).toLowerCase();
-  const body = JSON.stringify({
-    jsonrpc: '2.0', id: 1, method: 'eth_getLogs',
-    params: [{
-      fromBlock: '0x0',
-      toBlock:   'latest',
-      address:   HSFC_HEDGEDPOOL,
-      topics:    [null, paddedAddr],
-    }],
-  });
-  const res = await fetch(HYPER_EVM_RPC, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  });
-  if (!res.ok) throw new Error('RPC HTTP ' + res.status);
-  const json = await res.json();
-  // RPC logs lack symbol/premium fields; return empty — best effort
-  return [];
-}
-
 // ── MAIN ENTRY ────────────────────────────────────────────
 
 async function runChainSync() {
-  const inp = document.getElementById('chain-wallet-input');
-  const address = (inp.value || '').trim();
+  const address = (document.getElementById('chain-wallet-input').value || '').trim();
   if (!address.startsWith('0x') || address.length < 10) return;
 
   saveWallet(address);
 
+  // Save Goldsky URL if user entered one
+  const hsfcInp = document.getElementById('chain-hsfc-url-input');
+  if (hsfcInp && hsfcInp.value.trim()) saveHsfcUrl(hsfcInp.value.trim());
+
   const btn = document.getElementById('chain-sync-run-btn');
-  btn.disabled = true;
-  btn.textContent = 'Syncing…';
+  btn.disabled    = true;
+  btn.textContent = 'Syncing\u2026';
 
   const statusEl  = document.getElementById('chain-sync-status');
   const ryskEl    = document.getElementById('cs-rysk-status');
@@ -2736,9 +2758,9 @@ async function runChainSync() {
 
   statusEl.style.display  = 'block';
   summaryEl.style.display = 'none';
-  ryskEl.textContent = 'Fetching…';
+  ryskEl.textContent = 'Fetching\u2026';
   ryskEl.style.color = 'var(--mu)';
-  hsfcEl.textContent = 'Fetching…';
+  hsfcEl.textContent = loadHsfcUrl() ? 'Fetching\u2026' : 'No URL configured';
   hsfcEl.style.color = 'var(--mu)';
 
   const [ryskResult, hsfcResult] = await Promise.allSettled([
@@ -2759,23 +2781,28 @@ async function runChainSync() {
   } else {
     const msg = ryskResult.reason && ryskResult.reason.message;
     ryskEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS blocked (use local server)'
+      ? '\u26A0 CORS \u2014 open via http.server 8080'
       : '\u2717 ' + (msg || 'Failed');
     ryskEl.style.color = 'var(--red)';
     hasError = true;
   }
 
   if (hsfcResult.status === 'fulfilled') {
-    const { imported, skipped } = hsfcResult.value;
-    totalImported += imported;
-    hsfcEl.textContent = imported > 0
-      ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
-      : '\u2713 ' + skipped + ' already synced';
-    hsfcEl.style.color = 'var(--green)';
+    const { imported, skipped, noUrl } = hsfcResult.value;
+    if (noUrl) {
+      hsfcEl.textContent = '\u2014 paste Goldsky URL below';
+      hsfcEl.style.color = 'var(--mu)';
+    } else {
+      totalImported += imported;
+      hsfcEl.textContent = imported > 0
+        ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
+        : '\u2713 ' + skipped + ' already synced';
+      hsfcEl.style.color = 'var(--green)';
+    }
   } else {
     const msg = hsfcResult.reason && hsfcResult.reason.message;
     hsfcEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS blocked (use local server)'
+      ? '\u26A0 CORS \u2014 open via http.server 8080'
       : '\u2717 ' + (msg || 'Failed');
     hsfcEl.style.color = 'var(--red)';
     hasError = true;
@@ -2789,14 +2816,13 @@ async function runChainSync() {
     summaryEl.textContent = 'All trades already synced.';
     summaryEl.style.color = 'var(--mu)';
   } else {
-    summaryEl.innerHTML = 'Could not reach one or more sources. Try opening via:<br><code style="font-size:.65rem">python3 -m http.server 8080</code>';
+    summaryEl.textContent = 'One or more sources failed.';
     summaryEl.style.color = 'var(--mu2)';
   }
 
-  btn.disabled = false;
+  btn.disabled    = false;
   btn.textContent = 'Sync';
 
-  // Auto-close after 2s if all succeeded
   if (!hasError && totalImported === 0) {
     setTimeout(closeChainSyncModal, 2000);
   }
@@ -2920,6 +2946,15 @@ async function runChainSync() {
           oninput="document.getElementById('chain-sync-run-btn').disabled=!this.value.trim().startsWith('0x')">
         <button id="chain-sync-run-btn" class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700;white-space:nowrap" onclick="runChainSync()" disabled>Sync</button>
       </div>
+    </div>
+
+    <!-- Hypersurface Goldsky URL config -->
+    <div style="margin-bottom:14px">
+      <label class="fl" style="display:flex;align-items:center;gap:6px">
+        Hypersurface Subgraph URL
+        <span style="font-size:.6rem;color:var(--mu);font-weight:400">(find in Network tab on app.hypersurface.io)</span>
+      </label>
+      <input id="chain-hsfc-url-input" type="text" class="finput" placeholder="https://api.goldsky.com/api/public/project_.../subgraphs/..." style="font-family:var(--mono);font-size:.65rem">
     </div>
 
     <!-- Status rows -->
