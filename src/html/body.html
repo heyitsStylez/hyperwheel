@@ -1,4 +1,20 @@
 
+<!-- WALLET POPUP (first visit) — must be in body.html, before the <script> block -->
+<div class="overlay" id="wallet-overlay" style="display:none">
+  <div class="wallet-popup">
+    <div class="wp-header">&gt; hyperwheel v1.0</div>
+    <div class="wp-label">Enter Wallet Address</div>
+    <div class="wp-prompt-row">
+      <span class="wp-prompt-prefix">&gt;</span>
+      <input id="wp-wallet-input" type="text" class="wp-input" placeholder="0x..."
+        spellcheck="false" autocomplete="off"
+        oninput="document.getElementById('wp-enter-btn').disabled=!this.value.trim().startsWith('0x')">
+    </div>
+    <button id="wp-enter-btn" class="wp-btn" onclick="submitWalletPopup()" disabled>[ Connect ]</button>
+    <div id="wp-status" class="wp-status"><span class="wp-cursor"></span>awaiting input...</div>
+  </div>
+</div>
+
 <header class="header">
   <div class="hl">
     <div class="hlogo">&#9881;</div>
