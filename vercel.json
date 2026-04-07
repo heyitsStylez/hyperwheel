@@ -1,6 +1,7 @@
 {
-  "buildCommand": "mkdir -p public && cp hyperwheel.html public/index.html",
+  "buildCommand": "python3 build.py --check",
   "outputDirectory": "public",
+  "framework": null,
   "headers": [
     {
       "source": "/(.*)",

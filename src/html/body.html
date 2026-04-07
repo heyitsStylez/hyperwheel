@@ -1,0 +1,269 @@
+
+<header class="header">
+  <div class="hl">
+    <div class="hlogo">&#9881;</div>
+    <div>
+      <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
+      <div class="hsub">v1.0.8</div>
+    </div>
+  </div>
+  <div class="hbtns" style="display:flex;align-items:center;gap:16px">
+    <span id="auto-sync-status" style="font-size:.68rem;font-family:var(--mono);color:var(--mu)"></span>
+    <button class="btn btn-g" onclick="showSync()">&#9729; Cloud Sync</button>
+    <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
+    <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
+  </div>
+</header>
+
+<main class="page-wrap">
+<div class="content-col">
+
+  <!-- CUMULATIVE P&L HERO -->
+  <div class="cpnl-hero" id="cpnl-hero">
+    <div class="cpnl-hero-hd">
+      <div>
+        <div class="cpnl-hero-label">Cumulative P&amp;L</div>
+        <div class="cpnl-hero-val" id="cpnl-val">—</div>
+        <div class="cpnl-hero-change" id="cpnl-change"></div>
+      </div>
+      <div class="cpnl-period-btns">
+        <button class="cpnl-period-btn" id="cpnl-btn-1M" onclick="setCpnlPeriod('1M')">1M</button>
+        <button class="cpnl-period-btn" id="cpnl-btn-3M" onclick="setCpnlPeriod('3M')">3M</button>
+        <button class="cpnl-period-btn active" id="cpnl-btn-ALL" onclick="setCpnlPeriod('ALL')">ALL</button>
+      </div>
+    </div>
+    <div id="cpnl-chart-area"></div>
+  </div>
+
+  <!-- ASSET FILTER TABS -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div class="asset-tabs">
+      <button class="asset-tab all active" id="fb-ALL" onclick="setFilter('ALL')">All Assets</button>
+      <button class="asset-tab btc" id="fb-BTC" onclick="setFilter('BTC')">
+        <span class="asset-dot ad-btc"></span> BTC
+      </button>
+      <button class="asset-tab eth" id="fb-ETH" onclick="setFilter('ETH')">
+        <span class="asset-dot ad-eth"></span> ETH
+      </button>
+          <button class="asset-tab hype" id="fb-HYPE" onclick="setFilter('HYPE')">
+        <span class="asset-dot ad-hype"></span> HYPE
+      </button>
+          <button class="asset-tab sol" id="fb-SOL" onclick="setFilter('SOL')">
+        <span class="asset-dot ad-sol"></span> SOL
+      </button>
+    </div>
+  </div>
+
+  <div class="top-left">
+
+  <!-- EXPIRY WATCH -->
+  <div class="expiry-section">
+    <div class="expiry-hd">
+      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+        <button class="expiry-refresh" onclick="fetchExpiryPrices()" title="Refresh live prices">&#8635; Refresh</button>
+        <span id="expiry-last-refreshed" style="font-size:.55rem;font-family:var(--mono);color:var(--mu2)"></span>
+      </div>
+    </div>
+    <div id="expiry-table-wrap"><div class="exp-empty">No trades expiring this week</div></div>
+  </div>
+
+  <!-- PREMIUM PNL -->
+  <div class="sec">
+    <div class="sec-hd">
+      <div class="sec-ttl"><span class="dot dg"></span>Premium P&amp;L</div>
+      <div class="ppnl-tabs">
+        <button class="ppnl-tab active" id="ppnl-tab-total" onclick="setPpnlTab('total')">Total</button>
+        <button class="ppnl-tab" id="ppnl-tab-monthly" onclick="setPpnlTab('monthly')">Monthly</button>
+      </div>
+    </div>
+    <div id="ppnl-body"></div>
+  </div>
+
+  </div><!-- end top-left -->
+
+  <!-- TRADE DRAWER -->
+  <div class="drawer-overlay" id="trade-drawer-overlay" onclick="closeTradeDrawer()"></div>
+  <div id="trade-drawer">
+    <div class="drawer-hd">
+      <div class="sec-ttl"><span class="dot dp"></span>Log New Trade</div>
+      <button class="drawer-close" onclick="closeTradeDrawer()">&#10005; Close</button>
+    </div>
+    <div class="fi">
+      <!-- Asset -->
+      <div class="field fi-full">
+        <label>Asset</label>
+        <div class="tg">
+          <button class="tb active" id="ab-BTC" onclick="setAsset('BTC')" style="color:var(--btc);border-color:var(--btcb);background:var(--btcd)">&#9654; BTC</button>
+          <button class="tb" id="ab-ETH" onclick="setAsset('ETH')">&#9670; ETH</button>
+          <button class="tb" id="ab-HYPE" onclick="setAsset('HYPE')" style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9632; HYPE</button>
+          <button class="tb" id="ab-SOL"  onclick="setAsset('SOL')"  style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9679; SOL</button>
+        </div>
+      </div>
+      <!-- Platform -->
+      <div class="field fi-full" id="field-platform">
+        <label>Platform</label>
+        <div class="tg">
+          <button class="tb te active" id="tog-RYSK" onclick="setPlatform('RYSK')">RYSK</button>
+          <button class="tb tc" id="tog-HSFC" onclick="setPlatform('HSFC')">HSFC</button>
+        </div>
+      </div>
+      <!-- Type -->
+      <div class="field fi-full">
+        <label>Trade Type</label>
+        <div class="tg">
+          <button class="tb tp active" id="tog-PUT" onclick="setType('PUT')">PUT</button>
+          <button class="tb tc" id="tog-CALL" onclick="setType('CALL')">CALL</button>
+          <button class="tb th" id="tog-HOLDING" onclick="setType('HOLDING')" style="font-size:.65rem">&#9632; HOLDING</button>
+        </div>
+      </div>
+      <!-- Open date -->
+      <div class="field"><label>Open Date</label><div class="date-wrap"><input type="date" id="f-date"><button type="button" class="cal-btn" onclick="document.getElementById('f-date').showPicker()" title="Pick date">&#128197;</button></div></div>
+      <!-- Expiry -->
+      <div class="field" id="field-expiry"><label>Expiry Date</label><div class="date-wrap"><input type="date" id="f-expiry"><button type="button" class="cal-btn" onclick="document.getElementById('f-expiry').showPicker()" title="Pick date">&#128197;</button></div></div>
+      <!-- DTE -->
+      <div class="field" id="field-dte"><label>DTE (auto)</label><input type="number" id="f-dte" placeholder="&mdash;" readonly style="color:var(--mu2)"></div>
+    </div>
+
+    <!-- Lot picker — only shown when type=CALL and 2+ lots are open for the selected asset -->
+    <div id="field-lot-row" style="display:none;padding:0 20px 10px">
+      <div class="field">
+        <label>Assign Call to Lot</label>
+        <select id="f-lot" onchange="autoFillFromLot()"></select>
+      </div>
+    </div>
+
+    <div class="holding-hint" id="holding-hint">
+      <strong>Spot / Manual Entry</strong> &mdash; Use this to log assets you already hold from spot purchases.<br>
+      Enter your <strong>cost basis</strong> (what you paid per token) under Cost Basis, your <strong>quantity</strong> as Size.<br>
+      The tracker will treat this as an open position so you can start selling covered calls against it immediately.
+    </div>
+    <div class="fb">
+      <div class="field"><label id="f-strike-lbl">Strike ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
+      <div class="field" id="field-size-wrap">
+        <label>Size
+          <span id="field-size-unit-toggle" style="display:none;margin-left:8px">
+            <button class="tb active" id="szu-contracts" onclick="setSizeUnit('contracts')" style="font-size:.55rem;padding:2px 7px">Contracts</button>
+            <button class="tb" id="szu-usdc" onclick="setSizeUnit('usdc')" style="font-size:.55rem;padding:2px 7px">USDC</button>
+          </span>
+        </label>
+        <input type="number" id="f-size" value="0.05" step="0.01">
+        <span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span>
+      </div>
+      <div class="field" id="field-premium"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
+      <div class="field fi-full" id="field-outcome">
+        <label>Outcome</label>
+        <div class="tg">
+          <button class="tb to active" id="tog-OPEN" onclick="setOut('OPEN')">Open</button>
+          <button class="tb te" id="tog-EXPIRED" onclick="setOut('EXPIRED')">Expired</button>
+          <button class="tb ta" id="tog-ASSIGNED" onclick="setOut('ASSIGNED')">Assigned</button>
+          <button class="tb tk" id="tog-CALLED" onclick="setOut('CALLED')">Called</button>
+          <button class="tb tc" id="tog-CLOSED" onclick="setOut('CLOSED')">Closed</button>
+        </div>
+      </div>
+      <div class="field" id="field-closecost" style="display:none">
+        <label>Close Cost (USD)</label>
+        <input type="number" id="f-closecost" placeholder="0" step="1" min="0">
+        <span style="font-size:.62rem;color:var(--mu);font-family:var(--mono);margin-top:2px">cost to buy back position</span>
+      </div>
+    </div>
+    <div style="padding:0 20px 20px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+      <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="e.g. ETH at $3,200, starting with covered calls on held ETH"></div>
+      <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add Trade &rarr;</button>
+    </div>
+    <div class="ferr" id="ferr"></div>
+  </div><!-- end trade-drawer -->
+
+
+  <!-- TRADE LOG -->
+  <div class="sec" id="tlog">
+    <div class="sec-hd">
+      <div class="sec-ttl"><span class="dot db"></span>Trade Log</div>
+      <span id="tcnt" style="font-size:.7rem;color:var(--mu);font-family:var(--mono)"></span>
+    </div>
+    <div id="ncbwrap"></div>
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th>Asset</th><th>Platform</th><th>Lot</th><th>Opened</th><th>Expiry</th><th>DTE</th><th>Type</th>
+          <th>Strike</th><th>Size</th><th>Coll.</th><th>Premium</th>
+          <th>Outcome</th><th>APR</th><th>Lot Premium</th><th></th>
+        </tr></thead>
+        <tbody id="ttbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end content-col -->
+
+
+</main>
+
+
+<!-- CLOUD SYNC MODAL -->
+<div class="overlay" id="sync-overlay">
+  <div class="sync-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 4px">Cloud Sync</h3>
+        <div id="sync-last-pushed" style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Never synced</div>
+      </div>
+      <button onclick="closeSync()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+
+    <!-- Sync code -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Your Sync Code</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="sync-code-box" id="sync-code-display"></div>
+        <button class="sync-btn-copy" id="sync-copy-btn" onclick="copySyncCode()">Copy</button>
+      </div>
+      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:6px">
+        Copy this code to any other browser to sync your data.
+        <button onclick="toggleSyncCodeChange()" style="background:none;border:none;color:var(--blue);font-size:.65rem;font-family:var(--mono);cursor:pointer;padding:0 0 0 6px;text-decoration:underline">Use a different code</button>
+      </div>
+      <div class="sync-code-change" id="sync-code-change">
+        <input class="sync-code-input" id="sync-code-input" type="text" placeholder="Paste sync code from another browser">
+        <button onclick="applySyncCode()" style="flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:var(--green);color:var(--bg);border:none;padding:8px 14px;cursor:pointer">Apply</button>
+      </div>
+    </div>
+
+    <!-- Push / Pull -->
+    <div class="sync-actions">
+      <button class="sync-btn-push" id="sync-push-btn" onclick="syncPush()">&#8593; Push to Cloud</button>
+      <button class="sync-btn-pull" id="sync-pull-btn" onclick="syncPull()">&#8595; Pull from Cloud</button>
+    </div>
+
+    <!-- Status -->
+    <div class="sync-status" id="sync-status"></div>
+
+    <!-- Pull preview -->
+    <div class="sync-pull-preview" id="sync-pull-preview">
+      <div id="sync-pull-info" style="background:var(--s2);border:1px solid var(--bd2);padding:12px 14px;font-size:.75rem;color:var(--text);font-family:var(--mono);line-height:1.7"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="doCloudImport('merge')" style="flex:1;padding:9px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#43; Merge with existing</button>
+        <button onclick="doCloudImport('replace')" style="flex:1;padding:9px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#8635; Replace all</button>
+      </div>
+      <div style="font-size:.7rem;color:var(--mu);font-family:var(--mono)">
+        <strong style="color:var(--mu2)">Merge:</strong> adds cloud trades, skips duplicates by ID.<br>
+        <strong style="color:var(--mu2)">Replace:</strong> deletes all current trades, loads from cloud.
+      </div>
+    </div>
+
+    <div style="font-size:.67rem;color:var(--mu);font-family:var(--mono);border-top:1px solid var(--bd);padding-top:12px;margin-top:4px;line-height:1.7">
+      Data is stored in the cloud under your sync code. Anyone with your code can access your data, so keep it private.
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="rovl">
+  <div class="modal">
+    <h3>Delete all trades?</h3>
+    <p>This permanently removes everything from your tracker and cannot be undone.</p>
+    <div class="mbtns">
+      <button class="btn btn-g" onclick="closeReset()">Cancel</button>
+      <button class="btn-d" style="padding:7px 16px;font-size:.78rem;border-radius:7px" onclick="doReset()">Yes, delete all</button>
+    </div>
+  </div>
+</div>
+
