@@ -113,6 +113,11 @@ function _histRow(r) {
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
   const aprStr = '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
     + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  const corrBtn = r.outcome === 'EXPIRED' && r.type === 'CALL'
+    ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
+    : r.outcome === 'EXPIRED' && r.type === 'PUT'
+    ? '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>'
+    : '';
   return '<tr>'
     + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
     + '<td>' + platBadge + '</td>'
@@ -125,7 +130,7 @@ function _histRow(r) {
     + '<td class="cr">+$' + fmt(r.premium) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
-    + '<td class="td-act"><div class="row-actions">'
+    + '<td class="td-act"><div class="row-actions">' + corrBtn
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
