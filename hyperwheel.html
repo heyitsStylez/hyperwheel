@@ -1260,6 +1260,7 @@ function _openRow(r) {
     + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td class="td-act"><div class="row-actions">' + actions
+      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -1284,6 +1285,7 @@ function _histRow(r) {
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">'
+      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -1921,6 +1923,109 @@ function submitWalletPopup() {
   }, 300);
 }
 
+// ── EDIT TRADE MODAL ─────────────────────────────────────────
+
+let _editId = null;
+
+function openEditModal(id) {
+  const t = trades.find(t => t.id === id);
+  if (!t) return;
+  _editId = id;
+
+  const isHolding = t.type === 'HOLDING';
+  document.getElementById('edit-title').textContent = isHolding
+    ? 'Edit Spot Holding — ' + t.asset
+    : 'Edit ' + t.type + ' — ' + t.asset;
+
+  const f = (id, label, type, value, extra) =>
+    '<div class="field">'
+    + '<label>' + label + '</label>'
+    + '<input id="ef-' + id + '" type="' + type + '" value="' + (value ?? '') + '"' + (extra ? ' ' + extra : '') + '>'
+    + '</div>';
+
+  const sel = (id, label, options, value) =>
+    '<div class="field">'
+    + '<label>' + label + '</label>'
+    + '<select id="ef-' + id + '">'
+    + options.map(o => '<option value="' + o.v + '"' + (o.v === value ? ' selected' : '') + '>' + o.l + '</option>').join('')
+    + '</select>'
+    + '</div>';
+
+  let html = '';
+  if (isHolding) {
+    html += f('date',   'Date Acquired', 'date',   t.date,   '');
+    html += f('strike', 'Cost Basis ($)', 'number', t.strike, 'step="0.01" min="0"');
+    html += f('size',   'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
+    html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
+  } else {
+    html += f('date',    'Date',         'date',   t.date,   '');
+    html += f('expiry',  'Expiry',       'date',   t.expiry, '');
+    html += f('dte',     'DTE',          'number', t.dte,    'step="1" min="0"');
+    html += f('strike',  'Strike ($)',   'number', t.strike, 'step="0.01" min="0"');
+    html += f('size',    'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
+    html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
+    html += sel('outcome', 'Outcome', [
+      { v: 'OPEN',     l: 'Open' },
+      { v: 'EXPIRED',  l: 'Expired' },
+      { v: 'ASSIGNED', l: 'Assigned' },
+      { v: 'CALLED',   l: 'Called Away' },
+    ], t.outcome);
+    html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
+  }
+
+  document.getElementById('edit-fields').innerHTML = html;
+  document.getElementById('edit-err').textContent = '';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-overlay').classList.remove('open');
+  _editId = null;
+}
+
+function saveEdit() {
+  const t = trades.find(t => t.id === _editId);
+  if (!t) { closeEditModal(); return; }
+  const err = document.getElementById('edit-err');
+  err.textContent = '';
+
+  const isHolding = t.type === 'HOLDING';
+  const get = id => document.getElementById('ef-' + id);
+
+  const date = get('date').value.trim();
+  if (!date) { err.textContent = 'Date is required.'; return; }
+
+  const strike = parseFloat(get('strike').value);
+  const size   = parseFloat(get('size').value);
+  if (isNaN(strike) || strike <= 0) { err.textContent = isHolding ? 'Cost basis must be > 0.' : 'Strike must be > 0.'; return; }
+  if (isNaN(size)   || size   <= 0) { err.textContent = 'Size must be > 0.'; return; }
+
+  t.date   = date;
+  t.strike = strike;
+  t.size   = size;
+  t.notes  = get('notes').value.trim();
+
+  if (!isHolding) {
+    t.expiry  = get('expiry').value.trim();
+    const dte = parseInt(get('dte').value);
+    t.dte     = isNaN(dte) ? null : dte;
+    const prem = parseFloat(get('premium').value);
+    t.premium  = isNaN(prem) ? 0 : prem;
+    t.outcome  = get('outcome').value;
+  }
+
+  save();
+  render();
+  closeEditModal();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const el = document.getElementById('edit-overlay');
+  if (el) el.addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+});
+
 // ── MERGE LOTS ───────────────────────────────────────────────
 
 function openMergeModal(asset) {
@@ -2028,11 +2133,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Close trade drawer on Escape
+// Close modals on Escape
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById('trade-drawer').classList.contains('open')) {
-    closeTradeDrawer();
-  }
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('edit-overlay').classList.contains('open')) { closeEditModal(); return; }
+  if (document.getElementById('trade-drawer').classList.contains('open')) { closeTradeDrawer(); return; }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -2378,6 +2483,22 @@ async function autoLoadChain(address) {
 }
 
 </script>
+
+<!-- EDIT TRADE MODAL -->
+<div class="merge-overlay" id="edit-overlay">
+  <div class="merge-modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="edit-title" style="font-size:.95rem">Edit Trade</h3>
+      <button onclick="closeEditModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+    <div id="edit-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    <div id="edit-err" style="font-size:.72rem;color:var(--red);margin-top:10px;min-height:1.2em"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-g" onclick="closeEditModal()">Cancel</button>
+      <button class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="rovl">
   <div class="modal">
