@@ -276,7 +276,7 @@ function rTable(displayRows, streams, lots) {
   ncWrap.innerHTML = bannerHtml ? '<div style="padding:16px 20px 0">' + bannerHtml + '</div>' : '';
 
   // Split into open and history
-  const openRows = displayRows.filter(r => r.outcome === 'OPEN');
+  const openRows = displayRows.filter(r => r.outcome === 'OPEN' && r.type !== 'HOLDING');
   const histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
 
   if (ocntEl) ocntEl.textContent = openRows.length ? String(openRows.length) : '';
