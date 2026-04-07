@@ -5,35 +5,78 @@ A single-file HTML/JS/CSS options trading tracker for the **Wheel strategy** on
 [Rysk Finance](https://v12.rysk.finance) — a DeFi options platform on HyperEVM
 (HyperLiquid L2, chainId 999). The user trades BTC, ETH, HYPE, and SOL.
 
-**Output file:** `rysk-pnl-tracker.html` (~143 KB, single file, no build step)
+**Output file:** `hyperwheel.html` (assembled from modular sources — see below)
+
+---
+
+## Modular development workflow
+
+### Source files (edit these)
+```
+src/
+  css/styles.css         — all CSS (8 themes + component styles)
+  html/head.html         — <head> with /* CSS_PLACEHOLDER */ marker
+  html/body.html         — <body> content (header, main, trade drawer)
+  html/modals.html       — overlay modals (edit, merge, sync, reset)
+  js/01-state.js         — KEY, trades, state vars, MIN_SIZE, ASSET_COLORS
+  js/02-utils.js         — today(), save(), fmt(), sk()
+  js/03-form-controls.js — setAsset, setType, setFilter, etc.
+  js/04-trade-crud.js    — addTrade, clearForm, deleteTrade, quickOutcome
+  js/05-compute.js       — compute() lot engine
+  js/06-render-table.js  — rTable, renderExpiryTable, fetchExpiryPrices
+  js/07-render-charts.js — rCpnlChart, rCharts, cOpts, setCpnlPeriod
+  js/08-render.js        — render() orchestrator + rStats()
+  js/09-drawer-modal.js  — openTradeDrawer, closeTradeDrawer, focusForm
+  js/10-reset-modal.js   — showReset, closeReset, doReset
+  js/11-cloud-sync.js    — syncPush, syncPull, getSyncCode, etc.
+  js/12-auto-sync.js     — scheduleAutoSync, autoSyncPush, setAutoSyncStatus
+  js/13-edit-modal.js    — openEditModal, saveEdit, onEdit* handlers
+  js/14-merge-modal.js   — openMergeModal, closeMergeModal, confirmMerge
+  js/15-event-listeners.js — global keydown handlers
+  js/16-clock.js         — UTC clock IIFE
+  js/17-boot.js          — init IIFE (runs last, bootstraps the app)
+```
+
+### Build
+After editing any source file, run:
+```bash
+python3 build.py --check
+```
+This assembles `hyperwheel.html` (local use) and `public/index.html` (Vercel), then runs the JS syntax check. Never commit without a passing build.
+
+### Parallel agent zones (non-overlapping)
+| Zone | Files |
+|------|-------|
+| Compute logic | `src/js/05-compute.js` |
+| Trade table | `src/js/06-render-table.js` |
+| Charts | `src/js/07-render-charts.js` |
+| Cloud sync | `src/js/11-cloud-sync.js`, `src/js/12-auto-sync.js` |
+| Edit modal | `src/js/13-edit-modal.js`, `src/html/modals.html` |
+| Styling | `src/css/styles.css` |
+
+**Only one agent should ever touch `src/js/01-state.js` at a time.**
 
 ---
 
 ## Non-negotiable development rules
 
-### 1. Always syntax-check before finishing
-After **every** edit to the HTML file, extract the JS and run Node:
+### 1. Always build and syntax-check before finishing
+After **every** edit to any `src/` file, run:
 
 ```bash
-python3 -c "
-with open('rysk-pnl-tracker.html') as f:
-    c = f.read()
-s = c.find('<script>\nconst KEY')
-e = c.rfind('</script>')
-open('/tmp/test.js','w').write(c[s+8:e])
-"
-node --check /tmp/test.js
+python3 build.py --check
 ```
 
-Iterate until the exit code is 0. Never present the file with a failing check.
+Iterate until the exit code is 0. Never present changes with a failing check.
 
 ### 2. No hardcoded colours — ever
 All colours must use CSS variables. No hex values or `rgb()` literals in
 component styles. The 8-theme system defines everything via `--var` tokens.
 
-### 3. Single-file constraint
-Everything — HTML, CSS, JS — lives in `rysk-pnl-tracker.html`. No external
-files, no build tools, no npm. Chart.js is loaded from cdnjs.
+### 3. Output is a single file — source is modular
+The deployed artifact (`hyperwheel.html` / `public/index.html`) is a single
+self-contained file assembled by `python3 build.py`. Edit `src/` files, never
+edit `hyperwheel.html` or `public/index.html` directly. No npm, no bundlers.
 
 ---
 
