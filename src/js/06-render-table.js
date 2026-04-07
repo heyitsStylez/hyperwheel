@@ -127,7 +127,9 @@ function _histRow(r) {
     + '<td>' + typeBadge + '</td>'
     + '<td>$' + fmt(r.strike) + '</td>'
     + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
-    + '<td class="cr">+$' + fmt(r.premium) + '</td>'
+    + '<td class="cr">' + (r.outcome === 'CLOSED'
+        ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
+        : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">' + corrBtn
