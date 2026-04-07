@@ -91,9 +91,9 @@ function parseRyskTrade(r, openTxHashes) {
   const strike  = bigIntToNum(r.strike,   dec);
   const size    = bigIntToNum(r.quantity, dec);
   const rawPrem = bigIntToNum(r.premium,  dec);
-  // isBuy=false → user sold option → received premium (positive)
-  // isBuy=true  → user bought option → paid premium (negative)
-  const premium = r.isBuy ? -Math.abs(rawPrem) : Math.abs(rawPrem);
+  // On /api/user/positions: isBuy=true = user wrote/sold option (received premium)
+  // isBuy=false = user bought option (paid premium — uncommon for wheel strategy)
+  const premium = r.isBuy ? Math.abs(rawPrem) : -Math.abs(rawPrem);
 
   const createdAt = r.createdAt || 0;
   const expiryTs  = r.expiry    || 0;
@@ -141,13 +141,12 @@ async function fetchRysk(type, address) {
 }
 
 async function syncRysk(address) {
-  let history = [], positions = [];
+  // /api/history is empty for most wallets; /api/user/positions returns all
+  // open + expired positions and is the authoritative source.
+  let positions = [];
 
   try {
-    [history, positions] = await Promise.all([
-      fetchRysk('history',   address),
-      fetchRysk('positions', address).catch(() => []),
-    ]);
+    positions = await fetchRysk('positions', address);
   } catch (e) {
     const msg = e.message || String(e);
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
@@ -156,11 +155,12 @@ async function syncRysk(address) {
     throw e;
   }
 
+  // All returned positions are "open" from the positions endpoint perspective
   const openTxHashes = new Set((positions || []).map(p => p.txHash).filter(Boolean));
   const synced    = loadSynced();
   const newTrades = [];
 
-  for (const r of (history || [])) {
+  for (const r of (positions || [])) {
     if (r.txHash && synced.has(r.txHash)) continue;
     const t = parseRyskTrade(r, openTxHashes);
     if (!t) continue;
@@ -175,7 +175,7 @@ async function syncRysk(address) {
     saveSynced(synced);
   }
 
-  return { imported: newTrades.length, skipped: (history || []).length - newTrades.length };
+  return { imported: newTrades.length, skipped: (positions || []).length - newTrades.length };
 }
 
 // ── HYPERSURFACE SYNC ─────────────────────────────────────
@@ -197,48 +197,64 @@ function parseHsfcSymbol(symbol) {
   return { asset, isPut, strike, expiry };
 }
 
-function parseHsfcTrade(r) {
-  if (!r.symbol) return null;
-  const parsed = parseHsfcSymbol(r.symbol);
-  if (!parsed) return null;
-  if (!['BTC', 'ETH', 'HYPE', 'SOL'].includes(parsed.asset)) return null;
+// Parse one TradeLeg from the Hypersurface subgraph into a trade object.
+// trade = parent Trade (has createdTimestamp, createdTransaction, id)
+// leg   = TradeLeg (has amount, premium, oToken)
+function parseHsfcLeg(trade, leg) {
+  const oToken = leg.oToken;
+  if (!oToken) return null;
+
+  // oToken.symbol is "HYPE-28MAR26-25-C" format
+  const parsed = parseHsfcSymbol(oToken.symbol || '');
+  // Fallback: use underlyingAsset.symbol if oToken.symbol parse fails
+  const asset = (parsed && parsed.asset) || symbolToAsset((oToken.underlyingAsset && oToken.underlyingAsset.symbol) || '');
+  if (!['BTC', 'ETH', 'HYPE', 'SOL'].includes(asset)) return null;
+
+  // strikePrice is at 1e8 per Hypersurface docs ($25 = 2,500,000,000)
+  const strike = parseInt(oToken.strikePrice || '0') / 1e8;
+  const expiryTs = parseInt(oToken.expiryTimestamp || '0');
+  const isPut = oToken.isPut;
+  const expiry = (parsed && parsed.expiry) || (expiryTs ? unixToDate(expiryTs) : '');
 
   // amount at 1e8; negative = sold (wrote option)
-  const amount  = parseFloat(r.amount || '0') / 1e8;
+  const amount  = parseInt(leg.amount || '0') / 1e8;
   const size    = Math.abs(amount);
-  const rawPrem = parseFloat(r.premium || '0');
+  // premium in USDT0 (6 decimals on HyperEVM)
+  const rawPrem = parseInt(leg.premium || '0') / 1e6;
   // negative amount (sold) → received premium
   const premium = amount < 0 ? Math.abs(rawPrem) : -Math.abs(rawPrem);
 
-  const createdAt  = parseInt(r.timestamp || '0');
-  const expiryTs   = r.expiry ? parseInt(r.expiry) : 0;
-  const expiryDate = expiryTs ? unixToDate(expiryTs) : parsed.expiry;
+  const createdAt  = parseInt(trade.createdTimestamp || '0');
   const openDate   = createdAt ? unixToDate(createdAt) : today();
   const dte        = (createdAt && expiryTs) ? Math.round((expiryTs - createdAt) / 86400) : null;
+  const nowTs      = Math.floor(Date.now() / 1000);
+  const outcome    = (expiryTs > 0 && expiryTs < nowTs) ? 'EXPIRED' : 'OPEN';
 
-  const nowTs   = Math.floor(Date.now() / 1000);
-  const outcome = (expiryTs > 0 && expiryTs < nowTs) ? 'EXPIRED' : 'OPEN';
+  // Dedup key: parent trade id + leg id
+  const txHash = (trade.createdTransaction || trade.id || '') + '-' + (leg.id || '');
 
   return {
     id: Date.now() + Math.floor(Math.random() * 1e6),
-    asset:    parsed.asset,
-    type:     parsed.isPut ? 'PUT' : 'CALL',
-    date:     openDate,
-    expiry:   expiryDate,
+    asset,
+    type:   isPut ? 'PUT' : 'CALL',
+    date:   openDate,
+    expiry,
     dte,
-    strike:   parsed.strike,
+    strike,
     size,
     premium,
     outcome,
     notes: 'Hypersurface chain sync',
     platform: 'HSFC',
-    txHash: r.transactionHash || r.id || null,
+    txHash,
   };
 }
 
 async function fetchHsfcGoldsky(goldskyUrl, address) {
+  // Real schema: Trade → legs[] → oToken { symbol strikePrice expiryTimestamp isPut }
+  // Filter by taker (the user's address, stored lowercase in the subgraph)
   const gql = JSON.stringify({
-    query: '{ trades(where:{account:"' + address.toLowerCase() + '"}, orderBy:timestamp, orderDirection:desc, first:1000){ id transactionHash symbol amount premium timestamp expiry account } }'
+    query: '{ trades(where:{taker:"' + address.toLowerCase() + '"}, orderBy:createdTimestamp, orderDirection:desc, first:1000){ id createdTimestamp createdTransaction totalPremium legs { id amount premium oToken { symbol strikePrice expiryTimestamp isPut underlyingAsset { symbol } } } } }'
   });
 
   if (hasProxy()) {
@@ -279,13 +295,16 @@ async function syncHypersurface(address) {
   const synced    = loadSynced();
   const newTrades = [];
 
-  for (const r of trades_raw) {
-    const key = r.transactionHash || r.id;
-    if (key && synced.has(key)) continue;
-    const t = parseHsfcTrade(r);
-    if (!t) continue;
-    newTrades.push(t);
-    if (key) synced.add(key);
+  // Each trade can have multiple legs; each leg becomes one trade entry
+  for (const trade of trades_raw) {
+    for (const leg of (trade.legs || [])) {
+      const key = (trade.createdTransaction || trade.id || '') + '-' + (leg.id || '');
+      if (key && synced.has(key)) continue;
+      const t = parseHsfcLeg(trade, leg);
+      if (!t) continue;
+      newTrades.push(t);
+      if (key) synced.add(key);
+    }
   }
 
   if (newTrades.length > 0) {
@@ -295,7 +314,8 @@ async function syncHypersurface(address) {
     saveSynced(synced);
   }
 
-  return { imported: newTrades.length, skipped: trades_raw.length - newTrades.length };
+  const totalLegs = trades_raw.reduce((n, t) => n + (t.legs || []).length, 0);
+  return { imported: newTrades.length, skipped: totalLegs - newTrades.length };
 }
 
 // ── MAIN ENTRY ────────────────────────────────────────────
