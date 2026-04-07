@@ -285,32 +285,27 @@ function rCharts(displayRows) {
 
   function calcStats(rows) {
     let totalPrem = 0, totalCount = 0;
-    let otmPrem = 0, otmCount = 0;
-    let itmPrem = 0, itmCount = 0;
-    let openPrem = 0, openCount = 0;
-    let assignedNotional = 0;
+    let otmCount = 0, itmCount = 0;
+    let openCount = 0;
+    let aprWeightedSum = 0, aprWeightTotal = 0;
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
       totalPrem += net;
       totalCount++;
-      if (r.outcome === 'OPEN') {
-        openPrem += net;
-        openCount++;
-        return;
-      }
-      if (r.outcome === 'EXPIRED') {
-        otmPrem += net;
-        otmCount++;
-      } else if (r.outcome === 'ASSIGNED' || r.outcome === 'CALLED') {
-        itmPrem += net;
-        itmCount++;
-        if (r.outcome === 'ASSIGNED') assignedNotional += (r.strike || 0) * (r.size || 0);
+      if (r.outcome === 'OPEN') { openCount++; return; }
+      if (r.outcome === 'EXPIRED') otmCount++;
+      else if (r.outcome === 'ASSIGNED' || r.outcome === 'CALLED') itmCount++;
+      if (r.annual != null) {
+        const notional = (r.strike || 0) * (r.size || 0);
+        aprWeightedSum += r.annual * notional;
+        aprWeightTotal += notional;
       }
     });
     const settled = otmCount + itmCount;
     const returnRate = settled > 0 ? otmCount / settled * 100 : null;
-    return { totalPrem, totalCount, otmPrem, otmCount, itmPrem, itmCount, openPrem, openCount, assignedNotional, returnRate, settled };
+    const portfolioAPR = aprWeightTotal > 0 ? aprWeightedSum / aprWeightTotal : null;
+    return { totalPrem, totalCount, otmCount, itmCount, openCount, returnRate, settled, portfolioAPR };
   }
 
   const pos = n => n === 1 ? '1 position' : n + ' positions';
@@ -336,12 +331,9 @@ function rCharts(displayRows) {
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
-      card('Premium Settled OTM',
-        s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash,
-        s.otmCount > 0 ? pos(s.otmCount) : ''),
-      card('Premium In Progress',
-        s.openCount > 0 ? '$' + fmt(s.openPrem) : dash,
-        s.openCount > 0 ? pos(s.openCount) + ' open' : ''),
+      card('Portfolio APR',
+        s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash,
+        s.settled > 0 ? 'notional-weighted · ' + s.settled + ' settled' : ''),
       card('Return Rate',
         s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
         s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : ''),
@@ -372,8 +364,7 @@ function rCharts(displayRows) {
       return '<tr>' +
         '<td>' + fmtMonth(ym) + '</td>' +
         '<td>' + (s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash) + '</td>' +
-        '<td>' + (s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash) + '</td>' +
-        '<td>' + (s.openCount > 0 ? '$' + fmt(s.openPrem) : dash) + '</td>' +
+        '<td>' + (s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash) + '</td>' +
         '<td' + rateClass + '>' + (s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash) + '<span class="ppnl-sub" style="display:block">' + (s.settled > 0 ? s.otmCount + '/' + s.settled : '') + '</span></td>' +
       '</tr>';
     }).join('');
@@ -382,8 +373,7 @@ function rCharts(displayRows) {
       '<thead><tr>' +
         '<th>Month</th>' +
         '<th>Premium</th>' +
-        '<th>Settled OTM</th>' +
-        '<th>In Progress</th>' +
+        '<th>Portfolio APR</th>' +
         '<th>Return Rate</th>' +
       '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +

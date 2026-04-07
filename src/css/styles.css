@@ -230,7 +230,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .ppnl-tabs{display:flex;gap:4px}
 .ppnl-tab{font-family:var(--mono);font-size:.65rem;letter-spacing:1px;cursor:pointer;background:transparent;border:1px solid var(--bd);color:var(--mu);padding:4px 10px;transition:all .15s}
 .ppnl-tab.active{border-color:var(--green);color:var(--green)}
-.ppnl-cards{padding:16px 20px 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.ppnl-cards{padding:16px 20px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,340px));gap:12px;justify-content:center}
 .ppnl-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
 .ppnl-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--mu);font-family:var(--mono);margin-bottom:10px}
 .ppnl-main{font-size:1.05rem;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1.1}
@@ -244,7 +244,6 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .ppnl-mtbl tr:last-child td{border-bottom:none}
 .ppnl-mtbl .rate-hi{color:var(--green)}
 .ppnl-mtbl .rate-lo{color:var(--red)}
-@media(max-width:1100px){.ppnl-cards{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.ppnl-cards{grid-template-columns:1fr 1fr}}
 @media(max-width:420px){.ppnl-cards{grid-template-columns:1fr}}
 
