@@ -30,55 +30,17 @@ function unixToDate(ts) {
 }
 
 function loadSynced() {
-  try { return new Set(JSON.parse(localStorage.getItem(SYNCED_KEY) || '[]')); } catch (e) { return new Set(); }
+  try { return new Set(JSON.parse(localStorage.getItem(HW_SYNCED_KEY) || '[]')); } catch (e) { return new Set(); }
 }
 
 function saveSynced(set) {
-  localStorage.setItem(SYNCED_KEY, JSON.stringify([...set]));
-}
-
-function loadWallet() {
-  return localStorage.getItem(WALLET_KEY) || '';
-}
-
-function saveWallet(addr) {
-  localStorage.setItem(WALLET_KEY, addr);
+  localStorage.setItem(HW_SYNCED_KEY, JSON.stringify([...set]));
 }
 
 // Returns true when running under a real web server (Vercel or local http.server)
 // so the /api/chain-sync proxy is available.
 function hasProxy() {
   return window.location.protocol !== 'file:';
-}
-
-// ── MODAL ─────────────────────────────────────────────────
-
-function openChainSyncModal() {
-  const ov = document.getElementById('chain-sync-overlay');
-  ov.style.display = 'flex';
-
-  const saved = loadWallet();
-  const walletInp = document.getElementById('chain-wallet-input');
-  walletInp.value = saved;
-  document.getElementById('chain-sync-run-btn').disabled = !saved.startsWith('0x');
-
-  // Reset status
-  const statusEl  = document.getElementById('chain-sync-status');
-  const summaryEl = document.getElementById('cs-summary');
-  statusEl.style.display  = 'none';
-  summaryEl.style.display = 'none';
-  document.getElementById('cs-rysk-status').textContent = '—';
-  document.getElementById('cs-hsfc-status').textContent = '—';
-  document.getElementById('cs-rysk-status').style.color = 'var(--mu)';
-  document.getElementById('cs-hsfc-status').style.color = 'var(--mu)';
-
-  requestAnimationFrame(() => ov.classList.add('open'));
-}
-
-function closeChainSyncModal() {
-  const ov = document.getElementById('chain-sync-overlay');
-  ov.classList.remove('open');
-  setTimeout(() => { ov.style.display = 'none'; }, 180);
 }
 
 // ── RYSK SYNC ─────────────────────────────────────────────
@@ -113,7 +75,6 @@ function parseRyskTrade(r) {
     size,
     premium,
     outcome,
-    notes: 'Rysk chain sync',
     platform: 'RYSK',
     txHash: r.txHash || null,
   };
@@ -251,7 +212,6 @@ function parseHsfcLeg(trade, leg) {
     size,
     premium,
     outcome,
-    notes: 'Hypersurface chain sync',
     platform: 'HSFC',
     txHash,
   };
@@ -325,87 +285,13 @@ async function syncHypersurface(address) {
   return { imported: newTrades.length, skipped: totalLegs - newTrades.length };
 }
 
-// ── MAIN ENTRY ────────────────────────────────────────────
+// ── AUTO LOAD ──────────────────────────────────────────────
 
-async function runChainSync() {
-  const address = (document.getElementById('chain-wallet-input').value || '').trim();
-  if (!address.startsWith('0x') || address.length < 10) return;
-
-  saveWallet(address);
-
-  const btn = document.getElementById('chain-sync-run-btn');
-  btn.disabled    = true;
-  btn.textContent = 'Syncing\u2026';
-
-  const statusEl  = document.getElementById('chain-sync-status');
-  const ryskEl    = document.getElementById('cs-rysk-status');
-  const hsfcEl    = document.getElementById('cs-hsfc-status');
-  const summaryEl = document.getElementById('cs-summary');
-
-  statusEl.style.display  = 'block';
-  summaryEl.style.display = 'none';
-  ryskEl.textContent = 'Fetching\u2026';
-  ryskEl.style.color = 'var(--mu)';
-  hsfcEl.textContent = 'Fetching\u2026';
-  hsfcEl.style.color = 'var(--mu)';
-
+async function autoLoadChain(address) {
+  if (!address || !address.startsWith('0x')) return;
   const [ryskResult, hsfcResult] = await Promise.allSettled([
     syncRysk(address),
     syncHypersurface(address),
   ]);
-
-  let totalImported = 0;
-  let hasError = false;
-
-  if (ryskResult.status === 'fulfilled') {
-    const { imported, corrected, skipped } = ryskResult.value;
-    totalImported += imported;
-    let ryskMsg = imported > 0 ? '\u2713 ' + imported + ' new' : '\u2713';
-    if (corrected > 0) ryskMsg += ', ' + corrected + ' outcomes fixed';
-    if (imported === 0 && corrected === 0) ryskMsg = '\u2713 ' + skipped + ' already synced';
-    ryskEl.textContent = ryskMsg;
-    ryskEl.style.color = 'var(--green)';
-  } else {
-    const msg = ryskResult.reason && ryskResult.reason.message;
-    ryskEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS \u2014 open via http.server 8080'
-      : '\u2717 ' + (msg || 'Failed');
-    ryskEl.style.color = 'var(--red)';
-    hasError = true;
-  }
-
-  if (hsfcResult.status === 'fulfilled') {
-    const { imported, skipped } = hsfcResult.value;
-    totalImported += imported;
-    hsfcEl.textContent = imported > 0
-      ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
-      : '\u2713 ' + skipped + ' already synced';
-    hsfcEl.style.color = 'var(--green)';
-  } else {
-    const msg = hsfcResult.reason && hsfcResult.reason.message;
-    hsfcEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS \u2014 open via http.server 8080'
-      : '\u2717 ' + (msg || 'Failed');
-    hsfcEl.style.color = 'var(--red)';
-    hasError = true;
-  }
-
-  summaryEl.style.display = 'block';
-  if (totalImported > 0) {
-    summaryEl.textContent = 'Imported ' + totalImported + ' new trade' + (totalImported !== 1 ? 's' : '') + '.';
-    summaryEl.style.color = 'var(--green)';
-  } else if (!hasError) {
-    summaryEl.textContent = 'All trades already synced.';
-    summaryEl.style.color = 'var(--mu)';
-  } else {
-    summaryEl.textContent = 'One or more sources failed.';
-    summaryEl.style.color = 'var(--mu2)';
-  }
-
-  btn.disabled    = false;
-  btn.textContent = 'Sync';
-
-  if (!hasError && totalImported === 0) {
-    setTimeout(closeChainSyncModal, 2000);
-  }
+  // syncRysk and syncHypersurface already call save() and render() internally
 }

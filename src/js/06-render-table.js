@@ -192,11 +192,9 @@ function rTable(displayRows, streams, lots) {
       else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
     }
     const platBadge = isHoldingRow ? '<span class="mu" style="font-size:.65rem">&mdash;</span>' : (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-    const notesTitle = r.notes ? ` title="${r.notes.replace(/"/g,'&quot;')}"` : '';
-    const notesIcon = r.notes ? ' <span style="color:var(--mu);font-size:.65rem;cursor:default" title="' + r.notes.replace(/"/g,'&quot;') + '">&#128196;</span>' : '';
     const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
-    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}${notesTitle}>
-      <td><span class="badge ${assetCls}">${r.asset}</span>${notesIcon}</td>
+    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}>
+      <td><span class="badge ${assetCls}">${r.asset}</span></td>
       <td>${platBadge}</td>
       <td class="mu" style="font-size:.72rem">${r.lotNum ? 'L'+r.lotNum : '&mdash;'}</td>
       <td>${r.date}</td>
@@ -213,7 +211,7 @@ function rTable(displayRows, streams, lots) {
       <td class="td-act"><div class="row-actions">${
         (r.outcome === 'OPEN' && r.type === 'CALL') ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-cal" onclick="quickOutcome(${r.id},'CALLED')" title="Mark called away">Called ↑</button>` :
         (r.outcome === 'OPEN' && r.type === 'PUT')  ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-asg" onclick="quickOutcome(${r.id},'ASSIGNED')" title="Mark assigned">Asgn ↓</button>` : ''
-      }<button class="btn-e" onclick="openEditModal(${r.id})" title="Edit">&#9998;</button><button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
+      }<button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
     </tr>`;
   });
 

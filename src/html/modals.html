@@ -1,132 +1,24 @@
-<!-- EDIT TRADE MODAL -->
-<div class="overlay" id="edit-overlay" style="display:none">
-  <div class="edit-modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <h3>Edit Trade</h3>
-      <button onclick="closeEditModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+<!-- WALLET POPUP (first visit) -->
+<div class="overlay" id="wallet-overlay" style="display:none">
+  <div class="wallet-popup">
+    <div class="wp-logo">HYPERWHEEL</div>
+    <div class="wp-sub">Enter your wallet address to load your trading positions from Rysk Finance and Hypersurface.</div>
+    <div class="wp-row">
+      <input id="wp-wallet-input" type="text" class="wp-input" placeholder="0x..."
+        oninput="document.getElementById('wp-enter-btn').disabled=!this.value.trim().startsWith('0x')">
+      <button id="wp-enter-btn" class="wp-btn" onclick="submitWalletPopup()" disabled>Enter</button>
     </div>
-
-    <!-- Platform + Asset + Type row -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:90px">
-        <label class="fl">Platform</label>
-        <select id="e-platform" class="finput" onchange="onEditPlatformChange()">
-          <option value="RYSK">RYSK</option>
-          <option value="HSFC">HSFC</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Asset</label>
-        <select id="e-asset" class="finput" onchange="onEditAssetChange()">
-          <option value="BTC">BTC</option>
-          <option value="ETH">ETH</option>
-          <option value="HYPE">HYPE</option>
-          <option value="SOL">SOL</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Type</label>
-        <select id="e-type" class="finput" onchange="onEditTypeChange()">
-          <option value="PUT">PUT</option>
-          <option value="CALL">CALL</option>
-          <option value="HOLDING">HOLDING</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Outcome</label>
-        <select id="e-outcome" class="finput" onchange="onEditOutcomeChange()">
-          <option value="OPEN">OPEN</option>
-          <option value="EXPIRED">EXPIRED</option>
-          <option value="ASSIGNED">ASSIGNED</option>
-          <option value="CALLED">CALLED</option>
-          <option value="CLOSED">CLOSED</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Date + Expiry row -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:140px">
-        <label class="fl">Open Date</label>
-        <input id="e-date" type="date" class="finput">
-      </div>
-      <div style="flex:1;min-width:140px" id="e-expiry-wrap">
-        <label class="fl">Expiry Date</label>
-        <input id="e-expiry" type="date" class="finput">
-      </div>
-      <div style="flex:1;min-width:80px" id="e-dte-wrap">
-        <label class="fl">DTE</label>
-        <input id="e-dte" type="number" class="finput" min="1" max="365" placeholder="21">
-      </div>
-    </div>
-
-    <!-- Strike + Size + Premium -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:120px">
-        <label class="fl" id="e-strike-label">Strike</label>
-        <input id="e-strike" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Size</label>
-        <input id="e-size" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px" id="e-premium-wrap">
-        <label class="fl">Premium (USD)</label>
-        <input id="e-premium" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px" id="e-closecost-wrap">
-        <label class="fl">Close Cost (USD)</label>
-        <input id="e-closecost" type="number" class="finput" min="0" step="any">
-      </div>
-    </div>
-
-    <!-- Notes -->
-    <div>
-      <label class="fl">Notes</label>
-      <input id="e-notes" type="text" class="finput" placeholder="Optional notes" maxlength="200">
-    </div>
-
-    <div id="e-err" style="display:none;color:var(--red);font-family:var(--mono);font-size:.7rem;padding:6px 10px;background:var(--rd);border:1px solid var(--rb);border-radius:6px"></div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-      <button class="btn btn-g" onclick="closeEditModal()">Cancel</button>
-      <button class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700" onclick="saveEdit()">Save Changes</button>
-    </div>
+    <div id="wp-status" class="wp-status">Ready when you are.</div>
   </div>
 </div>
 
-<!-- CHAIN SYNC MODAL -->
-<div class="overlay" id="chain-sync-overlay" style="display:none">
-  <div class="sync-modal" style="max-width:480px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 2px">Chain Sync</h3>
-        <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Pull positions from Rysk &amp; Hypersurface</div>
-      </div>
-      <button onclick="closeChainSyncModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
-    </div>
-
-    <!-- Wallet address input -->
-    <div style="margin-bottom:14px">
-      <label class="fl">Wallet Address</label>
-      <div style="display:flex;gap:8px">
-        <input id="chain-wallet-input" type="text" class="finput" placeholder="0x..." style="flex:1;font-family:var(--mono);font-size:.72rem"
-          oninput="document.getElementById('chain-sync-run-btn').disabled=!this.value.trim().startsWith('0x')">
-        <button id="chain-sync-run-btn" class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700;white-space:nowrap" onclick="runChainSync()" disabled>Sync</button>
-      </div>
-    </div>
-
-    <!-- Status rows -->
-    <div id="chain-sync-status" style="display:none;font-family:var(--mono);font-size:.72rem;line-height:1.9">
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
-        <span style="color:var(--mu)">Rysk</span>
-        <span id="cs-rysk-status" style="color:var(--mu)">—</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
-        <span style="color:var(--mu)">Hypersurface</span>
-        <span id="cs-hsfc-status" style="color:var(--mu)">—</span>
-      </div>
-      <div id="cs-summary" style="padding-top:10px;font-size:.75rem;color:var(--text);display:none"></div>
+<div class="overlay" id="rovl">
+  <div class="modal">
+    <h3>Delete all trades?</h3>
+    <p>This permanently removes everything from your tracker and cannot be undone.</p>
+    <div class="mbtns">
+      <button class="btn btn-g" onclick="closeReset()">Cancel</button>
+      <button class="btn-d" style="padding:7px 16px;font-size:.78rem;border-radius:7px" onclick="doReset()">Yes, delete all</button>
     </div>
   </div>
 </div>

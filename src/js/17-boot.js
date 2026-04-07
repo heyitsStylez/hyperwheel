@@ -1,11 +1,20 @@
-// ── BOOT
+// ── BOOT ──────────────────────────────────────────────
 (function init() {
-  try { trades = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) { trades = []; }
-  // Migrate: ensure all trades have a platform field
-  trades.forEach(t => { if (!t.platform) t.platform = 'RYSK'; });
+  // Load manually-entered HOLDING positions from localStorage
+  try {
+    trades = JSON.parse(localStorage.getItem(HW_HOLDINGS_KEY) || '[]');
+  } catch (e) {
+    trades = [];
+  }
+
   document.getElementById('f-date').value = today();
-  document.getElementById('f-date').addEventListener('change', autoDTE);
-  document.getElementById('f-expiry').addEventListener('change', autoDTE);
-  render();
-  fetchExpiryPrices();
+
+  const wallet = loadWallet();
+  if (!wallet) {
+    showWalletPopup();
+  } else {
+    render();
+    fetchExpiryPrices();
+    autoLoadChain(wallet);
+  }
 })();

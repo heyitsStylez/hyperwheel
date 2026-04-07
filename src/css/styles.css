@@ -264,24 +264,6 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .holding-hint strong{color:var(--orange)}
 .field-hide{opacity:0;pointer-events:none;transition:opacity .2s}
 
-.sync-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:460px;width:92%;transform:translateY(10px);transition:transform .18s}
-.overlay.open .sync-modal{transform:translateY(0)}
-.sync-code-box{flex:1;font-family:var(--mono);font-size:.72rem;background:var(--s2);border:1px solid var(--bd2);padding:9px 12px;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sync-btn-copy{flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:transparent;border:1px solid var(--bd2);color:var(--mu2);padding:8px 12px;cursor:pointer;white-space:nowrap;transition:all .15s}
-.sync-btn-copy:hover{color:var(--text);border-color:var(--mu)}
-.sync-actions{display:flex;gap:8px;margin-bottom:14px}
-.sync-btn-push{flex:1;padding:10px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-.sync-btn-push:hover:not(:disabled){background:var(--gb)}
-.sync-btn-pull{flex:1;padding:10px;border:1px solid var(--bd2);background:var(--s2);color:var(--mu2);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-.sync-btn-pull:hover:not(:disabled){border-color:var(--mu);color:var(--text)}
-.sync-btn-push:disabled,.sync-btn-pull:disabled{opacity:.4;cursor:not-allowed}
-.sync-status{font-size:.78rem;font-family:var(--mono);padding:8px 12px;display:none;margin-bottom:14px}
-.sync-status.ok{background:var(--gd);border:1px solid var(--gb);color:var(--green)}
-.sync-status.err{background:var(--rd);border:1px solid var(--rb);color:var(--red)}
-.sync-pull-preview{display:none;flex-direction:column;gap:10px}
-.sync-code-change{display:none;margin-top:8px;gap:7px}
-.sync-code-input{flex:1;font-family:var(--mono);font-size:.7rem;background:var(--s2);border:1px solid var(--bd2);padding:8px 11px;color:var(--text);outline:none}
-.sync-code-input:focus{border-color:var(--mu)}
 
 /* ── Global shape reset ── */
 *, *::before, *::after { border-radius: 0 !important; }
@@ -309,21 +291,6 @@ body::after {
 ::-webkit-scrollbar-track { background: #05050a; }
 ::-webkit-scrollbar-thumb { background: #2a2a44; }
 
-/* ─── WALLET / RYSK IMPORT ──────────────────────────────── */
-.wallet-card {
-  background: var(--surface);
-  border: 1px solid var(--bd);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 14px;
-}
-/* ─── EDIT TRADE MODAL ──────────────────────────────────── */
-.btn-e {
-  background: transparent; border: 1px solid var(--bd2);
-  color: var(--mu2); border-radius: 4px; padding: 2px 6px;
-  cursor: pointer; font-size: .75rem; line-height: 1;
-}
-.btn-e:hover { color: var(--blue); border-color: var(--blb); background: var(--bld); }
 .btn-qa {
   border-radius: 4px; padding: 2px 7px; cursor: pointer;
   font-size: .65rem; line-height: 1.4; font-family: var(--mono);
@@ -337,65 +304,72 @@ body::after {
 .row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }
 tr:hover .row-actions { opacity:1; pointer-events:all; }
 td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
-.edit-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.72); z-index: 900;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity .18s;
+
+/* ─── WALLET POPUP ────────────────────────────────────── */
+.wallet-popup {
+  background: var(--surface);
+  border: 1px solid var(--bd2);
+  padding: 56px 44px 48px;
+  max-width: 440px;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
 }
-.edit-overlay.open { opacity: 1; pointer-events: all; }
-.edit-modal {
-  background: var(--surface); border: 1px solid var(--bd2);
-  border-radius: 16px; padding: 22px 24px;
-  width: min(480px, 92vw); max-height: 88vh; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 14px;
+.wp-logo {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: var(--text);
+  text-transform: uppercase;
 }
-.edit-modal h3 {
-  font-family: var(--sans); font-size: .92rem; font-weight: 700;
-  color: var(--text); margin: 0;
+.wp-sub {
+  font-size: .72rem;
+  color: var(--mu2);
+  font-family: var(--mono);
+  line-height: 1.7;
+  max-width: 320px;
 }
-.edit-modal-hd {
-  display: flex; align-items: center; justify-content: space-between;
+.wp-row {
+  display: flex;
+  width: 100%;
+  gap: 0;
 }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+.wp-input {
+  flex: 1;
+  background: var(--s2);
+  border: 1px solid var(--bd2);
+  border-right: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .72rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .15s;
+  min-width: 0;
 }
-.edit-field { display: flex; flex-direction: column; gap: 4px; }
-.edit-field.full { grid-column: 1 / -1; }
-.edit-field label {
-  font-family: var(--mono); font-size: .63rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .8px; color: var(--mu);
-}
-.edit-input {
-  font-family: var(--mono); font-size: .75rem;
-  background: var(--s2); border: 1px solid var(--bd2);
-  border-radius: 7px; padding: 7px 10px; color: var(--text);
-}
-.edit-input:focus { outline: none; border-color: var(--green); }
-.edit-select {
-  font-family: var(--mono); font-size: .75rem;
-  background: var(--s2); border: 1px solid var(--bd2);
-  border-radius: 7px; padding: 7px 10px; color: var(--text);
+.wp-input:focus { border-color: var(--green); }
+.wp-btn {
+  font-family: var(--mono);
+  font-size: .78rem;
+  font-weight: 700;
+  background: var(--green);
+  color: var(--bg);
+  border: none;
+  padding: 10px 22px;
   cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity .15s;
+  flex-shrink: 0;
 }
-.edit-actions {
-  display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px;
-}
-.edit-save-btn {
-  font-family: var(--sans); font-size: .75rem; font-weight: 700;
-  background: var(--green); color: var(--bg);
-  border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer;
-}
-.edit-cancel-btn {
-  font-family: var(--sans); font-size: .75rem; font-weight: 700;
-  background: transparent; border: 1px solid var(--bd2); color: var(--mu2);
-  border-radius: 8px; padding: 8px 14px; cursor: pointer;
-}
-.edit-cancel-btn:hover { color: var(--text); border-color: var(--mu); }
-.edit-err {
-  font-family: var(--mono); font-size: .68rem; color: var(--red);
-  background: var(--rd); border: 1px solid var(--rb);
-  border-radius: 6px; padding: 6px 10px; display: none;
+.wp-btn:disabled { opacity: .3; cursor: not-allowed; }
+.wp-status {
+  font-size: .62rem;
+  font-family: var(--mono);
+  color: var(--mu);
+  letter-spacing: .5px;
 }
 
 /* ─── CUMULATIVE P&L HERO ───────────────────────────────────── */
