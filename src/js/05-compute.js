@@ -13,7 +13,8 @@ function compute(assetFilter) {
   const lots = {};     // per-asset array of lot objects
 
   assets.forEach(a => {
-    const assetTrades = trades.filter(t => t.asset === a);
+    const assetTrades = trades.filter(t => t.asset === a)
+      .sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id);
     let portfolioPnl = 0;      // tracks full P&L inc. assignment debits
     let portfolioPremiums = 0; // total premiums (puts + calls) for asset
     let putOnlyPnl = 0;        // running premiums from non-assigned PUTs only
