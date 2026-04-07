@@ -287,13 +287,18 @@ function rCharts(displayRows) {
     let totalPrem = 0, totalCount = 0;
     let otmPrem = 0, otmCount = 0;
     let itmPrem = 0, itmCount = 0;
+    let openPrem = 0, openCount = 0;
     let assignedNotional = 0;
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
       totalPrem += net;
       totalCount++;
-      if (r.outcome === 'OPEN') return; // premium collected but not yet settled — skip OTM/ITM buckets
+      if (r.outcome === 'OPEN') {
+        openPrem += net;
+        openCount++;
+        return;
+      }
       if (r.outcome === 'EXPIRED') {
         otmPrem += net;
         otmCount++;
@@ -305,7 +310,7 @@ function rCharts(displayRows) {
     });
     const settled = otmCount + itmCount;
     const returnRate = settled > 0 ? otmCount / settled * 100 : null;
-    return { totalPrem, totalCount, otmPrem, otmCount, itmPrem, itmCount, assignedNotional, returnRate, settled };
+    return { totalPrem, totalCount, otmPrem, otmCount, itmPrem, itmCount, openPrem, openCount, assignedNotional, returnRate, settled };
   }
 
   const pos = n => n === 1 ? '1 position' : n + ' positions';
@@ -330,7 +335,7 @@ function rCharts(displayRows) {
     el.innerHTML = [
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
-        s.totalCount > 0 ? pos(s.totalCount) : ''),
+        s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
       card('Premium Expired OTM',
         s.otmCount > 0 ? '$' + fmt(s.otmPrem) : dash,
         s.otmCount > 0 ? pos(s.otmCount) : ''),
