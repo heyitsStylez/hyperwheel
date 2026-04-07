@@ -102,6 +102,7 @@ function _openRow(r) {
     + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td class="td-act"><div class="row-actions">' + actions
+      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -126,6 +127,7 @@ function _histRow(r) {
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">'
+      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
