@@ -13,6 +13,8 @@
   if (!wallet) {
     showWalletPopup();
   } else {
+    const fw = document.getElementById('footer-wallet');
+    if (fw && wallet) fw.textContent = wallet.slice(0,6) + '...' + wallet.slice(-4);
     render();
     fetchExpiryPrices();
     autoLoadChain(wallet);

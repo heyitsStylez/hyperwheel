@@ -17,15 +17,15 @@
 
 <header class="header">
   <div class="hl">
-    <div class="hlogo">&#9881;</div>
+    <span class="hlogo-mark">//</span>
     <div>
-      <div class="htitle" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3.5px">HyperWheel</div>
-      <div class="hsub">v1.0.8</div>
+      <div class="htitle">HyperWheel<span class="title-cursor"></span></div>
+      <div class="hsub">WHEEL STRATEGY TRACKER</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
-    <button class="btn btn-g" style="font-size:.65rem" onclick="showWalletPopup()">&#9679; Wallet</button>
-    <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Existing Assets</button>
+    <button class="btn btn-g" style="font-size:.65rem" onclick="showWalletPopup()">[ WALLET ]</button>
+    <button class="btn btn-p" onclick="openTradeDrawer()">[ + ADD ASSET ]</button>
     <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
   </div>
 </header>
@@ -161,6 +161,17 @@
 
 </div><!-- end content-col -->
 
+<div class="footer-bar" id="footer-bar">
+  <span class="footer-live">LIVE</span>
+  <span class="footer-sep">·</span>
+  <span id="footer-wallet">—</span>
+  <span class="footer-sep">·</span>
+  <span>RYSK + HYPERSURFACE</span>
+  <span class="footer-sep">·</span>
+  <span id="footer-sync-time">—</span>
+  <span class="footer-sep">·</span>
+  <span>v1.0.8</span>
+</div>
 
 </main>
 
