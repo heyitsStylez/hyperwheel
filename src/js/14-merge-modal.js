@@ -79,7 +79,6 @@ function confirmMerge() {
   // Update the kept trade to have merged values
   keepTrade.strike = avgCost;
   keepTrade.size = totalSize;
-  keepTrade.notes = 'Merged from ' + openLots.length + ' lots';
 
   // Reassign all CALL trades from other lots to have no explicit lotNum
   // (they'll naturally attach to the single remaining lot via compute)

@@ -272,24 +272,6 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .holding-hint strong{color:var(--orange)}
 .field-hide{opacity:0;pointer-events:none;transition:opacity .2s}
 
-.sync-modal{background:var(--surface);border:1px solid var(--bd2);border-radius:14px;padding:26px;max-width:460px;width:92%;transform:translateY(10px);transition:transform .18s}
-.overlay.open .sync-modal{transform:translateY(0)}
-.sync-code-box{flex:1;font-family:var(--mono);font-size:.72rem;background:var(--s2);border:1px solid var(--bd2);padding:9px 12px;color:var(--text);letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sync-btn-copy{flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:transparent;border:1px solid var(--bd2);color:var(--mu2);padding:8px 12px;cursor:pointer;white-space:nowrap;transition:all .15s}
-.sync-btn-copy:hover{color:var(--text);border-color:var(--mu)}
-.sync-actions{display:flex;gap:8px;margin-bottom:14px}
-.sync-btn-push{flex:1;padding:10px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-.sync-btn-push:hover:not(:disabled){background:var(--gb)}
-.sync-btn-pull{flex:1;padding:10px;border:1px solid var(--bd2);background:var(--s2);color:var(--mu2);font-family:var(--sans);font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-.sync-btn-pull:hover:not(:disabled){border-color:var(--mu);color:var(--text)}
-.sync-btn-push:disabled,.sync-btn-pull:disabled{opacity:.4;cursor:not-allowed}
-.sync-status{font-size:.78rem;font-family:var(--mono);padding:8px 12px;display:none;margin-bottom:14px}
-.sync-status.ok{background:var(--gd);border:1px solid var(--gb);color:var(--green)}
-.sync-status.err{background:var(--rd);border:1px solid var(--rb);color:var(--red)}
-.sync-pull-preview{display:none;flex-direction:column;gap:10px}
-.sync-code-change{display:none;margin-top:8px;gap:7px}
-.sync-code-input{flex:1;font-family:var(--mono);font-size:.7rem;background:var(--s2);border:1px solid var(--bd2);padding:8px 11px;color:var(--text);outline:none}
-.sync-code-input:focus{border-color:var(--mu)}
 
 /* ── Global shape reset ── */
 *, *::before, *::after { border-radius: 0 !important; }
@@ -317,21 +299,6 @@ body::after {
 ::-webkit-scrollbar-track { background: #05050a; }
 ::-webkit-scrollbar-thumb { background: #2a2a44; }
 
-/* ─── WALLET / RYSK IMPORT ──────────────────────────────── */
-.wallet-card {
-  background: var(--surface);
-  border: 1px solid var(--bd);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 14px;
-}
-/* ─── EDIT TRADE MODAL ──────────────────────────────────── */
-.btn-e {
-  background: transparent; border: 1px solid var(--bd2);
-  color: var(--mu2); border-radius: 4px; padding: 2px 6px;
-  cursor: pointer; font-size: .75rem; line-height: 1;
-}
-.btn-e:hover { color: var(--blue); border-color: var(--blb); background: var(--bld); }
 .btn-qa {
   border-radius: 4px; padding: 2px 7px; cursor: pointer;
   font-size: .65rem; line-height: 1.4; font-family: var(--mono);
@@ -345,65 +312,72 @@ body::after {
 .row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }
 tr:hover .row-actions { opacity:1; pointer-events:all; }
 td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
-.edit-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.72); z-index: 900;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity .18s;
+
+/* ─── WALLET POPUP ────────────────────────────────────── */
+.wallet-popup {
+  background: var(--surface);
+  border: 1px solid var(--bd2);
+  padding: 56px 44px 48px;
+  max-width: 440px;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
 }
-.edit-overlay.open { opacity: 1; pointer-events: all; }
-.edit-modal {
-  background: var(--surface); border: 1px solid var(--bd2);
-  border-radius: 16px; padding: 22px 24px;
-  width: min(480px, 92vw); max-height: 88vh; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 14px;
+.wp-logo {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: var(--text);
+  text-transform: uppercase;
 }
-.edit-modal h3 {
-  font-family: var(--sans); font-size: .92rem; font-weight: 700;
-  color: var(--text); margin: 0;
+.wp-sub {
+  font-size: .72rem;
+  color: var(--mu2);
+  font-family: var(--mono);
+  line-height: 1.7;
+  max-width: 320px;
 }
-.edit-modal-hd {
-  display: flex; align-items: center; justify-content: space-between;
+.wp-row {
+  display: flex;
+  width: 100%;
+  gap: 0;
 }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+.wp-input {
+  flex: 1;
+  background: var(--s2);
+  border: 1px solid var(--bd2);
+  border-right: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .72rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color .15s;
+  min-width: 0;
 }
-.edit-field { display: flex; flex-direction: column; gap: 4px; }
-.edit-field.full { grid-column: 1 / -1; }
-.edit-field label {
-  font-family: var(--mono); font-size: .63rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .8px; color: var(--mu);
-}
-.edit-input {
-  font-family: var(--mono); font-size: .75rem;
-  background: var(--s2); border: 1px solid var(--bd2);
-  border-radius: 7px; padding: 7px 10px; color: var(--text);
-}
-.edit-input:focus { outline: none; border-color: var(--green); }
-.edit-select {
-  font-family: var(--mono); font-size: .75rem;
-  background: var(--s2); border: 1px solid var(--bd2);
-  border-radius: 7px; padding: 7px 10px; color: var(--text);
+.wp-input:focus { border-color: var(--green); }
+.wp-btn {
+  font-family: var(--mono);
+  font-size: .78rem;
+  font-weight: 700;
+  background: var(--green);
+  color: var(--bg);
+  border: none;
+  padding: 10px 22px;
   cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity .15s;
+  flex-shrink: 0;
 }
-.edit-actions {
-  display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px;
-}
-.edit-save-btn {
-  font-family: var(--sans); font-size: .75rem; font-weight: 700;
-  background: var(--green); color: var(--bg);
-  border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer;
-}
-.edit-cancel-btn {
-  font-family: var(--sans); font-size: .75rem; font-weight: 700;
-  background: transparent; border: 1px solid var(--bd2); color: var(--mu2);
-  border-radius: 8px; padding: 8px 14px; cursor: pointer;
-}
-.edit-cancel-btn:hover { color: var(--text); border-color: var(--mu); }
-.edit-err {
-  font-family: var(--mono); font-size: .68rem; color: var(--red);
-  background: var(--rd); border: 1px solid var(--rb);
-  border-radius: 6px; padding: 6px 10px; display: none;
+.wp-btn:disabled { opacity: .3; cursor: not-allowed; }
+.wp-status {
+  font-size: .62rem;
+  font-family: var(--mono);
+  color: var(--mu);
+  letter-spacing: .5px;
 }
 
 /* ─── CUMULATIVE P&L HERO ───────────────────────────────────── */
@@ -542,10 +516,8 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
-    <span id="auto-sync-status" style="font-size:.68rem;font-family:var(--mono);color:var(--mu)"></span>
-    <button class="btn btn-g" onclick="openChainSyncModal()">&#128279; Chain Sync</button>
-    <button class="btn btn-g" onclick="showSync()">&#9729; Cloud Sync</button>
-    <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Trade</button>
+    <button class="btn btn-g" style="font-size:.65rem" onclick="showWalletPopup()">&#9679; Wallet</button>
+    <button class="btn btn-p" onclick="openTradeDrawer()">+ Add Existing Assets</button>
     <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
   </div>
 </header>
@@ -621,7 +593,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <div class="drawer-overlay" id="trade-drawer-overlay" onclick="closeTradeDrawer()"></div>
   <div id="trade-drawer">
     <div class="drawer-hd">
-      <div class="sec-ttl"><span class="dot dp"></span>Log New Trade</div>
+      <div class="sec-ttl"><span class="dot dp"></span>Add Existing Assets</div>
       <button class="drawer-close" onclick="closeTradeDrawer()">&#10005; Close</button>
     </div>
     <div class="fi">
@@ -635,76 +607,26 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
           <button class="tb" id="ab-SOL"  onclick="setAsset('SOL')"  style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9679; SOL</button>
         </div>
       </div>
-      <!-- Platform -->
-      <div class="field fi-full" id="field-platform">
-        <label>Platform</label>
-        <div class="tg">
-          <button class="tb te active" id="tog-RYSK" onclick="setPlatform('RYSK')">RYSK</button>
-          <button class="tb tc" id="tog-HSFC" onclick="setPlatform('HSFC')">HSFC</button>
-        </div>
-      </div>
-      <!-- Type -->
-      <div class="field fi-full">
-        <label>Trade Type</label>
-        <div class="tg">
-          <button class="tb tp active" id="tog-PUT" onclick="setType('PUT')">PUT</button>
-          <button class="tb tc" id="tog-CALL" onclick="setType('CALL')">CALL</button>
-          <button class="tb th" id="tog-HOLDING" onclick="setType('HOLDING')" style="font-size:.65rem">&#9632; HOLDING</button>
-        </div>
-      </div>
       <!-- Open date -->
-      <div class="field"><label>Open Date</label><div class="date-wrap"><input type="date" id="f-date"><button type="button" class="cal-btn" onclick="document.getElementById('f-date').showPicker()" title="Pick date">&#128197;</button></div></div>
-      <!-- Expiry -->
-      <div class="field" id="field-expiry"><label>Expiry Date</label><div class="date-wrap"><input type="date" id="f-expiry"><button type="button" class="cal-btn" onclick="document.getElementById('f-expiry').showPicker()" title="Pick date">&#128197;</button></div></div>
-      <!-- DTE -->
-      <div class="field" id="field-dte"><label>DTE (auto)</label><input type="number" id="f-dte" placeholder="&mdash;" readonly style="color:var(--mu2)"></div>
+      <div class="field"><label>Purchase Date</label><div class="date-wrap"><input type="date" id="f-date"><button type="button" class="cal-btn" onclick="document.getElementById('f-date').showPicker()" title="Pick date">&#128197;</button></div></div>
     </div>
 
-    <!-- Lot picker — only shown when type=CALL and 2+ lots are open for the selected asset -->
-    <div id="field-lot-row" style="display:none;padding:0 20px 10px">
-      <div class="field">
-        <label>Assign Call to Lot</label>
-        <select id="f-lot" onchange="autoFillFromLot()"></select>
-      </div>
-    </div>
-
-    <div class="holding-hint" id="holding-hint">
-      <strong>Spot / Manual Entry</strong> &mdash; Use this to log assets you already hold from spot purchases.<br>
-      Enter your <strong>cost basis</strong> (what you paid per token) under Cost Basis, your <strong>quantity</strong> as Size.<br>
-      The tracker will treat this as an open position so you can start selling covered calls against it immediately.
+    <div class="holding-hint" id="holding-hint" style="display:block">
+      <strong>Spot / Manual Entry</strong> &mdash; Log assets you already hold from spot purchases.<br>
+      Enter your <strong>cost basis</strong> (what you paid per token) under Cost Basis / Token, your <strong>quantity</strong> as Size.<br>
+      The tracker will treat this as an open position so you can track your holdings.
     </div>
     <div class="fb">
-      <div class="field"><label id="f-strike-lbl">Strike ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
+      <div class="field"><label id="f-strike-lbl">Cost Basis / Token ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
       <div class="field" id="field-size-wrap">
-        <label>Size
-          <span id="field-size-unit-toggle" style="display:none;margin-left:8px">
-            <button class="tb active" id="szu-contracts" onclick="setSizeUnit('contracts')" style="font-size:.55rem;padding:2px 7px">Contracts</button>
-            <button class="tb" id="szu-usdc" onclick="setSizeUnit('usdc')" style="font-size:.55rem;padding:2px 7px">USDC</button>
-          </span>
-        </label>
+        <label>Size</label>
         <input type="number" id="f-size" value="0.05" step="0.01">
         <span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span>
       </div>
-      <div class="field" id="field-premium"><label>Premium (USDC)</label><input type="number" id="f-prem" placeholder="185" step="1"></div>
-      <div class="field fi-full" id="field-outcome">
-        <label>Outcome</label>
-        <div class="tg">
-          <button class="tb to active" id="tog-OPEN" onclick="setOut('OPEN')">Open</button>
-          <button class="tb te" id="tog-EXPIRED" onclick="setOut('EXPIRED')">Expired</button>
-          <button class="tb ta" id="tog-ASSIGNED" onclick="setOut('ASSIGNED')">Assigned</button>
-          <button class="tb tk" id="tog-CALLED" onclick="setOut('CALLED')">Called</button>
-          <button class="tb tc" id="tog-CLOSED" onclick="setOut('CLOSED')">Closed</button>
-        </div>
-      </div>
-      <div class="field" id="field-closecost" style="display:none">
-        <label>Close Cost (USD)</label>
-        <input type="number" id="f-closecost" placeholder="0" step="1" min="0">
-        <span style="font-size:.62rem;color:var(--mu);font-family:var(--mono);margin-top:2px">cost to buy back position</span>
-      </div>
     </div>
     <div style="padding:0 20px 20px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
-      <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="e.g. ETH at $3,200, starting with covered calls on held ETH"></div>
-      <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add Trade &rarr;</button>
+      <div></div>
+      <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add &rarr;</button>
     </div>
     <div class="ferr" id="ferr"></div>
   </div><!-- end trade-drawer -->
@@ -735,61 +657,6 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 </main>
 
 
-<!-- CLOUD SYNC MODAL -->
-<div class="overlay" id="sync-overlay">
-  <div class="sync-modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div>
-        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 4px">Cloud Sync</h3>
-        <div id="sync-last-pushed" style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Never synced</div>
-      </div>
-      <button onclick="closeSync()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
-    </div>
-
-    <!-- Sync code -->
-    <div style="margin-bottom:16px">
-      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Your Sync Code</div>
-      <div style="display:flex;gap:7px;align-items:center">
-        <div class="sync-code-box" id="sync-code-display"></div>
-        <button class="sync-btn-copy" id="sync-copy-btn" onclick="copySyncCode()">Copy</button>
-      </div>
-      <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:6px">
-        Copy this code to any other browser to sync your data.
-        <button onclick="toggleSyncCodeChange()" style="background:none;border:none;color:var(--blue);font-size:.65rem;font-family:var(--mono);cursor:pointer;padding:0 0 0 6px;text-decoration:underline">Use a different code</button>
-      </div>
-      <div class="sync-code-change" id="sync-code-change">
-        <input class="sync-code-input" id="sync-code-input" type="text" placeholder="Paste sync code from another browser">
-        <button onclick="applySyncCode()" style="flex-shrink:0;font-family:var(--sans);font-size:.72rem;font-weight:700;background:var(--green);color:var(--bg);border:none;padding:8px 14px;cursor:pointer">Apply</button>
-      </div>
-    </div>
-
-    <!-- Push / Pull -->
-    <div class="sync-actions">
-      <button class="sync-btn-push" id="sync-push-btn" onclick="syncPush()">&#8593; Push to Cloud</button>
-      <button class="sync-btn-pull" id="sync-pull-btn" onclick="syncPull()">&#8595; Pull from Cloud</button>
-    </div>
-
-    <!-- Status -->
-    <div class="sync-status" id="sync-status"></div>
-
-    <!-- Pull preview -->
-    <div class="sync-pull-preview" id="sync-pull-preview">
-      <div id="sync-pull-info" style="background:var(--s2);border:1px solid var(--bd2);padding:12px 14px;font-size:.75rem;color:var(--text);font-family:var(--mono);line-height:1.7"></div>
-      <div style="display:flex;gap:8px">
-        <button onclick="doCloudImport('merge')" style="flex:1;padding:9px;border:1px solid var(--gb);background:var(--gd);color:var(--green);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#43; Merge with existing</button>
-        <button onclick="doCloudImport('replace')" style="flex:1;padding:9px;border:1px solid var(--bd2);background:transparent;color:var(--mu2);font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer">&#8635; Replace all</button>
-      </div>
-      <div style="font-size:.7rem;color:var(--mu);font-family:var(--mono)">
-        <strong style="color:var(--mu2)">Merge:</strong> adds cloud trades, skips duplicates by ID.<br>
-        <strong style="color:var(--mu2)">Replace:</strong> deletes all current trades, loads from cloud.
-      </div>
-    </div>
-
-    <div style="font-size:.67rem;color:var(--mu);font-family:var(--mono);border-top:1px solid var(--bd);padding-top:12px;margin-top:4px;line-height:1.7">
-      Data is stored in the cloud under your sync code. Anyone with your code can access your data, so keep it private.
-    </div>
-  </div>
-</div>
 
 <div class="overlay" id="rovl">
   <div class="modal">
@@ -803,7 +670,10 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 </div>
 
 <script>
-const KEY = 'rysk_wheel_v4';
+const HW_WALLET_KEY   = 'hw_wallet';
+const HW_HOLDINGS_KEY = 'hw_holdings';
+const HW_SYNCED_KEY   = 'hw_synced_v1';
+
 let trades = [];
 let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts', sPpnlTab = 'total', sCpnlPeriod = 'ALL';
 let livePrices = {};
@@ -811,29 +681,22 @@ let livePrices = {};
 const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
 const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9945ff' };
 
-// Cloud sync state
-const SYNC_CODE_KEY = 'rysk_sync_code_v1';
-const SYNC_LAST_KEY = 'rysk_sync_last_v1';
-let cloudPullData = null;
-let syncCodeChangeVisible = false;
-
-// Edit modal state
-let editingId = null;
-
 // Merge modal state
 let mergeAsset = null;
 
-// Auto sync state
-let autoSyncTimer = null;
-
-// Chain sync state
-const WALLET_KEY = 'rysk_wallet_v1';
-const SYNCED_KEY = 'rysk_synced_v1';
-
 function today() { return new Date().toISOString().split('T')[0]; }
-function save()  { localStorage.setItem(KEY, JSON.stringify(trades)); scheduleAutoSync(); }
+function save() {
+  const holdings = trades.filter(t => t.type === 'HOLDING');
+  localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(holdings));
+}
 function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
 function sk(v)   { return Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/,'')+'K' : fmt(v); }
+function loadWallet() {
+  return localStorage.getItem(HW_WALLET_KEY) || '';
+}
+function saveWallet(addr) {
+  localStorage.setItem(HW_WALLET_KEY, addr);
+}
 
 // ── FORM CONTROLS
 function setAsset(a) {
@@ -1030,32 +893,13 @@ function addTrade() {
   const errEl = document.getElementById('ferr');
   errEl.style.display = 'none';
   const g = id => document.getElementById(id).value;
-  const date = g('f-date'), expiry = g('f-expiry');
+  const date = g('f-date');
   const strike = parseFloat(g('f-strike')), size = parseFloat(g('f-size'));
-  const prem = parseFloat(g('f-prem')), dte = parseInt(g('f-dte'));
-  const notes = g('f-notes').trim();
   function err(m) { errEl.textContent = '⚠ ' + m; errEl.style.display = 'block'; }
-  if (!date)   return err('Open date required.');
-  if (sType !== 'HOLDING' && !expiry) return err('Expiry date required.');
-  if (!strike || strike <= 0) return err(sType === 'HOLDING' ? 'Cost basis required.' : 'Strike price required.');
+  if (!date)   return err('Purchase date required.');
+  if (!strike || strike <= 0) return err('Cost basis required.');
   if (!size || size <= 0)     return err('Size required.');
-  if (sPlatform === 'RYSK' && size < MIN_SIZE[sAsset]) return err('Minimum size for ' + sAsset + ' is ' + MIN_SIZE[sAsset] + '.');
-  if (sType !== 'HOLDING' && (isNaN(prem) || prem < 0)) return err('Premium required (enter 0 if none).');
-  const lotRow = document.getElementById('field-lot-row');
-  const lotNumVal = (sType === 'CALL' && lotRow && lotRow.style.display !== 'none')
-    ? (parseInt(document.getElementById('f-lot').value) || null)
-    : null;
-  const closeCost = parseFloat(document.getElementById('f-closecost').value) || 0;
-  if (sOut === 'CLOSED' && closeCost < 0) return err('Close cost cannot be negative.');
-  // If size was entered in USDC, convert to token count
-  let finalSize = size;
-  if (sSizeUnit === 'usdc') {
-    if (!strike || strike <= 0) return err('Strike required to convert USDC size to token count.');
-    finalSize = size / strike;
-  }
-  const tradeObj = { id: Date.now(), asset: sAsset, type: sType, date, expiry, dte: isNaN(dte)?null:dte, strike, size: finalSize, premium: prem, outcome: sOut, notes, platform: sPlatform };
-  if (sOut === 'CLOSED') tradeObj.closeCost = closeCost;
-  if (lotNumVal !== null) tradeObj.lotNum = lotNumVal;
+  const tradeObj = { id: Date.now(), asset: sAsset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', platform: 'SPOT' };
   trades.push(tradeObj);
   save(); render(); clearForm();
   closeTradeDrawer();
@@ -1063,19 +907,9 @@ function addTrade() {
 }
 
 function clearForm() {
-  ['f-expiry','f-strike','f-notes','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('f-prem').value = '';
-  document.getElementById('f-prem').style.opacity = '1';
-  document.getElementById('f-prem').readOnly = false;
+  ['f-strike','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('f-size').value = MIN_SIZE[sAsset];
-  setOut('OPEN');
-  // Reset to PUT if was on HOLDING
-  if (sType === 'HOLDING') setType('PUT');
   document.getElementById('ferr').style.display = 'none';
-  const hint = document.getElementById('holding-hint');
-  if (hint) hint.style.display = 'none';
-  const ccField = document.getElementById('field-closecost');
-  if (ccField) ccField.style.display = 'none';
 }
 
 function deleteTrade(id) { trades = trades.filter(t => t.id !== id); save(); render(); }
@@ -1445,11 +1279,9 @@ function rTable(displayRows, streams, lots) {
       else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
     }
     const platBadge = isHoldingRow ? '<span class="mu" style="font-size:.65rem">&mdash;</span>' : (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-    const notesTitle = r.notes ? ` title="${r.notes.replace(/"/g,'&quot;')}"` : '';
-    const notesIcon = r.notes ? ' <span style="color:var(--mu);font-size:.65rem;cursor:default" title="' + r.notes.replace(/"/g,'&quot;') + '">&#128196;</span>' : '';
     const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
-    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}${notesTitle}>
-      <td><span class="badge ${assetCls}">${r.asset}</span>${notesIcon}</td>
+    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}>
+      <td><span class="badge ${assetCls}">${r.asset}</span></td>
       <td>${platBadge}</td>
       <td class="mu" style="font-size:.72rem">${r.lotNum ? 'L'+r.lotNum : '&mdash;'}</td>
       <td>${r.date}</td>
@@ -1466,7 +1298,7 @@ function rTable(displayRows, streams, lots) {
       <td class="td-act"><div class="row-actions">${
         (r.outcome === 'OPEN' && r.type === 'CALL') ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-cal" onclick="quickOutcome(${r.id},'CALLED')" title="Mark called away">Called ↑</button>` :
         (r.outcome === 'OPEN' && r.type === 'PUT')  ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-asg" onclick="quickOutcome(${r.id},'ASSIGNED')" title="Mark assigned">Asgn ↓</button>` : ''
-      }<button class="btn-e" onclick="openEditModal(${r.id})" title="Edit">&#9998;</button><button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
+      }<button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
     </tr>`;
   });
 
@@ -1914,364 +1746,38 @@ function closeReset() { document.getElementById('rovl').classList.remove('open')
 function doReset()    { trades = []; save(); render(); closeReset(); }
 document.getElementById('rovl').addEventListener('click', function(e) { if(e.target===this) closeReset(); });
 
-// ═══════════════════════════════════════════════════════════
-// CLOUD SYNC
-// ═══════════════════════════════════════════════════════════
-
-function getSyncCode() {
-  let code = localStorage.getItem(SYNC_CODE_KEY);
-  if (!code) {
-    code = crypto.randomUUID();
-    localStorage.setItem(SYNC_CODE_KEY, code);
-  }
-  return code;
-}
-
-function showSync() {
-  const code = getSyncCode();
-  document.getElementById('sync-code-display').textContent = code;
-  const lastPushed = localStorage.getItem(SYNC_LAST_KEY);
-  document.getElementById('sync-last-pushed').textContent = lastPushed
-    ? 'Last pushed: ' + new Date(lastPushed).toUTCString()
-    : 'Never synced';
-  cloudPullData = null;
-  syncCodeChangeVisible = false;
-  document.getElementById('sync-pull-preview').style.display = 'none';
-  document.getElementById('sync-status').style.display = 'none';
-  document.getElementById('sync-code-change').style.display = 'none';
-  document.getElementById('sync-overlay').classList.add('open');
-}
-
-function closeSync() {
-  document.getElementById('sync-overlay').classList.remove('open');
-}
-
-function copySyncCode() {
-  const code = document.getElementById('sync-code-display').textContent;
-  navigator.clipboard.writeText(code).then(function() {
-    const btn = document.getElementById('sync-copy-btn');
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.style.color = 'var(--green)';
-    btn.style.borderColor = 'var(--gb)';
-    setTimeout(function() {
-      btn.textContent = orig;
-      btn.style.color = '';
-      btn.style.borderColor = '';
-    }, 1800);
-  });
-}
-
-function toggleSyncCodeChange() {
-  syncCodeChangeVisible = !syncCodeChangeVisible;
-  const el = document.getElementById('sync-code-change');
-  el.style.display = syncCodeChangeVisible ? 'flex' : 'none';
-  if (syncCodeChangeVisible) document.getElementById('sync-code-input').focus();
-}
-
-function applySyncCode() {
-  const input = document.getElementById('sync-code-input').value.trim().toLowerCase();
-  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-  if (!uuidRe.test(input)) {
-    setSyncMsg('Invalid code — must be a UUID like xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'err');
-    return;
-  }
-  localStorage.setItem(SYNC_CODE_KEY, input);
-  document.getElementById('sync-code-display').textContent = input;
-  document.getElementById('sync-code-input').value = '';
-  document.getElementById('sync-code-change').style.display = 'none';
-  syncCodeChangeVisible = false;
-  setSyncMsg('Sync code updated. Pull from cloud to load your trades.', 'ok');
-}
-
-async function syncPush() {
-  const code = getSyncCode();
-  const btn = document.getElementById('sync-push-btn');
-  btn.disabled = true;
-  btn.textContent = 'Pushing...';
-  setSyncMsg('', '');
-  cloudPullData = null;
-  document.getElementById('sync-pull-preview').style.display = 'none';
-  try {
-    const payload = {
-      version: 1,
-      app: 'hyperwheel-tracker',
-      exported: new Date().toISOString(),
-      tradeCount: trades.length,
-      trades: trades
-    };
-    const res = await fetch('/api/sync?code=' + code, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Push failed');
-    const now = new Date().toISOString();
-    localStorage.setItem(SYNC_LAST_KEY, now);
-    document.getElementById('sync-last-pushed').textContent = 'Last pushed: ' + new Date(now).toUTCString();
-    setSyncMsg('Pushed ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' to cloud.', 'ok');
-  } catch(e) {
-    setSyncMsg('Push failed: ' + e.message, 'err');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '\u2191 Push to Cloud';
-  }
-}
-
-async function syncPull() {
-  const code = getSyncCode();
-  const btn = document.getElementById('sync-pull-btn');
-  btn.disabled = true;
-  btn.textContent = 'Pulling...';
-  setSyncMsg('', '');
-  cloudPullData = null;
-  document.getElementById('sync-pull-preview').style.display = 'none';
-  try {
-    const res = await fetch('/api/sync?code=' + code);
-    if (res.status === 404) {
-      setSyncMsg('No data found in cloud for this sync code. Push first from another browser.', 'err');
-      return;
-    }
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'Pull failed');
-    }
-    const data = await res.json();
-    const importedTrades = Array.isArray(data) ? data : (data.trades || []);
-    if (!Array.isArray(importedTrades) || importedTrades.length === 0) {
-      setSyncMsg('Cloud data is empty.', 'err');
-      return;
-    }
-    cloudPullData = importedTrades;
-    const existingIds = new Set(trades.map(function(t) { return t.id; }));
-    const newCount = importedTrades.filter(function(t) { return !existingIds.has(t.id); }).length;
-    const dupCount = importedTrades.length - newCount;
-    document.getElementById('sync-pull-info').innerHTML =
-      '<strong style="color:var(--text)">' + importedTrades.length + ' trades in cloud</strong><br>' +
-      '<span style="color:var(--green)">' + newCount + ' new</span>' +
-      ' &nbsp;|&nbsp; <span style="color:var(--mu2)">' + dupCount + ' already in tracker</span><br>' +
-      '<span style="color:var(--mu)">Currently in tracker: ' + trades.length + '</span>';
-    document.getElementById('sync-pull-preview').style.display = 'flex';
-  } catch(e) {
-    setSyncMsg('Pull failed: ' + e.message, 'err');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '\u2193 Pull from Cloud';
-  }
-}
-
-function doCloudImport(mode) {
-  if (!cloudPullData) return;
-  if (mode === 'replace') {
-    trades = cloudPullData;
-    setSyncMsg('Replaced all trades. ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + ' loaded from cloud.', 'ok');
-  } else {
-    const existingIds = new Set(trades.map(function(t) { return t.id; }));
-    const toAdd = cloudPullData.filter(function(t) { return !existingIds.has(t.id); });
-    trades = trades.concat(toAdd);
-    trades.sort(function(a, b) { return a.date.localeCompare(b.date) || a.id - b.id; });
-    setSyncMsg('Merged ' + toAdd.length + ' new trade' + (toAdd.length !== 1 ? 's' : '') + '. ' + (cloudPullData.length - toAdd.length) + ' duplicate(s) skipped.', 'ok');
-  }
-  save();
-  render();
-  cloudPullData = null;
-  document.getElementById('sync-pull-preview').style.display = 'none';
-}
-
-function setSyncMsg(msg, type) {
-  const el = document.getElementById('sync-status');
-  if (!msg) { el.style.display = 'none'; return; }
-  el.textContent = msg;
-  el.className = 'sync-status ' + type;
-  el.style.display = 'block';
-}
-
-document.getElementById('sync-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeSync();
-});
-
-// ═══════════════════════════════════════════════════════════
-// AUTO SYNC
-// ═══════════════════════════════════════════════════════════
-
-function scheduleAutoSync() {
-  if (!localStorage.getItem(SYNC_LAST_KEY)) return;
-  clearTimeout(autoSyncTimer);
-  autoSyncTimer = setTimeout(autoSyncPush, 2000);
-}
-
-async function autoSyncPush() {
-  const code = localStorage.getItem(SYNC_CODE_KEY);
-  if (!code) return;
-  setAutoSyncStatus('syncing');
-  try {
-    const payload = {
-      version: 1, app: 'hyperwheel-tracker',
-      exported: new Date().toISOString(),
-      tradeCount: trades.length, trades: trades
-    };
-    const res = await fetch('/api/sync?code=' + code, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error();
-    localStorage.setItem(SYNC_LAST_KEY, new Date().toISOString());
-    setAutoSyncStatus('ok');
-  } catch(e) {
-    setAutoSyncStatus('err');
-  }
-}
-
-function setAutoSyncStatus(state) {
-  const el = document.getElementById('auto-sync-status');
-  if (!el) return;
-  clearTimeout(el._hideTimer);
-  if (state === 'syncing') {
-    el.textContent = '\u21bb Syncing';
-    el.style.color = 'var(--mu)';
-  } else if (state === 'ok') {
-    el.textContent = '\u2713 Synced';
-    el.style.color = 'var(--green)';
-    el._hideTimer = setTimeout(function() { el.textContent = ''; }, 3000);
-  } else {
-    el.textContent = '\u26a0 Sync failed';
-    el.style.color = 'var(--red)';
-    el._hideTimer = setTimeout(function() { el.textContent = ''; }, 5000);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// EDIT TRADE MODAL
-// ═══════════════════════════════════════════════════════════
-
-function openEditModal(id) {
-  const t = trades.find(t => t.id === id);
-  if (!t) return;
-  editingId = id;
-
-  document.getElementById('e-platform').value = t.platform || 'RYSK';
-  document.getElementById('e-asset').value   = t.asset   || 'BTC';
-  document.getElementById('e-type').value    = t.type    || 'PUT';
-  document.getElementById('e-outcome').value = t.outcome || 'OPEN';
-  document.getElementById('e-date').value    = t.date    || '';
-  document.getElementById('e-expiry').value  = t.expiry  || '';
-  document.getElementById('e-dte').value     = t.dte     || '';
-  document.getElementById('e-strike').value  = t.strike  || '';
-  document.getElementById('e-size').value    = t.size    || '';
-  document.getElementById('e-premium').value = t.premium != null ? t.premium : '';
-  document.getElementById('e-closecost').value = t.closeCost != null ? t.closeCost : '';
-  document.getElementById('e-notes').value   = t.notes   || '';
-  document.getElementById('e-err').style.display = 'none';
-
-  onEditTypeChange(); // adjust field visibility for HOLDING
-  onEditOutcomeChange(); // adjust close cost visibility
-  onEditPlatformChange(); // adjust CLOSED option visibility
-  const ov = document.getElementById('edit-overlay');
+// ── WALLET POPUP (first visit) ─────────────────────────
+function showWalletPopup() {
+  const ov = document.getElementById('wallet-overlay');
+  const inp = document.getElementById('wp-wallet-input');
+  const btn = document.getElementById('wp-enter-btn');
+  const saved = loadWallet();
+  inp.value = saved;
+  btn.disabled = !saved.startsWith('0x');
+  document.getElementById('wp-status').textContent = 'Ready when you are.';
   ov.style.display = 'flex';
   requestAnimationFrame(() => ov.classList.add('open'));
+  if (!saved) inp.focus();
 }
 
-function closeEditModal() {
-  const ov = document.getElementById('edit-overlay');
+function hideWalletPopup() {
+  const ov = document.getElementById('wallet-overlay');
   ov.classList.remove('open');
   setTimeout(() => { ov.style.display = 'none'; }, 180);
-  editingId = null;
 }
 
-function onEditAssetChange() {
-  // nothing needed — asset change doesn't affect field visibility
+function submitWalletPopup() {
+  const address = (document.getElementById('wp-wallet-input').value || '').trim();
+  if (!address.startsWith('0x') || address.length < 10) return;
+  saveWallet(address);
+  document.getElementById('wp-status').textContent = 'Loading positions...';
+  setTimeout(() => {
+    hideWalletPopup();
+    render();
+    fetchExpiryPrices();
+    autoLoadChain(address);
+  }, 300);
 }
-
-function onEditPlatformChange() {
-  const plat = document.getElementById('e-platform').value;
-  const outcomeEl = document.getElementById('e-outcome');
-  const closedOpt = outcomeEl.querySelector('option[value="CLOSED"]');
-  if (plat === 'RYSK') {
-    if (closedOpt) closedOpt.style.display = 'none';
-    if (outcomeEl.value === 'CLOSED') outcomeEl.value = 'OPEN';
-  } else {
-    if (closedOpt) closedOpt.style.display = '';
-  }
-  onEditOutcomeChange();
-}
-
-function onEditOutcomeChange() {
-  const outcome = document.getElementById('e-outcome').value;
-  const ccWrap = document.getElementById('e-closecost-wrap');
-  if (ccWrap) ccWrap.style.display = (outcome === 'CLOSED') ? '' : 'none';
-}
-
-function onEditTypeChange() {
-  const type = document.getElementById('e-type').value;
-  const isHolding = type === 'HOLDING';
-  document.getElementById('e-expiry-wrap').style.display  = isHolding ? 'none' : '';
-  document.getElementById('e-dte-wrap').style.display     = isHolding ? 'none' : '';
-  document.getElementById('e-premium-wrap').style.display = isHolding ? 'none' : '';
-  document.getElementById('e-closecost-wrap').style.display = isHolding ? 'none' : '';
-  document.getElementById('e-strike-label').textContent   = isHolding ? 'Cost Basis' : 'Strike';
-}
-
-function saveEdit() {
-  const errEl = document.getElementById('e-err');
-  errEl.style.display = 'none';
-
-  function err(msg) {
-    errEl.textContent = '⚠ ' + msg;
-    errEl.style.display = 'block';
-  }
-
-  const platform  = document.getElementById('e-platform').value;
-  const asset     = document.getElementById('e-asset').value;
-  const type      = document.getElementById('e-type').value;
-  const outcome   = document.getElementById('e-outcome').value;
-  const date      = document.getElementById('e-date').value;
-  const expiry    = document.getElementById('e-expiry').value;
-  const dte       = parseInt(document.getElementById('e-dte').value);
-  const strike    = parseFloat(document.getElementById('e-strike').value);
-  const size      = parseFloat(document.getElementById('e-size').value);
-  const premium   = parseFloat(document.getElementById('e-premium').value);
-  const closeCost = parseFloat(document.getElementById('e-closecost').value) || 0;
-  const notes     = document.getElementById('e-notes').value.trim();
-  const isHolding = type === 'HOLDING';
-
-  if (!date)                            return err('Open date required.');
-  if (!isHolding && !expiry)            return err('Expiry date required.');
-  if (!strike || strike <= 0)           return err(isHolding ? 'Cost basis required.' : 'Strike required.');
-  if (!size || size <= 0)               return err('Size required.');
-  if (platform === 'RYSK' && size < MIN_SIZE[asset]) return err('Minimum size for ' + asset + ' is ' + MIN_SIZE[asset] + '.');
-  if (!isHolding && (isNaN(premium) || premium < 0)) return err('Premium required (enter 0 if none).');
-  if (outcome === 'CLOSED' && closeCost < 0) return err('Close cost cannot be negative.');
-
-  const idx = trades.findIndex(t => t.id === editingId);
-  if (idx === -1) return err('Trade not found.');
-
-  const updated = {
-    ...trades[idx],
-    platform, asset, type, outcome, date,
-    expiry:  isHolding ? '' : expiry,
-    dte:     isHolding ? null : (isNaN(dte) ? null : dte),
-    strike, size,
-    premium: isHolding ? 0 : (isNaN(premium) ? 0 : premium),
-    notes,
-  };
-  if (outcome === 'CLOSED') updated.closeCost = closeCost;
-  else delete updated.closeCost;
-  trades[idx] = updated;
-
-  save();
-  render();
-  closeEditModal();
-}
-
-// Close on overlay backdrop click
-document.addEventListener('DOMContentLoaded', function() {
-  const ov = document.getElementById('edit-overlay');
-  if (ov) ov.addEventListener('click', function(e) {
-    if (e.target === this) closeEditModal();
-  });
-});
 
 // ── MERGE LOTS ───────────────────────────────────────────────
 
@@ -2354,7 +1860,6 @@ function confirmMerge() {
   // Update the kept trade to have merged values
   keepTrade.strike = avgCost;
   keepTrade.size = totalSize;
-  keepTrade.notes = 'Merged from ' + openLots.length + ' lots';
 
   // Reassign all CALL trades from other lots to have no explicit lotNum
   // (they'll naturally attach to the single remaining lot via compute)
@@ -2409,16 +1914,25 @@ document.addEventListener('keydown', function(e) {
   setInterval(tickClock, 1000);
 })();
 
-// ── BOOT
+// ── BOOT ──────────────────────────────────────────────
 (function init() {
-  try { trades = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) { trades = []; }
-  // Migrate: ensure all trades have a platform field
-  trades.forEach(t => { if (!t.platform) t.platform = 'RYSK'; });
+  // Load manually-entered HOLDING positions from localStorage
+  try {
+    trades = JSON.parse(localStorage.getItem(HW_HOLDINGS_KEY) || '[]');
+  } catch (e) {
+    trades = [];
+  }
+
   document.getElementById('f-date').value = today();
-  document.getElementById('f-date').addEventListener('change', autoDTE);
-  document.getElementById('f-expiry').addEventListener('change', autoDTE);
-  render();
-  fetchExpiryPrices();
+
+  const wallet = loadWallet();
+  if (!wallet) {
+    showWalletPopup();
+  } else {
+    render();
+    fetchExpiryPrices();
+    autoLoadChain(wallet);
+  }
 })();
 
 // ── CHAIN SYNC ────────────────────────────────────────────
@@ -2453,55 +1967,17 @@ function unixToDate(ts) {
 }
 
 function loadSynced() {
-  try { return new Set(JSON.parse(localStorage.getItem(SYNCED_KEY) || '[]')); } catch (e) { return new Set(); }
+  try { return new Set(JSON.parse(localStorage.getItem(HW_SYNCED_KEY) || '[]')); } catch (e) { return new Set(); }
 }
 
 function saveSynced(set) {
-  localStorage.setItem(SYNCED_KEY, JSON.stringify([...set]));
-}
-
-function loadWallet() {
-  return localStorage.getItem(WALLET_KEY) || '';
-}
-
-function saveWallet(addr) {
-  localStorage.setItem(WALLET_KEY, addr);
+  localStorage.setItem(HW_SYNCED_KEY, JSON.stringify([...set]));
 }
 
 // Returns true when running under a real web server (Vercel or local http.server)
 // so the /api/chain-sync proxy is available.
 function hasProxy() {
   return window.location.protocol !== 'file:';
-}
-
-// ── MODAL ─────────────────────────────────────────────────
-
-function openChainSyncModal() {
-  const ov = document.getElementById('chain-sync-overlay');
-  ov.style.display = 'flex';
-
-  const saved = loadWallet();
-  const walletInp = document.getElementById('chain-wallet-input');
-  walletInp.value = saved;
-  document.getElementById('chain-sync-run-btn').disabled = !saved.startsWith('0x');
-
-  // Reset status
-  const statusEl  = document.getElementById('chain-sync-status');
-  const summaryEl = document.getElementById('cs-summary');
-  statusEl.style.display  = 'none';
-  summaryEl.style.display = 'none';
-  document.getElementById('cs-rysk-status').textContent = '—';
-  document.getElementById('cs-hsfc-status').textContent = '—';
-  document.getElementById('cs-rysk-status').style.color = 'var(--mu)';
-  document.getElementById('cs-hsfc-status').style.color = 'var(--mu)';
-
-  requestAnimationFrame(() => ov.classList.add('open'));
-}
-
-function closeChainSyncModal() {
-  const ov = document.getElementById('chain-sync-overlay');
-  ov.classList.remove('open');
-  setTimeout(() => { ov.style.display = 'none'; }, 180);
 }
 
 // ── RYSK SYNC ─────────────────────────────────────────────
@@ -2536,7 +2012,6 @@ function parseRyskTrade(r) {
     size,
     premium,
     outcome,
-    notes: 'Rysk chain sync',
     platform: 'RYSK',
     txHash: r.txHash || null,
   };
@@ -2674,7 +2149,6 @@ function parseHsfcLeg(trade, leg) {
     size,
     premium,
     outcome,
-    notes: 'Hypersurface chain sync',
     platform: 'HSFC',
     txHash,
   };
@@ -2748,222 +2222,40 @@ async function syncHypersurface(address) {
   return { imported: newTrades.length, skipped: totalLegs - newTrades.length };
 }
 
-// ── MAIN ENTRY ────────────────────────────────────────────
+// ── AUTO LOAD ──────────────────────────────────────────────
 
-async function runChainSync() {
-  const address = (document.getElementById('chain-wallet-input').value || '').trim();
-  if (!address.startsWith('0x') || address.length < 10) return;
-
-  saveWallet(address);
-
-  const btn = document.getElementById('chain-sync-run-btn');
-  btn.disabled    = true;
-  btn.textContent = 'Syncing\u2026';
-
-  const statusEl  = document.getElementById('chain-sync-status');
-  const ryskEl    = document.getElementById('cs-rysk-status');
-  const hsfcEl    = document.getElementById('cs-hsfc-status');
-  const summaryEl = document.getElementById('cs-summary');
-
-  statusEl.style.display  = 'block';
-  summaryEl.style.display = 'none';
-  ryskEl.textContent = 'Fetching\u2026';
-  ryskEl.style.color = 'var(--mu)';
-  hsfcEl.textContent = 'Fetching\u2026';
-  hsfcEl.style.color = 'var(--mu)';
-
+async function autoLoadChain(address) {
+  if (!address || !address.startsWith('0x')) return;
   const [ryskResult, hsfcResult] = await Promise.allSettled([
     syncRysk(address),
     syncHypersurface(address),
   ]);
-
-  let totalImported = 0;
-  let hasError = false;
-
-  if (ryskResult.status === 'fulfilled') {
-    const { imported, corrected, skipped } = ryskResult.value;
-    totalImported += imported;
-    let ryskMsg = imported > 0 ? '\u2713 ' + imported + ' new' : '\u2713';
-    if (corrected > 0) ryskMsg += ', ' + corrected + ' outcomes fixed';
-    if (imported === 0 && corrected === 0) ryskMsg = '\u2713 ' + skipped + ' already synced';
-    ryskEl.textContent = ryskMsg;
-    ryskEl.style.color = 'var(--green)';
-  } else {
-    const msg = ryskResult.reason && ryskResult.reason.message;
-    ryskEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS \u2014 open via http.server 8080'
-      : '\u2717 ' + (msg || 'Failed');
-    ryskEl.style.color = 'var(--red)';
-    hasError = true;
-  }
-
-  if (hsfcResult.status === 'fulfilled') {
-    const { imported, skipped } = hsfcResult.value;
-    totalImported += imported;
-    hsfcEl.textContent = imported > 0
-      ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
-      : '\u2713 ' + skipped + ' already synced';
-    hsfcEl.style.color = 'var(--green)';
-  } else {
-    const msg = hsfcResult.reason && hsfcResult.reason.message;
-    hsfcEl.textContent = msg === 'CORS_BLOCKED'
-      ? '\u26A0 CORS \u2014 open via http.server 8080'
-      : '\u2717 ' + (msg || 'Failed');
-    hsfcEl.style.color = 'var(--red)';
-    hasError = true;
-  }
-
-  summaryEl.style.display = 'block';
-  if (totalImported > 0) {
-    summaryEl.textContent = 'Imported ' + totalImported + ' new trade' + (totalImported !== 1 ? 's' : '') + '.';
-    summaryEl.style.color = 'var(--green)';
-  } else if (!hasError) {
-    summaryEl.textContent = 'All trades already synced.';
-    summaryEl.style.color = 'var(--mu)';
-  } else {
-    summaryEl.textContent = 'One or more sources failed.';
-    summaryEl.style.color = 'var(--mu2)';
-  }
-
-  btn.disabled    = false;
-  btn.textContent = 'Sync';
-
-  if (!hasError && totalImported === 0) {
-    setTimeout(closeChainSyncModal, 2000);
-  }
+  // syncRysk and syncHypersurface already call save() and render() internally
 }
 
 </script>
 
-<!-- EDIT TRADE MODAL -->
-<div class="overlay" id="edit-overlay" style="display:none">
-  <div class="edit-modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <h3>Edit Trade</h3>
-      <button onclick="closeEditModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+<!-- WALLET POPUP (first visit) -->
+<div class="overlay" id="wallet-overlay" style="display:none">
+  <div class="wallet-popup">
+    <div class="wp-logo">HYPERWHEEL</div>
+    <div class="wp-sub">Enter your wallet address to load your trading positions from Rysk Finance and Hypersurface.</div>
+    <div class="wp-row">
+      <input id="wp-wallet-input" type="text" class="wp-input" placeholder="0x..."
+        oninput="document.getElementById('wp-enter-btn').disabled=!this.value.trim().startsWith('0x')">
+      <button id="wp-enter-btn" class="wp-btn" onclick="submitWalletPopup()" disabled>Enter</button>
     </div>
-
-    <!-- Platform + Asset + Type row -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:90px">
-        <label class="fl">Platform</label>
-        <select id="e-platform" class="finput" onchange="onEditPlatformChange()">
-          <option value="RYSK">RYSK</option>
-          <option value="HSFC">HSFC</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Asset</label>
-        <select id="e-asset" class="finput" onchange="onEditAssetChange()">
-          <option value="BTC">BTC</option>
-          <option value="ETH">ETH</option>
-          <option value="HYPE">HYPE</option>
-          <option value="SOL">SOL</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Type</label>
-        <select id="e-type" class="finput" onchange="onEditTypeChange()">
-          <option value="PUT">PUT</option>
-          <option value="CALL">CALL</option>
-          <option value="HOLDING">HOLDING</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Outcome</label>
-        <select id="e-outcome" class="finput" onchange="onEditOutcomeChange()">
-          <option value="OPEN">OPEN</option>
-          <option value="EXPIRED">EXPIRED</option>
-          <option value="ASSIGNED">ASSIGNED</option>
-          <option value="CALLED">CALLED</option>
-          <option value="CLOSED">CLOSED</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Date + Expiry row -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:140px">
-        <label class="fl">Open Date</label>
-        <input id="e-date" type="date" class="finput">
-      </div>
-      <div style="flex:1;min-width:140px" id="e-expiry-wrap">
-        <label class="fl">Expiry Date</label>
-        <input id="e-expiry" type="date" class="finput">
-      </div>
-      <div style="flex:1;min-width:80px" id="e-dte-wrap">
-        <label class="fl">DTE</label>
-        <input id="e-dte" type="number" class="finput" min="1" max="365" placeholder="21">
-      </div>
-    </div>
-
-    <!-- Strike + Size + Premium -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="flex:1;min-width:120px">
-        <label class="fl" id="e-strike-label">Strike</label>
-        <input id="e-strike" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px">
-        <label class="fl">Size</label>
-        <input id="e-size" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px" id="e-premium-wrap">
-        <label class="fl">Premium (USD)</label>
-        <input id="e-premium" type="number" class="finput" min="0" step="any">
-      </div>
-      <div style="flex:1;min-width:100px" id="e-closecost-wrap">
-        <label class="fl">Close Cost (USD)</label>
-        <input id="e-closecost" type="number" class="finput" min="0" step="any">
-      </div>
-    </div>
-
-    <!-- Notes -->
-    <div>
-      <label class="fl">Notes</label>
-      <input id="e-notes" type="text" class="finput" placeholder="Optional notes" maxlength="200">
-    </div>
-
-    <div id="e-err" style="display:none;color:var(--red);font-family:var(--mono);font-size:.7rem;padding:6px 10px;background:var(--rd);border:1px solid var(--rb);border-radius:6px"></div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-      <button class="btn btn-g" onclick="closeEditModal()">Cancel</button>
-      <button class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700" onclick="saveEdit()">Save Changes</button>
-    </div>
+    <div id="wp-status" class="wp-status">Ready when you are.</div>
   </div>
 </div>
 
-<!-- CHAIN SYNC MODAL -->
-<div class="overlay" id="chain-sync-overlay" style="display:none">
-  <div class="sync-modal" style="max-width:480px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 2px">Chain Sync</h3>
-        <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Pull positions from Rysk &amp; Hypersurface</div>
-      </div>
-      <button onclick="closeChainSyncModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
-    </div>
-
-    <!-- Wallet address input -->
-    <div style="margin-bottom:14px">
-      <label class="fl">Wallet Address</label>
-      <div style="display:flex;gap:8px">
-        <input id="chain-wallet-input" type="text" class="finput" placeholder="0x..." style="flex:1;font-family:var(--mono);font-size:.72rem"
-          oninput="document.getElementById('chain-sync-run-btn').disabled=!this.value.trim().startsWith('0x')">
-        <button id="chain-sync-run-btn" class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700;white-space:nowrap" onclick="runChainSync()" disabled>Sync</button>
-      </div>
-    </div>
-
-    <!-- Status rows -->
-    <div id="chain-sync-status" style="display:none;font-family:var(--mono);font-size:.72rem;line-height:1.9">
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
-        <span style="color:var(--mu)">Rysk</span>
-        <span id="cs-rysk-status" style="color:var(--mu)">—</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
-        <span style="color:var(--mu)">Hypersurface</span>
-        <span id="cs-hsfc-status" style="color:var(--mu)">—</span>
-      </div>
-      <div id="cs-summary" style="padding-top:10px;font-size:.75rem;color:var(--text);display:none"></div>
+<div class="overlay" id="rovl">
+  <div class="modal">
+    <h3>Delete all trades?</h3>
+    <p>This permanently removes everything from your tracker and cannot be undone.</p>
+    <div class="mbtns">
+      <button class="btn btn-g" onclick="closeReset()">Cancel</button>
+      <button class="btn-d" style="padding:7px 16px;font-size:.78rem;border-radius:7px" onclick="doReset()">Yes, delete all</button>
     </div>
   </div>
 </div>
