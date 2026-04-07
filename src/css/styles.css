@@ -147,6 +147,14 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .ta.active{background:var(--rd);border-color:var(--red);color:var(--red)}
 .tk.active{background:var(--od);border-color:var(--orange);color:var(--orange)}
 
+/* TRADE LOG SECTIONS */
+.tlog-sub-hd{display:flex;align-items:center;gap:10px;padding:14px 0 8px;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu2);font-family:var(--mono)}
+.tlog-cnt{background:var(--s3);border:1px solid var(--bd2);border-radius:4px;padding:1px 7px;font-size:.6rem;color:var(--mu);font-weight:500}
+.th-sort{cursor:pointer;user-select:none}
+.th-sort:hover{color:var(--text)}
+.th-sort-act{color:var(--green) !important}
+.sort-arrow{margin-left:3px;font-size:.55rem;vertical-align:middle}
+
 /* TABLE */
 .twrap{overflow-x:auto;overflow-y:auto;max-height:72vh}
 table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.72rem;min-width:680px}

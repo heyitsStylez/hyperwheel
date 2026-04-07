@@ -1,3 +1,136 @@
+// Sort state — persists across renders
+let tSortOpen = { col: 'date', dir: 'desc' };
+let tSortHist = { col: 'date', dir: 'desc' };
+
+const _SORT_DESC_DEFAULT = ['date', 'expiry', 'strike', 'premium', 'annual'];
+
+function sortOpen(col) {
+  if (tSortOpen.col === col) {
+    tSortOpen.dir = tSortOpen.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    tSortOpen.col = col;
+    tSortOpen.dir = _SORT_DESC_DEFAULT.includes(col) ? 'desc' : 'asc';
+  }
+  render();
+}
+
+function sortHist(col) {
+  if (tSortHist.col === col) {
+    tSortHist.dir = tSortHist.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    tSortHist.col = col;
+    tSortHist.dir = _SORT_DESC_DEFAULT.includes(col) ? 'desc' : 'asc';
+  }
+  render();
+}
+
+function _sortRows(rows, s) {
+  const m = s.dir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const va = a[s.col], vb = b[s.col];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === 'string') return va.localeCompare(vb) * m;
+    return (va < vb ? -1 : va > vb ? 1 : 0) * m;
+  });
+}
+
+function _th(label, col, s, fn) {
+  const active = s.col === col;
+  const arrow = active ? (s.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  return '<th class="th-sort' + (active ? ' th-sort-act' : '') + '" onclick="' + fn + '(\'' + col + '\')">'
+    + label + (active ? '<span class="sort-arrow">' + arrow + '</span>' : '') + '</th>';
+}
+
+function _outcomeLabel(r) {
+  if (r.outcome === 'EXPIRED')  return r.type === 'CALL' ? 'Returned (Kept Asset)' : 'Returned (Kept Premium)';
+  if (r.outcome === 'ASSIGNED') return 'Assigned (Bought at Strike)';
+  if (r.outcome === 'CALLED')   return 'Called Away (Sold at Strike)';
+  if (r.outcome === 'CLOSED')   return 'Closed';
+  return r.outcome;
+}
+
+function _outcomeCls(r) {
+  if (r.outcome === 'ASSIGNED') return 'bass';
+  if (r.outcome === 'CALLED')   return 'bcal';
+  return 'bexp';
+}
+
+function _openHeaders() {
+  const s = tSortOpen, fn = 'sortOpen';
+  return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
+    + _th('Expiry','expiry',s,fn) + _th('DTE','dte',s,fn) + _th('Type','type',s,fn)
+    + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
+    + _th('APR','annual',s,fn) + '<th></th>';
+}
+
+function _histHeaders() {
+  const s = tSortHist, fn = 'sortHist';
+  return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
+    + _th('Expiry','expiry',s,fn) + _th('DTE','dte',s,fn) + _th('Type','type',s,fn)
+    + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
+    + _th('APR','annual',s,fn) + _th('Outcome','outcome',s,fn) + '<th></th>';
+}
+
+function _openRow(r) {
+  const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
+  const isHolding = r.type === 'HOLDING';
+  const typeBadge = isHolding
+    ? '<span class="badge bholding">&#9632; SPOT</span>'
+    : '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
+  const platBadge = isHolding
+    ? '<span class="mu" style="font-size:.65rem">&mdash;</span>'
+    : (r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>');
+  const aprStr = isHolding ? '&mdash;'
+    : '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+      + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  const actions = isHolding ? '' : (r.type === 'CALL'
+    ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
+      + '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
+    : '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
+      + '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>');
+  return '<tr>'
+    + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
+    + '<td>' + platBadge + '</td>'
+    + '<td class="mu" style="font-size:.72rem">' + r.date + '</td>'
+    + '<td class="mu" style="font-size:.72rem">' + (isHolding ? '&mdash;' : (r.expiry || '&mdash;')) + '</td>'
+    + '<td class="mu">' + (isHolding ? '&mdash;' : (r.dte || '&mdash;')) + '</td>'
+    + '<td>' + typeBadge + '</td>'
+    + '<td>$' + fmt(r.strike) + (isHolding ? '<br><span style="font-size:.65rem;color:var(--mu)">cost basis</span>' : '') + '</td>'
+    + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
+    + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
+    + '<td>' + aprStr + '</td>'
+    + '<td class="td-act"><div class="row-actions">' + actions
+      + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
+      + '</div></td>'
+    + '</tr>';
+}
+
+function _histRow(r) {
+  const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
+  const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
+  const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
+  const aprStr = '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+    + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  return '<tr>'
+    + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
+    + '<td>' + platBadge + '</td>'
+    + '<td class="mu" style="font-size:.72rem">' + r.date + '</td>'
+    + '<td class="mu" style="font-size:.72rem">' + (r.expiry || '&mdash;') + '</td>'
+    + '<td class="mu">' + (r.dte || '&mdash;') + '</td>'
+    + '<td>' + typeBadge + '</td>'
+    + '<td>$' + fmt(r.strike) + '</td>'
+    + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
+    + '<td class="cr">+$' + fmt(r.premium) + '</td>'
+    + '<td>' + aprStr + '</td>'
+    + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
+    + '<td class="td-act"><div class="row-actions">'
+      + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
+      + '</div></td>'
+    + '</tr>';
+}
+
 function rStats(streams, lots, displayRows) {
   renderExpiryTable();
 }
@@ -34,14 +167,12 @@ function renderExpiryTable() {
       ? '<span style="color:var(--red);font-weight:700">today</span>'
       : daysLeft + 'd';
 
-    // APR using original DTE at entry
     let aprHtml = '—';
     if (t.dte > 0 && t.strike > 0 && t.size > 0) {
       const ann = (t.premium / (t.strike * t.size)) * (365 / t.dte) * 100;
       aprHtml = ann.toFixed(1) + '%';
     }
 
-    // Status: OTM / ITM using live prices if available
     let statusHtml = '<span style="color:var(--mu)">—</span>';
     const spot = livePrices[t.asset];
     if (spot) {
@@ -93,18 +224,29 @@ function fetchExpiryPrices() {
 }
 
 function rTable(displayRows, streams, lots) {
-  const tbody  = document.getElementById('ttbody');
-  const ncWrap = document.getElementById('ncbwrap');
-  const cntEl  = document.getElementById('tcnt');
+  const ncWrap   = document.getElementById('ncbwrap');
+  const cntEl    = document.getElementById('tcnt');
+  const openBody = document.getElementById('ttbody-open');
+  const histBody = document.getElementById('ttbody-hist');
+  const openHdr  = document.getElementById('open-hdr');
+  const histHdr  = document.getElementById('hist-hdr');
+  const ocntEl   = document.getElementById('ocnt');
+  const hcntEl   = document.getElementById('hcnt');
 
   if (!displayRows.length) {
-    tbody.innerHTML = '<tr><td colspan="14"><div class="empty"><div class="empty-icon">&#9678;</div><div class="empty-title">No trades logged yet</div><div class="empty-sub">Start by logging your first position \u2014 a PUT, CALL, or spot HOLDING. Your P&amp;L, net cost basis, and premium income will appear here automatically.</div><button class="empty-cta" onclick="openTradeDrawer()">+ LOG FIRST TRADE</button></div></td></tr>';
-    ncWrap.innerHTML = ''; cntEl.textContent = ''; return;
+    if (openHdr)  openHdr.innerHTML  = _openHeaders();
+    if (histHdr)  histHdr.innerHTML  = _histHeaders();
+    if (openBody) openBody.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="empty-icon">&#9678;</div><div class="empty-title">No trades logged yet</div><div class="empty-sub">Start by logging your first position \u2014 a PUT, CALL, or spot HOLDING. Your P&amp;L, net cost basis, and premium income will appear here automatically.</div><button class="empty-cta" onclick="openTradeDrawer()">+ LOG FIRST TRADE</button></div></td></tr>';
+    if (histBody) histBody.innerHTML = '';
+    ncWrap.innerHTML = ''; cntEl.textContent = '';
+    if (ocntEl) ocntEl.textContent = '';
+    if (hcntEl) hcntEl.textContent = '';
+    return;
   }
 
-  cntEl.textContent = displayRows.length + ' trade' + (displayRows.length!==1?'s':'');
+  cntEl.textContent = displayRows.length + ' trade' + (displayRows.length !== 1 ? 's' : '');
 
-  // Net cost banners — one card per open LOT (lot-aware multi-wheel)
+  // Net cost banners — one card per open LOT
   let bannerHtml = '';
   ['BTC','ETH','HYPE','SOL'].forEach(a => {
     if (sFilter !== 'ALL' && sFilter !== a) return;
@@ -112,108 +254,45 @@ function rTable(displayRows, streams, lots) {
     if (!assetLots.length) return;
     const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a] || 'mu2';
     const totalLots = (lots[a] || []).length;
-
-    // Show merge button if 2+ open lots for this asset
     if (assetLots.length >= 2) {
-      bannerHtml += `<div style="margin-bottom:4px;text-align:right"><button class="btn-merge" onclick="openMergeModal('${a}')">Merge ${a} Lots</button></div>`;
+      bannerHtml += '<div style="margin-bottom:4px;text-align:right"><button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button></div>';
     }
     assetLots.forEach(lot => {
       const nc = lot.costBasis - (lot.lotPremiums / lot.size);
-      const lotLabel = totalLots > 1 ? `${a} Lot ${lot.lotNum}` : `${a} Held`;
+      const lotLabel = totalLots > 1 ? a + ' Lot ' + lot.lotNum : a + ' Held';
       const reduction = lot.costBasis - nc;
-      bannerHtml += `<div class="ncb" style="margin-bottom:8px">
-        <div class="nci"><div class="ncl">${lotLabel}</div><div class="ncv ${col}">${lot.size} ${a}</div></div>
-        <div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$${fmt(lot.costBasis)}</div></div>
-        <div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$${fmt(lot.lotPremiums)}</div></div>
-        <div class="nci"><div class="ncl">Net Cost / ${a}</div><div class="ncv orange">$${fmt(nc)}</div></div>
-        <div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$${fmt(reduction)}</div></div>
-        <div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$${fmt(nc)}</div></div>
-      </div>`;
+      bannerHtml += '<div class="ncb" style="margin-bottom:8px">'
+        + '<div class="nci"><div class="ncl">' + lotLabel + '</div><div class="ncv ' + col + '">' + lot.size + ' ' + a + '</div></div>'
+        + '<div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$' + fmt(lot.costBasis) + '</div></div>'
+        + '<div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$' + fmt(lot.lotPremiums) + '</div></div>'
+        + '<div class="nci"><div class="ncl">Net Cost / ' + a + '</div><div class="ncv orange">$' + fmt(nc) + '</div></div>'
+        + '<div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$' + fmt(reduction) + '</div></div>'
+        + '<div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$' + fmt(nc) + '</div></div>'
+        + '</div>';
     });
   });
-  if (bannerHtml) ncWrap.innerHTML = '<div style="padding:16px 20px 0">' + bannerHtml + '</div>';
-  else ncWrap.innerHTML = '';
+  ncWrap.innerHTML = bannerHtml ? '<div style="padding:16px 20px 0">' + bannerHtml + '</div>' : '';
 
-  const OMAP = { EXPIRED:'Expired &#10003;', ASSIGNED:'Assigned', CALLED:'Called Away', OPEN:'Open &#9679;', HOLDING:'&mdash;', CLOSED:'Closed &#10003;' };
-  const OBDG = { EXPIRED:'bexp', ASSIGNED:'bass', CALLED:'bcal', OPEN:'bopn', HOLDING:'bholding', CLOSED:'bclosed' };
+  // Split into open and history
+  const openRows = displayRows.filter(r => r.outcome === 'OPEN');
+  const histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
 
-  let html = '', lastAsset = null, inCC = {}, lastLot = {};
+  if (ocntEl) ocntEl.textContent = openRows.length ? String(openRows.length) : '';
+  if (hcntEl) hcntEl.textContent = histRows.length ? String(histRows.length) : '';
 
-  displayRows.forEach(r => {
-    const assetLo = r.asset.toLowerCase();
+  // Render headers with current sort state
+  if (openHdr) openHdr.innerHTML = _openHeaders();
+  if (histHdr) histHdr.innerHTML = _histHeaders();
 
-    // Asset separator when showing ALL and switching assets in sorted order
-    if (sFilter === 'ALL' && r.asset !== lastAsset) {
-      html += `<tr class="asset-sep"><td colspan="14"><span class="badge b${assetLo}">${{ BTC:'&#9654;', ETH:'&#9670;', HYPE:'&#9632;', SOL:'&#9679;' }[r.asset] || '&#9632;'} ${r.asset} Trades</span></td></tr>`;
-      lastAsset = r.asset;
-    }
+  // Open positions
+  const sortedOpen = _sortRows(openRows, tSortOpen);
+  if (openBody) openBody.innerHTML = sortedOpen.length
+    ? sortedOpen.map(_openRow).join('')
+    : '<tr><td colspan="11" style="padding:14px 12px;color:var(--mu);font-size:.75rem;text-align:center;font-family:var(--mono)">No open positions</td></tr>';
 
-    // Lot group header — shown for every lot (single and multi)
-    const prevLot = lastLot[r.asset];
-    if (r.lotNum && r.lotNum !== prevLot) {
-      lastLot[r.asset] = r.lotNum;
-      const lotLabel = r.type === 'HOLDING' ? 'Spot Entry' : 'Assigned';
-      html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9632; ${r.asset} — Lot ${r.lotNum} (${lotLabel} @ $${fmt(r.lotCostBasis)})</td></tr>`;
-    } else if (!r.lotNum && r.type === 'PUT') {
-      // Unassigned put — portfolio-level separator (only if there are also lots for this asset)
-      if (!lastLot['_put_' + r.asset] && (lots[r.asset] || []).length > 0) {
-        lastLot['_put_' + r.asset] = true;
-        html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9654; ${r.asset} — Cash-Secured Put (portfolio level)</td></tr>`;
-      }
-    }
-
-    // Fallback separator for CALL rows with no lot context (edge case: calls logged without a HOLDING)
-    if (r.type === 'CALL' && !r.lotNum && !inCC[r.asset]) {
-      inCC[r.asset] = true;
-      html += `<tr class="psep la-${assetLo}"><td colspan="14">&#9654; ${r.asset} Covered Call Phase</td></tr>`;
-    }
-
-    const lotPnlCell = r.lotPnl !== null
-      ? `<span class="cr">+$${fmt(r.lotPnl)}</span>`
-      : '<span style="color:var(--mu)">&mdash;</span>';
-    const coll = r.type === 'PUT' ? '$'+fmt(r.strike*r.size) : r.size+' '+r.asset;
-    const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
-    const isHoldingRow = r.type === 'HOLDING';
-
-    // APR display (single column replacing % Return / Mo% / Ann%)
-    const fmtPct = (v, dp=1) => v !== null ? v.toFixed(dp) + '%' : '&mdash;';
-    const aprColor = r.annual > 0 ? 'var(--green)' : 'var(--mu2)';
-    const aprStr = isHoldingRow ? '&mdash;' : `<span style="font-weight:700;color:${aprColor}">${fmtPct(r.annual)}</span>`;
-    const typeBadge = isHoldingRow
-      ? '<span class="badge bholding">&#9632; SPOT</span>'
-      : `<span class="badge b${r.type.toLowerCase()}">${r.type}</span>`;
-    const outcomeBadge = isHoldingRow
-      ? '<span style="color:var(--mu);font-size:.72rem">spot entry</span>'
-      : `<span class="badge ${OBDG[r.outcome]}">${OMAP[r.outcome]}</span>`;
-    // Lot clustering row classes
-    let rowCls = '';
-    if (r.lotNum) {
-      if (r.type === 'HOLDING' || r.outcome === 'ASSIGNED') rowCls = `lot-head la-${assetLo}`;
-      else if (r.type === 'CALL') rowCls = `lot-child la-${assetLo}`;
-    }
-    const platBadge = isHoldingRow ? '<span class="mu" style="font-size:.65rem">&mdash;</span>' : (r.platform === 'HSFC') ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-    const trStyle = isHoldingRow ? ' style="background:rgba(240,146,74,0.03)"' : '';
-    html += `<tr${rowCls ? ' class="' + rowCls + '"' : ''}${trStyle}>
-      <td><span class="badge ${assetCls}">${r.asset}</span></td>
-      <td>${platBadge}</td>
-      <td class="mu" style="font-size:.72rem">${r.lotNum ? 'L'+r.lotNum : '&mdash;'}</td>
-      <td>${r.date}</td>
-      <td class="mu">${isHoldingRow ? '&mdash;' : r.expiry}</td>
-      <td class="mu">${isHoldingRow ? '&mdash;' : (r.dte||'&mdash;')}</td>
-      <td>${typeBadge}</td>
-      <td>$${fmt(r.strike)}<br><span style="font-size:.65rem;color:var(--mu)">${isHoldingRow?'cost basis':'strike'}</span></td>
-      <td class="mu">${r.size} ${r.asset}</td>
-      <td class="mu">${coll}</td>
-      <td class="${isHoldingRow?'mu':'cr'}">${isHoldingRow?'&mdash;': (r.outcome === 'CLOSED' ? '+$' + r.premium + '<br><span style="font-size:.6rem;color:var(--red)">-$' + fmt(r.closeCost || 0) + ' close</span>' : '+$'+r.premium)}</td>
-      <td>${outcomeBadge}</td>
-      <td>${aprStr}</td>
-      <td>${lotPnlCell}</td>
-      <td class="td-act"><div class="row-actions">${
-        (r.outcome === 'OPEN' && r.type === 'CALL') ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-cal" onclick="quickOutcome(${r.id},'CALLED')" title="Mark called away">Called ↑</button>` :
-        (r.outcome === 'OPEN' && r.type === 'PUT')  ? `<button class="btn-qa btn-qa-exp" onclick="quickOutcome(${r.id},'EXPIRED')" title="Mark expired">Exp ✓</button><button class="btn-qa btn-qa-asg" onclick="quickOutcome(${r.id},'ASSIGNED')" title="Mark assigned">Asgn ↓</button>` : ''
-      }<button class="btn-d" onclick="deleteTrade(${r.id})" title="Delete">&#10005;</button></div></td>
-    </tr>`;
-  });
-
-  tbody.innerHTML = html;
+  // Position history
+  const sortedHist = _sortRows(histRows, tSortHist);
+  if (histBody) histBody.innerHTML = sortedHist.length
+    ? sortedHist.map(_histRow).join('')
+    : '<tr><td colspan="12" style="padding:14px 12px;color:var(--mu);font-size:.75rem;text-align:center;font-family:var(--mono)">No closed positions yet</td></tr>';
 }

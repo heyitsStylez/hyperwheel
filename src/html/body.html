@@ -147,15 +147,15 @@
       <span id="tcnt" style="font-size:.7rem;color:var(--mu);font-family:var(--mono)"></span>
     </div>
     <div id="ncbwrap"></div>
+    <!-- Open Positions -->
+    <div class="tlog-sub-hd"><span>Open Positions</span><span id="ocnt" class="tlog-cnt"></span></div>
     <div class="twrap">
-      <table>
-        <thead><tr>
-          <th>Asset</th><th>Platform</th><th>Lot</th><th>Opened</th><th>Expiry</th><th>DTE</th><th>Type</th>
-          <th>Strike</th><th>Size</th><th>Coll.</th><th>Premium</th>
-          <th>Outcome</th><th>APR</th><th>Lot Premium</th><th></th>
-        </tr></thead>
-        <tbody id="ttbody"></tbody>
-      </table>
+      <table><thead><tr id="open-hdr"></tr></thead><tbody id="ttbody-open"></tbody></table>
+    </div>
+    <!-- Position History -->
+    <div class="tlog-sub-hd" style="margin-top:24px"><span>Position History</span><span id="hcnt" class="tlog-cnt"></span></div>
+    <div class="twrap">
+      <table><thead><tr id="hist-hdr"></tr></thead><tbody id="ttbody-hist"></tbody></table>
     </div>
   </div>
 
@@ -170,7 +170,7 @@
   <span class="footer-sep">·</span>
   <span id="footer-sync-time">—</span>
   <span class="footer-sep">·</span>
-  <span>v1.0.8</span>
+  <span>v1.1.0</span>
 </div>
 
 </main>
