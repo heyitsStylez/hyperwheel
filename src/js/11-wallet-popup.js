@@ -22,6 +22,8 @@ function submitWalletPopup() {
   const address = (document.getElementById('wp-wallet-input').value || '').trim();
   if (!address.startsWith('0x') || address.length < 10) return;
   saveWallet(address);
+  const fw = document.getElementById('footer-wallet');
+  if (fw) fw.textContent = address.slice(0,6) + '...' + address.slice(-4);
   document.getElementById('wp-status').innerHTML = '<span class="wp-cursor"></span>loading positions...';
   setTimeout(() => {
     hideWalletPopup();
