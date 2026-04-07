@@ -20,3 +20,7 @@ let mergeAsset = null;
 
 // Auto sync state
 let autoSyncTimer = null;
+
+// Chain sync state
+const WALLET_KEY = 'rysk_wallet_v1';
+const SYNCED_KEY = 'rysk_synced_v1';
