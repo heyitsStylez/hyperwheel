@@ -141,6 +141,10 @@ async function syncRysk(address) {
     save();
     render();
     saveSynced(synced);
+    const expiredNew = newTrades.filter(t => t.outcome === 'EXPIRED');
+    if (expiredNew.length) {
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+    }
   }
 
   return { imported: newTrades.length, corrected, skipped: (positions || []).length - newTrades.length - corrected };
@@ -279,10 +283,64 @@ async function syncHypersurface(address) {
     save();
     render();
     saveSynced(synced);
+    const expiredNew = newTrades.filter(t => t.outcome === 'EXPIRED');
+    if (expiredNew.length) {
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+    }
   }
 
   const totalLegs = trades_raw.reduce((n, t) => n + (t.legs || []).length, 0);
   return { imported: newTrades.length, skipped: totalLegs - newTrades.length };
+}
+
+// ── OUTCOME AUTO-DETECTION ────────────────────────────────
+// After syncing, fetch CoinGecko historical prices for expired trades
+// and upgrade EXPIRED → CALLED (call ITM) or ASSIGNED (put ITM).
+
+const _CG_IDS = { BTC: 'bitcoin', ETH: 'ethereum', HYPE: 'hyperliquid', SOL: 'solana' };
+
+async function autoDetectOutcomes(newTrades) {
+  const toCheck = newTrades.filter(t =>
+    t.outcome === 'EXPIRED' && t.expiry && t.strike > 0 &&
+    (t.type === 'CALL' || t.type === 'PUT')
+  );
+  if (!toCheck.length) return false;
+
+  // Group by unique asset+expiry to minimise API calls
+  const keys = [...new Set(toCheck.map(t => t.asset + '|' + t.expiry))];
+  const priceCache = {};
+
+  for (const key of keys) {
+    const [asset, expiry] = key.split('|');
+    const cgId = _CG_IDS[asset];
+    if (!cgId) { priceCache[key] = null; continue; }
+    const [y, m, d] = expiry.split('-');
+    const cgDate = d + '-' + m + '-' + y;
+    try {
+      const res = await fetch(
+        'https://api.coingecko.com/api/v3/coins/' + cgId +
+        '/history?date=' + cgDate + '&localization=false'
+      );
+      if (!res.ok) { priceCache[key] = null; continue; }
+      const data = await res.json();
+      priceCache[key] = (data.market_data && data.market_data.current_price && data.market_data.current_price.usd) || null;
+    } catch (e) {
+      priceCache[key] = null;
+    }
+    // Respect CoinGecko free-tier rate limit
+    if (keys.indexOf(key) < keys.length - 1) await new Promise(r => setTimeout(r, 250));
+  }
+
+  let changed = false;
+  for (const t of toCheck) {
+    const spot = priceCache[t.asset + '|' + t.expiry];
+    if (spot == null) continue;
+    const trade = trades.find(tr => tr.id === t.id);
+    if (!trade || trade.outcome !== 'EXPIRED') continue;
+    if (t.type === 'CALL' && spot >= t.strike) { trade.outcome = 'CALLED';   changed = true; }
+    if (t.type === 'PUT'  && spot <= t.strike) { trade.outcome = 'ASSIGNED'; changed = true; }
+  }
+  return changed;
 }
 
 // ── AUTO LOAD ──────────────────────────────────────────────
