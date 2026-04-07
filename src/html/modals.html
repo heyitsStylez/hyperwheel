@@ -1,17 +1,3 @@
-<!-- WALLET POPUP (first visit) -->
-<div class="overlay" id="wallet-overlay" style="display:none">
-  <div class="wallet-popup">
-    <div class="wp-logo">HYPERWHEEL</div>
-    <div class="wp-sub">Enter your wallet address to load your trading positions from Rysk Finance and Hypersurface.</div>
-    <div class="wp-row">
-      <input id="wp-wallet-input" type="text" class="wp-input" placeholder="0x..."
-        oninput="document.getElementById('wp-enter-btn').disabled=!this.value.trim().startsWith('0x')">
-      <button id="wp-enter-btn" class="wp-btn" onclick="submitWalletPopup()" disabled>Enter</button>
-    </div>
-    <div id="wp-status" class="wp-status">Ready when you are.</div>
-  </div>
-</div>
-
 <div class="overlay" id="rovl">
   <div class="modal">
     <h3>Delete all trades?</h3>

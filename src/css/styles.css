@@ -307,69 +307,87 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 
 /* ─── WALLET POPUP ────────────────────────────────────── */
 .wallet-popup {
+  width: 480px;
+  max-width: 92vw;
   background: var(--surface);
-  border: 1px solid var(--bd2);
-  padding: 56px 44px 48px;
-  max-width: 440px;
-  width: 92%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  text-align: center;
+  border: 1px solid rgba(0,229,160,.2);
+  padding: 32px;
 }
-.wp-logo {
-  font-size: 2.4rem;
-  font-weight: 900;
-  letter-spacing: 8px;
-  color: var(--text);
-  text-transform: uppercase;
-}
-.wp-sub {
+.wp-header {
   font-size: .72rem;
-  color: var(--mu2);
-  font-family: var(--mono);
-  line-height: 1.7;
-  max-width: 320px;
+  font-weight: 500;
+  color: var(--green);
+  margin-bottom: 22px;
 }
-.wp-row {
+.wp-label {
+  font-size: .67rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.wp-prompt-row {
   display: flex;
-  width: 100%;
-  gap: 0;
+  align-items: center;
+  border: 1px solid rgba(0,229,160,.25);
+  background: var(--s2);
+  margin-bottom: 16px;
+}
+.wp-prompt-prefix {
+  font-size: .72rem;
+  color: var(--green);
+  padding: 10px 0 10px 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
 }
 .wp-input {
   flex: 1;
-  background: var(--s2);
-  border: 1px solid var(--bd2);
-  border-right: none;
+  background: transparent;
+  border: none;
   color: var(--text);
   font-family: var(--mono);
-  font-size: .72rem;
+  font-size: .67rem;
   padding: 10px 14px;
   outline: none;
-  transition: border-color .15s;
   min-width: 0;
 }
-.wp-input:focus { border-color: var(--green); }
+.wp-input::placeholder { color: var(--mu); }
 .wp-btn {
+  width: 100%;
+  background: transparent;
+  color: var(--green);
   font-family: var(--mono);
-  font-size: .78rem;
-  font-weight: 700;
-  background: var(--green);
-  color: var(--bg);
-  border: none;
-  padding: 10px 22px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  border: 1px solid rgba(0,229,160,.4);
+  padding: 11px;
   cursor: pointer;
-  letter-spacing: 1px;
-  transition: opacity .15s;
-  flex-shrink: 0;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  transition: background .15s;
 }
+.wp-btn:hover { background: rgba(0,229,160,.08); }
 .wp-btn:disabled { opacity: .3; cursor: not-allowed; }
 .wp-status {
-  font-size: .62rem;
-  font-family: var(--mono);
-  color: var(--mu);
-  letter-spacing: .5px;
+  font-size: .6rem;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wp-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 12px;
+  background: var(--green);
+  animation: wp-blink 1.1s step-end infinite;
+  flex-shrink: 0;
+}
+@keyframes wp-blink {
+  0%,100%{opacity:1} 50%{opacity:0}
 }
 
 /* ─── CUMULATIVE P&L HERO ───────────────────────────────────── */
