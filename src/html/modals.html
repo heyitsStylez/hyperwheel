@@ -95,6 +95,42 @@
   </div>
 </div>
 
+<!-- CHAIN SYNC MODAL -->
+<div class="overlay" id="chain-sync-overlay" style="display:none">
+  <div class="sync-modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin:0 0 2px">Chain Sync</h3>
+        <div style="font-size:.65rem;color:var(--mu);font-family:var(--mono)">Pull positions from Rysk &amp; Hypersurface</div>
+      </div>
+      <button onclick="closeChainSyncModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+
+    <!-- Wallet address input -->
+    <div style="margin-bottom:14px">
+      <label class="fl">Wallet Address</label>
+      <div style="display:flex;gap:8px">
+        <input id="chain-wallet-input" type="text" class="finput" placeholder="0x..." style="flex:1;font-family:var(--mono);font-size:.72rem"
+          oninput="document.getElementById('chain-sync-run-btn').disabled=!this.value.trim().startsWith('0x')">
+        <button id="chain-sync-run-btn" class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700;white-space:nowrap" onclick="runChainSync()" disabled>Sync</button>
+      </div>
+    </div>
+
+    <!-- Status rows -->
+    <div id="chain-sync-status" style="display:none;font-family:var(--mono);font-size:.72rem;line-height:1.9">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
+        <span style="color:var(--mu)">Rysk</span>
+        <span id="cs-rysk-status" style="color:var(--mu)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)">
+        <span style="color:var(--mu)">Hypersurface</span>
+        <span id="cs-hsfc-status" style="color:var(--mu)">—</span>
+      </div>
+      <div id="cs-summary" style="padding-top:10px;font-size:.75rem;color:var(--text);display:none"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MERGE LOTS MODAL -->
 <div class="merge-overlay" id="merge-overlay">
   <div class="merge-modal">
