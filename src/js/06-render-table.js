@@ -102,7 +102,6 @@ function _openRow(r) {
     + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td class="td-act"><div class="row-actions">' + actions
-      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -127,7 +126,6 @@ function _histRow(r) {
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">'
-      + '<button class="btn-qa" onclick="openEditModal(' + r.id + ')" title="Edit" style="color:var(--mu2)">&#9998;</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -263,13 +261,20 @@ function rTable(displayRows, streams, lots) {
       const nc = lot.costBasis - (lot.lotPremiums / lot.size);
       const lotLabel = totalLots > 1 ? a + ' Lot ' + lot.lotNum : a + ' Held';
       const reduction = lot.costBasis - nc;
+      const holdingTrade = trades.find(t => t.id === lot.tradeIds[0]);
+      const isManualHolding = holdingTrade && holdingTrade.type === 'HOLDING';
+      const editBtn = isManualHolding
+        ? '<button class="btn-qa" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding" style="margin-left:auto;color:var(--mu2);align-self:center">&#9998;</button>'
+        : '';
       bannerHtml += '<div class="ncb" style="margin-bottom:8px">'
         + '<div class="nci"><div class="ncl">' + lotLabel + '</div><div class="ncv ' + col + '">' + lot.size + ' ' + a + '</div></div>'
+        + '<div class="nci"><div class="ncl">Date Acquired</div><div class="ncv" style="color:var(--mu2)">' + (lot.startDate || '&mdash;') + '</div></div>'
         + '<div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$' + fmt(lot.costBasis) + '</div></div>'
         + '<div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$' + fmt(lot.lotPremiums) + '</div></div>'
         + '<div class="nci"><div class="ncl">Net Cost / ' + a + '</div><div class="ncv orange">$' + fmt(nc) + '</div></div>'
         + '<div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$' + fmt(reduction) + '</div></div>'
         + '<div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$' + fmt(nc) + '</div></div>'
+        + editBtn
         + '</div>';
     });
   });
