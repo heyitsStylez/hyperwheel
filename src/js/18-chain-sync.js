@@ -11,7 +11,7 @@ const SYMBOL_MAP = {
   kHYPE: 'HYPE', WHYPE: 'HYPE', wstHYPE: 'HYPE',
   uSOL: 'SOL', USOL: 'SOL',
 };
-const HSFC_URL_KEY = 'rysk_hsfc_url_v1';
+const HSFC_GOLDSKY_URL = 'https://api.goldsky.com/api/public/project_clysuc3c7f21y01ub6hd66nmp/subgraphs/hypersurface-sh-subgraph/latest/gn';
 
 function symbolToAsset(sym) {
   return SYMBOL_MAP[sym] || sym;
@@ -45,14 +45,6 @@ function saveWallet(addr) {
   localStorage.setItem(WALLET_KEY, addr);
 }
 
-function loadHsfcUrl() {
-  return localStorage.getItem(HSFC_URL_KEY) || '';
-}
-
-function saveHsfcUrl(url) {
-  localStorage.setItem(HSFC_URL_KEY, url);
-}
-
 // Returns true when running under a real web server (Vercel or local http.server)
 // so the /api/chain-sync proxy is available.
 function hasProxy() {
@@ -69,9 +61,6 @@ function openChainSyncModal() {
   const walletInp = document.getElementById('chain-wallet-input');
   walletInp.value = saved;
   document.getElementById('chain-sync-run-btn').disabled = !saved.startsWith('0x');
-
-  const hsfcInp = document.getElementById('chain-hsfc-url-input');
-  if (hsfcInp) hsfcInp.value = loadHsfcUrl();
 
   // Reset status
   const statusEl  = document.getElementById('chain-sync-status');
@@ -271,10 +260,7 @@ async function fetchHsfcGoldsky(goldskyUrl, address) {
 }
 
 async function syncHypersurface(address) {
-  const goldskyUrl = loadHsfcUrl();
-  if (!goldskyUrl) {
-    return { imported: 0, skipped: 0, noUrl: true };
-  }
+  const goldskyUrl = HSFC_GOLDSKY_URL;
 
   let trades_raw = [];
 
@@ -320,10 +306,6 @@ async function runChainSync() {
 
   saveWallet(address);
 
-  // Save Goldsky URL if user entered one
-  const hsfcInp = document.getElementById('chain-hsfc-url-input');
-  if (hsfcInp && hsfcInp.value.trim()) saveHsfcUrl(hsfcInp.value.trim());
-
   const btn = document.getElementById('chain-sync-run-btn');
   btn.disabled    = true;
   btn.textContent = 'Syncing\u2026';
@@ -337,7 +319,7 @@ async function runChainSync() {
   summaryEl.style.display = 'none';
   ryskEl.textContent = 'Fetching\u2026';
   ryskEl.style.color = 'var(--mu)';
-  hsfcEl.textContent = loadHsfcUrl() ? 'Fetching\u2026' : 'No URL configured';
+  hsfcEl.textContent = 'Fetching\u2026';
   hsfcEl.style.color = 'var(--mu)';
 
   const [ryskResult, hsfcResult] = await Promise.allSettled([
@@ -365,17 +347,12 @@ async function runChainSync() {
   }
 
   if (hsfcResult.status === 'fulfilled') {
-    const { imported, skipped, noUrl } = hsfcResult.value;
-    if (noUrl) {
-      hsfcEl.textContent = '\u2014 paste Goldsky URL below';
-      hsfcEl.style.color = 'var(--mu)';
-    } else {
-      totalImported += imported;
-      hsfcEl.textContent = imported > 0
-        ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
-        : '\u2713 ' + skipped + ' already synced';
-      hsfcEl.style.color = 'var(--green)';
-    }
+    const { imported, skipped } = hsfcResult.value;
+    totalImported += imported;
+    hsfcEl.textContent = imported > 0
+      ? '\u2713 ' + imported + ' new (' + skipped + ' skipped)'
+      : '\u2713 ' + skipped + ' already synced';
+    hsfcEl.style.color = 'var(--green)';
   } else {
     const msg = hsfcResult.reason && hsfcResult.reason.message;
     hsfcEl.textContent = msg === 'CORS_BLOCKED'
