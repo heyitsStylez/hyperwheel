@@ -67,16 +67,17 @@ function parseRyskTrade(r) {
   return {
     id: Date.now() + Math.floor(Math.random() * 1e6),
     asset,
-    type:   r.isPut ? 'PUT' : 'CALL',
-    date:   createdAt ? unixToDate(createdAt) : today(),
-    expiry: expiryTs  ? unixToDate(expiryTs)  : '',
-    dte:    dte > 0 ? dte : null,
+    type:    r.isPut ? 'PUT' : 'CALL',
+    date:    createdAt ? unixToDate(createdAt) : today(),
+    expiry:  expiryTs  ? unixToDate(expiryTs)  : '',
+    dte:     dte > 0 ? dte : null,
     strike,
     size,
     premium,
     outcome,
     platform: 'RYSK',
-    txHash: r.txHash || null,
+    txHash:  r.txHash || null,
+    isClose: !r.isBuy,  // isBuy=false = user bought back (closing trade)
   };
 }
 
@@ -136,12 +137,18 @@ async function syncRysk(address) {
     if (r.txHash) synced.add(r.txHash);
   }
 
-  if (newTrades.length > 0 || corrected > 0) {
-    newTrades.forEach(t => trades.push(t));
+  // Split: open trades imported first, then close trades applied against them
+  const openTrades  = newTrades.filter(t => !t.isClose);
+  const closeTrades = newTrades.filter(t =>  t.isClose);
+  let closedCount = 0;
+  openTrades.forEach(t => trades.push(t));
+  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+
+  if (openTrades.length > 0 || closedCount > 0 || corrected > 0) {
     save();
     render();
     saveSynced(synced);
-    const expiredNew = newTrades.filter(t => t.outcome === 'EXPIRED');
+    const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
       autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
     }
@@ -208,8 +215,8 @@ function parseHsfcLeg(trade, leg) {
   return {
     id: Date.now() + Math.floor(Math.random() * 1e6),
     asset,
-    type:   isPut ? 'PUT' : 'CALL',
-    date:   openDate,
+    type:    isPut ? 'PUT' : 'CALL',
+    date:    openDate,
     expiry,
     dte,
     strike,
@@ -218,6 +225,7 @@ function parseHsfcLeg(trade, leg) {
     outcome,
     platform: 'HSFC',
     txHash,
+    isClose: amount > 0,  // positive amount = bought back (closing trade)
   };
 }
 
@@ -278,19 +286,69 @@ async function syncHypersurface(address) {
     }
   }
 
-  if (newTrades.length > 0) {
-    newTrades.forEach(t => trades.push(t));
+  const openTrades  = newTrades.filter(t => !t.isClose);
+  const closeTrades = newTrades.filter(t =>  t.isClose);
+  let closedCount = 0;
+  openTrades.forEach(t => trades.push(t));
+  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+
+  if (openTrades.length > 0 || closedCount > 0) {
     save();
     render();
     saveSynced(synced);
-    const expiredNew = newTrades.filter(t => t.outcome === 'EXPIRED');
+    const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
       autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
     }
   }
 
   const totalLegs = trades_raw.reduce((n, t) => n + (t.legs || []).length, 0);
-  return { imported: newTrades.length, skipped: totalLegs - newTrades.length };
+  return { imported: openTrades.length, closed: closedCount, skipped: totalLegs - newTrades.length };
+}
+
+// ── CLOSE TRADE HANDLING ──────────────────────────────────
+// When a user buys back an option they sold, it arrives as a separate
+// trade entry with isClose=true. Instead of importing it as a row,
+// find the matching open trade and mark it CLOSED with closeCost set.
+
+function applyCloseTrade(closeTrade) {
+  const match = trades.find(t =>
+    t.asset   === closeTrade.asset &&
+    t.type    === closeTrade.type &&
+    t.expiry  === closeTrade.expiry &&
+    Math.abs(t.strike - closeTrade.strike) < 0.01 &&
+    t.outcome === 'OPEN'
+  );
+  if (!match) return false;
+  match.outcome   = 'CLOSED';
+  match.closeCost = Math.abs(closeTrade.premium);
+  return true;
+}
+
+// Migration: clean up already-imported negative-premium OPEN trades
+// (synced before this fix was deployed).
+function migrateCloseTrades() {
+  const closers = trades.filter(t => t.premium < 0 && t.outcome === 'OPEN' && t.type !== 'HOLDING');
+  if (!closers.length) return;
+  let changed = false;
+  for (const c of closers) {
+    const open = trades.find(t =>
+      t.id !== c.id &&
+      t.asset   === c.asset &&
+      t.type    === c.type &&
+      t.expiry  === c.expiry &&
+      Math.abs(t.strike - c.strike) < 0.01 &&
+      t.premium > 0 &&
+      t.outcome === 'OPEN'
+    );
+    if (open) {
+      open.outcome   = 'CLOSED';
+      open.closeCost = Math.abs(c.premium);
+      trades = trades.filter(t => t.id !== c.id);
+      changed = true;
+    }
+  }
+  if (changed) { save(); render(); }
 }
 
 // ── OUTCOME AUTO-DETECTION ────────────────────────────────
@@ -347,6 +405,8 @@ async function autoDetectOutcomes(newTrades) {
 
 async function autoLoadChain(address) {
   if (!address || !address.startsWith('0x')) return;
+  // Clean up any close trades imported before this fix was deployed
+  migrateCloseTrades();
   const [ryskResult, hsfcResult] = await Promise.allSettled([
     syncRysk(address),
     syncHypersurface(address),
