@@ -82,7 +82,7 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .drawer-close{background:none;border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;font-size:.85rem;padding:4px 10px;line-height:1.4;transition:all .15s}
 .drawer-close:hover{color:var(--text);border-color:var(--bd2)}
 @media(max-width:720px){
-  #trade-drawer{top:auto;right:0;left:0;bottom:0;width:100%;max-height:90vh;border-left:none;border-top:1px solid var(--bd);transform:translateY(110%)}
+  #trade-drawer{top:auto;right:0;left:0;bottom:0;width:100%;max-height:90vh;min-height:50vh;border-left:none;border-top:1px solid var(--bd);transform:translateY(110%)}
   #trade-drawer.open{transform:translateY(0)}
 }
 
@@ -164,7 +164,7 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .sort-arrow{margin-left:3px;font-size:.55rem;vertical-align:middle}
 
 /* TABLE */
-.twrap{overflow-x:auto;overflow-y:auto;max-height:72vh}
+.twrap{overflow-x:auto;overflow-y:auto;max-height:72vh;background:linear-gradient(to right,var(--surface) 20px,transparent) left/40px 100% no-repeat,linear-gradient(to left,var(--surface) 20px,transparent) right/40px 100% no-repeat,radial-gradient(farthest-side at 0% 50%,rgba(0,214,143,.12),transparent) left/8px 100% no-repeat,radial-gradient(farthest-side at 100% 50%,rgba(0,214,143,.12),transparent) right/8px 100% no-repeat;background-attachment:local,local,scroll,scroll}
 table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.72rem;min-width:680px}
 thead tr{border-bottom:1px solid var(--green)}
 th{font-size:.6rem;font-weight:500;letter-spacing:2px;color:var(--mu);text-align:left;padding:8px 10px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0;z-index:2;background:var(--surface)}
@@ -252,8 +252,8 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .ppnl-mtbl tr:last-child td{border-bottom:none}
 .ppnl-mtbl .rate-hi{color:var(--green)}
 .ppnl-mtbl .rate-lo{color:var(--red)}
-@media(max-width:700px){.ppnl-cards{grid-template-columns:1fr 1fr}}
-@media(max-width:420px){.ppnl-cards{grid-template-columns:1fr}}
+@media(max-width:600px){.ppnl-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.ppnl-cards{grid-template-columns:1fr}}
 
 /* EMPTY */
 .empty{text-align:center;padding:64px 24px;display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -281,6 +281,34 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .header{padding:14px 16px}
   .hbtns{display:none!important}
   .main{padding:18px 12px 60px}
+}
+
+@media(max-width:480px){
+  .fi{grid-template-columns:1fr}
+  .fb{grid-template-columns:1fr}
+  .header{padding:10px 12px}
+  .hsub{display:none}
+  .cpnl-hero-hd{padding:14px 14px 10px}
+  .cpnl-hero-val{font-size:1.5rem}
+  .ncb{flex-direction:column;gap:12px}
+  .sec{padding:14px 14px}
+  .page-wrap{gap:16px}
+  /* Font size floor */
+  th{font-size:.68rem}
+  .badge{font-size:.68rem}
+  .sec-ttl{font-size:.72rem}
+  .ppnl-lbl{font-size:.68rem}
+  .tlog-sub-hd{font-size:.68rem}
+  /* Modal single column */
+  #edit-fields{grid-template-columns:1fr!important}
+  .modal{max-width:calc(100vw - 24px)}
+  .merge-modal{width:95%}
+  /* Asset tabs wrap without brackets */
+  .asset-tabs{flex-wrap:wrap;gap:6px}
+  .asset-tab::before,.asset-tab.active::before{content:none}
+  /* Footer */
+  .footer-bar{flex-wrap:wrap;gap:8px 14px;padding:8px 12px}
+  .footer-deco{display:none}
 }
 
 
@@ -328,6 +356,32 @@ body::after {
 .row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }
 tr:hover .row-actions { opacity:1; pointer-events:all; }
 td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
+
+/* ── Touch device overrides ── */
+@media(hover:none){
+  .row-actions{opacity:1;pointer-events:all}
+  .btn{padding:11px 16px}
+  .btn-d{padding:8px 12px}
+  .btn-qa{padding:8px 10px}
+  .asset-tab{padding:10px 12px}
+  .tb{padding:11px 6px}
+  .cpnl-period-btn{padding:9px 12px}
+  .ppnl-tab{padding:9px 12px}
+  .drawer-close{padding:10px 14px}
+  .expiry-refresh{padding:9px 10px}
+}
+
+/* ── Active / touch feedback states ── */
+.btn-p:active{background:transparent;color:var(--green)}
+.btn-g:active{color:var(--green);border-color:rgba(0,214,143,.4)}
+.btn-d:active{background:rgba(240,80,80,.15)}
+.asset-tab:active:not(.active){border-color:var(--bd2);color:var(--mu2)}
+.tb:active:not(.active){border-color:var(--mu);color:var(--text)}
+.btn-qa:active{filter:brightness(1.18)}
+.ppnl-tab:active{border-color:var(--green);color:var(--green)}
+.cpnl-period-btn:active:not(.active){border-color:var(--bd2);color:var(--mu2)}
+.empty-cta:active{background:var(--gd)}
+.expiry-refresh:active{color:var(--green);border-color:rgba(0,214,143,.4)}
 
 /* ─── FOOTER STATUS BAR ──────────────────────────────── */
 .footer-bar {
@@ -563,6 +617,11 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 }
 .cpnl-tt-date { color: var(--mu); }
 .cpnl-tt-val  { font-weight: 600; }
+
+/* ── MOBILE FAB (Add Trade) ── */
+.mobile-fab{position:fixed;bottom:72px;right:16px;z-index:150;font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:1px;width:52px;height:52px;background:var(--gd);color:var(--green);border:1px solid var(--gb);cursor:pointer;touch-action:manipulation;transition:all .15s;display:none;align-items:center;justify-content:center}
+.mobile-fab:hover,.mobile-fab:active{background:var(--gb)}
+@media(max-width:720px){.mobile-fab{display:flex}}
 </style>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -732,15 +791,18 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 
 <div class="footer-bar" id="footer-bar">
   <span class="footer-live">LIVE</span>
-  <span class="footer-sep">·</span>
+  <span class="footer-sep footer-deco">·</span>
   <span id="footer-wallet">—</span>
-  <span class="footer-sep">·</span>
-  <span>RYSK + HYPERSURFACE</span>
-  <span class="footer-sep">·</span>
+  <span class="footer-sep footer-deco">·</span>
+  <span class="footer-deco">RYSK + HYPERSURFACE</span>
+  <span class="footer-sep footer-deco">·</span>
   <span id="footer-sync-time">—</span>
   <span class="footer-sep">·</span>
   <span>v1.1.0</span>
 </div>
+
+<!-- MOBILE FAB -->
+<button class="mobile-fab" onclick="openTradeDrawer()" aria-label="Add trade">[ + ]</button>
 
 </main>
 
@@ -2730,7 +2792,7 @@ async function autoLoadChain(address) {
 
 <!-- EDIT TRADE MODAL -->
 <div class="merge-overlay" id="edit-overlay">
-  <div class="merge-modal" style="max-width:480px">
+  <div class="merge-modal" style="max-width:min(480px, calc(100vw - 24px))">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <h3 id="edit-title" style="font-size:.95rem">Edit Trade</h3>
       <button onclick="closeEditModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
