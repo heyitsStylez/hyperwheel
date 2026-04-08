@@ -17,6 +17,6 @@
     if (fw && wallet) fw.textContent = wallet.slice(0,6) + '...' + wallet.slice(-4);
     render();
     fetchExpiryPrices();
-    autoLoadChain(wallet);
+    cloudPull().then(() => autoLoadChain(wallet));
   }
 })();
