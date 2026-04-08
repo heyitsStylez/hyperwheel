@@ -47,7 +47,7 @@ function _outcomeLabel(r) {
   if (r.outcome === 'EXPIRED')  return r.type === 'CALL' ? 'Returned (Kept Asset)' : 'Returned (Kept Premium)';
   if (r.outcome === 'ASSIGNED') return 'Assigned (Bought at Strike)';
   if (r.outcome === 'CALLED')   return 'Called Away (Sold at Strike)';
-  if (r.outcome === 'CLOSED')   return 'Closed';
+  if (r.outcome === 'CLOSED')   return 'Closed Early (Bought Back)';
   return r.outcome;
 }
 
