@@ -869,8 +869,7 @@ let mergeAsset = null;
 
 function today() { return new Date().toISOString().split('T')[0]; }
 function save() {
-  const holdings = trades.filter(t => t.type === 'HOLDING');
-  localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(holdings));
+  localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(trades));
   if (typeof scheduleCloudPush === 'function') scheduleCloudPush();
 }
 function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
