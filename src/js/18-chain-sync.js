@@ -403,13 +403,44 @@ async function autoDetectOutcomes(newTrades) {
 
 // ── AUTO LOAD ──────────────────────────────────────────────
 
+function _setChainStatus(msg, isErr) {
+  const el = document.getElementById('footer-sync-time');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? 'var(--red)' : 'var(--mu2)';
+}
+
 async function autoLoadChain(address) {
   if (!address || !address.startsWith('0x')) return;
-  // Clean up any close trades imported before this fix was deployed
   migrateCloseTrades();
+  _setChainStatus('syncing chain…');
   const [ryskResult, hsfcResult] = await Promise.allSettled([
     syncRysk(address),
     syncHypersurface(address),
   ]);
-  // syncRysk and syncHypersurface already call save() and render() internally
+
+  const errs = [];
+  let totalImported = 0;
+
+  if (ryskResult.status === 'fulfilled') {
+    totalImported += (ryskResult.value.imported || 0);
+  } else {
+    const msg = (ryskResult.reason && ryskResult.reason.message) || String(ryskResult.reason);
+    errs.push('Rysk: ' + (msg === 'CORS_BLOCKED' ? 'CORS blocked' : msg));
+  }
+
+  if (hsfcResult.status === 'fulfilled') {
+    totalImported += (hsfcResult.value.imported || 0);
+  } else {
+    const msg = (hsfcResult.reason && hsfcResult.reason.message) || String(hsfcResult.reason);
+    errs.push('HSFC: ' + (msg === 'CORS_BLOCKED' ? 'CORS blocked' : msg));
+  }
+
+  if (errs.length) {
+    _setChainStatus(errs.join(' | '), true);
+  } else if (totalImported > 0) {
+    _setChainStatus('synced ' + totalImported + ' trade' + (totalImported !== 1 ? 's' : ''));
+  } else {
+    _setChainStatus('chain: 0 new');
+  }
 }
