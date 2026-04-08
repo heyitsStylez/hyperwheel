@@ -13,8 +13,6 @@ function rCpnlChart() {
   if (!area) return;
 
   // Build time series from all non-HOLDING trades
-  // OPEN trades: book premium at open date (already collected)
-  // Settled trades: book at expiry date
   const events = [];
   trades.forEach(t => {
     if (t.type === 'HOLDING') return;
@@ -60,16 +58,13 @@ function rCpnlChart() {
     dispSeries = allSeries;
   } else {
     const cutStr = cutoff.toISOString().slice(0, 10);
-    // find the baseline value just before the cutoff
     let baseline = 0;
     let lastBefore = allSeries.filter(p => p.date < cutStr);
     if (lastBefore.length) baseline = lastBefore[lastBefore.length - 1].val;
     const inPeriod = allSeries.filter(p => p.date >= cutStr);
     if (!inPeriod.length) {
-      // no events in period — show flat line at current total
       dispSeries = [{ date: cutStr, val: totalPnl }, { date: today.toISOString().slice(0, 10), val: totalPnl }];
     } else {
-      // prepend anchor at cutoff start
       dispSeries = [{ date: cutStr, val: baseline }, ...inPeriod];
     }
   }
@@ -104,12 +99,12 @@ function rCpnlChart() {
     }
   }
 
-  // Render canvas
+  // Canvas setup
   const DPR = window.devicePixelRatio || 1;
   const W = area.clientWidth || 800;
   const H = 186;
 
-  area.innerHTML = '<div class="cpnl-canvas-wrap"><canvas id="cpnl-canvas"></canvas><div class="cpnl-dot" id="cpnl-dot" style="display:none"></div></div>';
+  area.innerHTML = '<div class="cpnl-canvas-wrap"><canvas id="cpnl-canvas"></canvas><div class="cpnl-dot" id="cpnl-dot" style="display:none"></div><div class="cpnl-tt" id="cpnl-tt" style="display:none"></div></div>';
   const canvas = document.getElementById('cpnl-canvas');
   canvas.width = W * DPR;
   canvas.height = H * DPR;
@@ -145,18 +140,6 @@ function rCpnlChart() {
   const zeroY = toY(0);
   const lineColor = periodEnd >= periodStart ? greenColor : redColor;
 
-  // Gradient fill
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-  grad.addColorStop(0, lineColor.replace(')', ', 0.25)').replace('rgb(', 'rgba(').replace(/^(#[0-9a-f]{6})$/i, (h) => {
-    const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
-    return 'rgba(' + r + ',' + g + ',' + b + ',0.25)';
-  }));
-  grad.addColorStop(1, lineColor.replace(')', ', 0)').replace('rgb(', 'rgba(').replace(/^(#[0-9a-f]{6})$/i, (h) => {
-    const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
-    return 'rgba(' + r + ',' + g + ',' + b + ',0)';
-  }));
-
-  // Helper: parse any color to rgba string
   function toRgba(color, alpha) {
     const hex = color.match(/^#([0-9a-f]{6})$/i);
     if (hex) {
@@ -172,102 +155,167 @@ function rCpnlChart() {
     }
     return color;
   }
-  const gradFill = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-  gradFill.addColorStop(0, toRgba(lineColor, 0.22));
-  gradFill.addColorStop(0.7, toRgba(lineColor, 0.06));
-  gradFill.addColorStop(1, toRgba(lineColor, 0));
 
-  // Draw zero line
-  ctx.save();
-  ctx.strokeStyle = bdColor;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(pad.left, zeroY);
-  ctx.lineTo(pad.left + cW, zeroY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  // Smooth Bézier path using Catmull-Rom spline
-  function buildPath(pts) {
+  // Fritsch-Carlson monotone cubic interpolation — no overshoot, smooth curves
+  function buildPath(points) {
+    const n = points.length;
     ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    if (pts.length === 1) return;
-    if (pts.length === 2) {
-      ctx.lineTo(pts[1].x, pts[1].y);
-      return;
+    ctx.moveTo(points[0].x, points[0].y);
+    if (n < 2) return;
+    if (n === 2) { ctx.lineTo(points[1].x, points[1].y); return; }
+
+    // Chord slopes
+    const dx = [], dy = [], slope = [];
+    for (let i = 0; i < n - 1; i++) {
+      dx[i] = points[i+1].x - points[i].x || 1e-10;
+      dy[i] = points[i+1].y - points[i].y;
+      slope[i] = dy[i] / dx[i];
     }
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(0, i - 1)];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[Math.min(pts.length - 1, i + 2)];
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+
+    // Tangents
+    const m = new Array(n);
+    m[0] = slope[0];
+    m[n-1] = slope[n-2];
+    for (let i = 1; i < n - 1; i++) {
+      if (slope[i-1] * slope[i] <= 0) {
+        m[i] = 0;
+      } else {
+        m[i] = (slope[i-1] + slope[i]) / 2;
+      }
+    }
+
+    // Monotonicity constraint (Fritsch-Carlson)
+    for (let i = 0; i < n - 1; i++) {
+      if (Math.abs(slope[i]) < 1e-10) { m[i] = m[i+1] = 0; continue; }
+      const alpha = m[i] / slope[i];
+      const beta  = m[i+1] / slope[i];
+      const h = Math.sqrt(alpha * alpha + beta * beta);
+      if (h > 3) {
+        const t = 3 / h;
+        m[i]   = t * alpha * slope[i];
+        m[i+1] = t * beta  * slope[i];
+      }
+    }
+
+    // Cubic Hermite segments
+    for (let i = 0; i < n - 1; i++) {
+      const hx = dx[i];
+      ctx.bezierCurveTo(
+        points[i].x + hx / 3,     points[i].y + m[i] * hx / 3,
+        points[i+1].x - hx / 3,   points[i+1].y - m[i+1] * hx / 3,
+        points[i+1].x,            points[i+1].y
+      );
     }
   }
 
-  // Fill area
-  ctx.save();
-  buildPath(pts);
-  ctx.lineTo(pts[pts.length - 1].x, Math.min(zeroY, pad.top + cH));
-  ctx.lineTo(pts[0].x, Math.min(zeroY, pad.top + cH));
-  ctx.closePath();
-  ctx.fillStyle = gradFill;
-  ctx.fill();
-  ctx.restore();
-
-  // Stroke line
-  ctx.save();
-  ctx.strokeStyle = lineColor;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  buildPath(pts);
-  ctx.stroke();
-  ctx.restore();
-
-  // Y-axis labels
-  ctx.save();
-  ctx.fillStyle = muColor;
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'right';
-  const yTicks = 3;
-  for (let i = 0; i <= yTicks; i++) {
-    const v = minV + (spread * i / yTicks);
-    const y = toY(v);
-    const label = (v >= 0 ? '' : '-') + '$' + (Math.abs(v) >= 1000 ? (Math.abs(v)/1000).toFixed(1)+'k' : Math.abs(v).toFixed(0));
-    ctx.fillText(label, pad.left - 6, y + 3.5);
-  }
-  ctx.restore();
-
-  // X-axis date labels
-  ctx.save();
-  ctx.fillStyle = muColor;
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'center';
   const MTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const xTicks = Math.min(5, dispSeries.length);
-  const step = Math.floor((dispSeries.length - 1) / Math.max(1, xTicks - 1));
-  const shownX = new Set();
-  for (let i = 0; i < dispSeries.length; i += Math.max(1, step)) {
-    const d = new Date(dispSeries[i].date + 'T12:00:00');
-    const lbl = MTHS[d.getMonth()] + " '" + String(d.getFullYear()).slice(2);
-    const x = toX(dates[i]);
-    if (!shownX.has(lbl)) {
-      shownX.add(lbl);
-      ctx.fillText(lbl, x, pad.top + cH + 22);
+
+  function drawChart(hoverIdx) {
+    ctx.clearRect(0, 0, W, H);
+
+    // Gradient fill
+    const gradFill = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    gradFill.addColorStop(0,   toRgba(lineColor, 0.22));
+    gradFill.addColorStop(0.7, toRgba(lineColor, 0.06));
+    gradFill.addColorStop(1,   toRgba(lineColor, 0));
+
+    // Zero line
+    ctx.save();
+    ctx.strokeStyle = bdColor;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, zeroY);
+    ctx.lineTo(pad.left + cW, zeroY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Fill area
+    ctx.save();
+    buildPath(pts);
+    ctx.lineTo(pts[pts.length - 1].x, Math.min(zeroY, pad.top + cH));
+    ctx.lineTo(pts[0].x, Math.min(zeroY, pad.top + cH));
+    ctx.closePath();
+    ctx.fillStyle = gradFill;
+    ctx.fill();
+    ctx.restore();
+
+    // Stroke line
+    ctx.save();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    buildPath(pts);
+    ctx.stroke();
+    ctx.restore();
+
+    // Y-axis labels
+    ctx.save();
+    ctx.fillStyle = muColor;
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    const yTicks = 3;
+    for (let i = 0; i <= yTicks; i++) {
+      const v = minV + (spread * i / yTicks);
+      const y = toY(v);
+      const label = (v >= 0 ? '' : '-') + '$' + (Math.abs(v) >= 1000 ? (Math.abs(v)/1000).toFixed(1)+'k' : Math.abs(v).toFixed(0));
+      ctx.fillText(label, pad.left - 6, y + 3.5);
+    }
+    ctx.restore();
+
+    // X-axis date labels
+    ctx.save();
+    ctx.fillStyle = muColor;
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    const xTicks = Math.min(5, dispSeries.length);
+    const step = Math.floor((dispSeries.length - 1) / Math.max(1, xTicks - 1));
+    const shownX = new Set();
+    for (let i = 0; i < dispSeries.length; i += Math.max(1, step)) {
+      const d = new Date(dispSeries[i].date + 'T12:00:00');
+      const lbl = MTHS[d.getMonth()] + " '" + String(d.getFullYear()).slice(2);
+      const x = toX(dates[i]);
+      if (!shownX.has(lbl)) {
+        shownX.add(lbl);
+        ctx.fillText(lbl, x, pad.top + cH + 22);
+      }
+    }
+    ctx.restore();
+
+    // Hover crosshair + dot
+    if (hoverIdx >= 0 && hoverIdx < pts.length) {
+      const pt = pts[hoverIdx];
+      ctx.save();
+      ctx.strokeStyle = muColor;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pad.top);
+      ctx.lineTo(pt.x, pad.top + cH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = lineColor;
+      ctx.shadowColor = lineColor;
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.restore();
     }
   }
-  ctx.restore();
 
-  // Animated end dot — position via CSS overlay
+  drawChart(-1);
+
+  // Animated end dot
   const lastPt = pts[pts.length - 1];
   const dotEl = document.getElementById('cpnl-dot');
   if (dotEl && lastPt) {
@@ -276,6 +324,54 @@ function rCpnlChart() {
     dotEl.style.top = lastPt.y + 'px';
     dotEl.style.color = lineColor;
   }
+
+  // Tooltip element
+  const ttEl = document.getElementById('cpnl-tt');
+
+  // Hover events
+  canvas.addEventListener('mousemove', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+
+    // Find nearest point by X
+    let nearest = -1, nearestDist = Infinity;
+    pts.forEach(function(pt, i) {
+      const dist = Math.abs(pt.x - mouseX);
+      if (dist < nearestDist) { nearestDist = dist; nearest = i; }
+    });
+
+    if (nearest >= 0 && mouseX >= pad.left - 8 && mouseX <= pad.left + cW + 8) {
+      if (dotEl) dotEl.style.display = 'none';
+      drawChart(nearest);
+
+      const pt = pts[nearest];
+      const dp = dispSeries[nearest];
+      const d = new Date(dp.date + 'T12:00:00');
+      const dateStr = MTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      const valStr = (dp.val >= 0 ? '+$' : '-$') + fmt(Math.abs(dp.val));
+
+      if (ttEl) {
+        ttEl.innerHTML = '<span class="cpnl-tt-date">' + dateStr + '</span><span class="cpnl-tt-val" style="color:' + lineColor + '">' + valStr + '</span>';
+        ttEl.style.display = 'flex';
+        // Position: prefer right of crosshair, flip left if near edge
+        const ttW = 180;
+        let left = pt.x + 12;
+        if (left + ttW > W - pad.right) left = pt.x - ttW - 12;
+        ttEl.style.left = Math.max(pad.left, left) + 'px';
+        ttEl.style.top = (pad.top + 4) + 'px';
+      }
+    } else {
+      drawChart(-1);
+      if (dotEl) dotEl.style.display = 'block';
+      if (ttEl) ttEl.style.display = 'none';
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    drawChart(-1);
+    if (dotEl) dotEl.style.display = 'block';
+    if (ttEl) ttEl.style.display = 'none';
+  });
 }
 
 function rCharts(displayRows) {
