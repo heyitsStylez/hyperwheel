@@ -217,11 +217,39 @@ tr.lot-child.la-eth:hover > td{background:rgba(98,126,234,.08)}
 tr.lot-child.la-hype:hover > td{background:rgba(0,229,160,.08)}
 tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 
-/* NET COST BANNER */
-.ncb{margin:16px auto 0;max-width:960px;background:var(--s3);border:1px solid var(--bd2);border-radius:10px;padding:13px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:24px}
-.nci .ncl{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono);margin-bottom:3px}
-.nci .ncv{font-family:var(--mono);font-size:.93rem;font-weight:500;color:var(--text)}
-.ncv.orange{color:var(--orange)}.ncv.green{color:var(--green)}.ncv.btc{color:var(--btc)}.ncv.eth{color:var(--eth)}
+/* HOLDINGS CARDS */
+.holdings-sec{margin-bottom:0}
+.holdings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
+.holdings-merges{margin-top:12px;display:flex;gap:8px;justify-content:flex-end}
+.hcard{background:var(--s2);border:1px solid var(--bd2);position:relative;overflow:hidden}
+.hcard-btc{border-left:3px solid var(--btc)}
+.hcard-eth{border-left:3px solid var(--eth)}
+.hcard-hype{border-left:3px solid var(--hype)}
+.hcard-sol{border-left:3px solid var(--sol)}
+.hcard-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 9px;border-bottom:1px solid var(--bd)}
+.hcard-asset{display:flex;align-items:center;gap:8px}
+.hcard-ticker{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
+.hct-btc{color:var(--btc)}.hct-eth{color:var(--eth)}.hct-hype{color:var(--hype)}.hct-sol{color:var(--sol)}
+.hcard-size{font-size:.78rem;font-weight:600;color:var(--text);font-family:var(--mono)}
+.hcard-date{font-size:.58rem;color:var(--mu2);letter-spacing:.3px;font-family:var(--mono)}
+.hcard-edit{background:none;border:1px solid var(--bd2);color:var(--mu2);cursor:pointer;font-size:.68rem;padding:2px 6px;transition:all .15s;font-family:var(--mono);line-height:1.4}
+.hcard-edit:hover{color:var(--text);border-color:var(--mu)}
+.hcard-hero{padding:13px 13px 9px}
+.hcard-hero-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--mu);margin-bottom:4px;font-family:var(--mono)}
+.hcard-hero-val{font-size:1.3rem;font-weight:700;color:var(--orange);letter-spacing:-.5px;line-height:1;font-family:var(--mono)}
+.hcard-hero-sub{font-size:.6rem;color:var(--mu2);margin-top:5px;font-family:var(--mono)}
+.hcard-hero-sub span{color:var(--green);font-weight:600}
+.hcard-bar-wrap{padding:0 13px 12px}
+.hcard-bar-labels{display:flex;justify-content:space-between;font-size:.54rem;color:var(--mu);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px;font-family:var(--mono)}
+.hcard-bar-track{height:3px;background:var(--bd2);overflow:hidden}
+.hcard-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),rgba(0,214,143,.5))}
+.hcard-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--bd)}
+.hcard-stat{padding:9px 13px}
+.hcard-stat:first-child{border-right:1px solid var(--bd)}
+.hcard-stat-lbl{font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:3px;font-family:var(--mono)}
+.hcard-stat-val{font-size:.8rem;font-weight:600;color:var(--text2);font-family:var(--mono)}
+.hcard-stat-val.green{color:var(--green)}
+.lot-badge{font-size:.5rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;background:var(--s3);border:1px solid var(--bd2);color:var(--mu2);font-family:var(--mono)}
 
 /* MERGE LOTS */
 .btn-merge{font-size:.62rem;font-family:var(--mono);font-weight:700;padding:3px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--ob);color:var(--orange);background:var(--od);transition:all .15s;white-space:nowrap;letter-spacing:.5px;text-transform:uppercase}
@@ -291,7 +319,6 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .hsub{display:none}
   .cpnl-hero-hd{padding:14px 14px 10px}
   .cpnl-hero-val{font-size:1.5rem}
-  .ncb{flex-direction:column;gap:12px}
   .sec{padding:14px 14px}
   .page-wrap{gap:16px}
   /* Font size floor */
@@ -770,12 +797,15 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 
 
   <!-- TRADE LOG -->
+  <!-- HOLDINGS -->
+  <div id="ncbwrap"></div>
+
+  <!-- TRADE LOG -->
   <div class="sec" id="tlog">
     <div class="sec-hd">
       <div class="sec-ttl"><span class="dot db"></span>Trade Log</div>
       <span id="tcnt" style="font-size:.7rem;color:var(--mu);font-family:var(--mono)"></span>
     </div>
-    <div id="ncbwrap"></div>
     <!-- Open Positions -->
     <div class="tlog-sub-hd"><span>Open Positions</span><span id="ocnt" class="tlog-cnt"></span></div>
     <div class="twrap">
@@ -1495,39 +1525,71 @@ function rTable(displayRows, streams, lots) {
 
   cntEl.textContent = displayRows.length + ' trade' + (displayRows.length !== 1 ? 's' : '');
 
-  // Net cost banners — one card per open LOT
-  let bannerHtml = '';
+  // Holdings cards — one card per open lot
+  const sym = { BTC:'&#9654;', ETH:'&#9670;', HYPE:'&#9632;', SOL:'&#9679;' };
+  let cardsHtml = '';
+  let mergesHtml = '';
+  let openLotCount = 0;
   ['BTC','ETH','HYPE','SOL'].forEach(a => {
     if (sFilter !== 'ALL' && sFilter !== a) return;
     const assetLots = (lots[a] || []).filter(l => l.open);
     if (!assetLots.length) return;
-    const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a] || 'mu2';
-    const totalLots = (lots[a] || []).length;
+    const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a];
+    const totalAssetLots = (lots[a] || []).length;
     if (assetLots.length >= 2) {
-      bannerHtml += '<div style="margin-bottom:4px;text-align:right"><button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button></div>';
+      mergesHtml += '<button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button>';
     }
     assetLots.forEach(lot => {
+      openLotCount++;
       const nc = lot.costBasis - (lot.lotPremiums / lot.size);
-      const lotLabel = totalLots > 1 ? a + ' Lot ' + lot.lotNum : a + ' Held';
       const reduction = lot.costBasis - nc;
+      const reductionPct = lot.costBasis > 0 ? (reduction / lot.costBasis * 100) : 0;
+      const lotBadge = totalAssetLots > 1 ? '<span class="lot-badge">Lot ' + lot.lotNum + '</span>' : '';
       const holdingTrade = trades.find(t => t.id === lot.tradeIds[0]);
       const isManualHolding = holdingTrade && holdingTrade.type === 'HOLDING';
       const editBtn = isManualHolding
-        ? '<button class="btn-qa" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding" style="margin-left:auto;color:var(--mu2);align-self:center">&#9998;</button>'
+        ? '<button class="hcard-edit" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding">&#9998;</button>'
         : '';
-      bannerHtml += '<div class="ncb" style="margin-bottom:8px">'
-        + '<div class="nci"><div class="ncl">' + lotLabel + '</div><div class="ncv ' + col + '">' + lot.size + ' ' + a + '</div></div>'
-        + '<div class="nci"><div class="ncl">Date Acquired</div><div class="ncv" style="color:var(--mu2)">' + (lot.startDate || '&mdash;') + '</div></div>'
-        + '<div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$' + fmt(lot.costBasis) + '</div></div>'
-        + '<div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$' + fmt(lot.lotPremiums) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Net Cost / ' + a + '</div><div class="ncv orange">$' + fmt(nc) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$' + fmt(reduction) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$' + fmt(nc) + '</div></div>'
-        + editBtn
+      cardsHtml += '<div class="hcard hcard-' + col + '">'
+        + '<div class="hcard-hd">'
+        +   '<div class="hcard-asset">'
+        +     '<span class="hcard-ticker hct-' + col + '">' + sym[a] + ' ' + a + '</span>'
+        +     '<span class="hcard-size">' + lot.size + '</span>'
+        +     lotBadge
+        +   '</div>'
+        +   '<div style="display:flex;align-items:center;gap:8px">'
+        +     (lot.startDate ? '<span class="hcard-date">since ' + lot.startDate + '</span>' : '')
+        +     editBtn
+        +   '</div>'
+        + '</div>'
+        + '<div class="hcard-hero">'
+        +   '<div class="hcard-hero-lbl">Net Cost / ' + a + '</div>'
+        +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
+        +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
+        + '</div>'
+        + '<div class="hcard-bar-wrap">'
+        +   '<div class="hcard-bar-labels"><span>Premium reduction</span><span style="color:var(--green)">' + reductionPct.toFixed(1) + '%</span></div>'
+        +   '<div class="hcard-bar-track"><div class="hcard-bar-fill" style="width:' + Math.min(reductionPct, 100).toFixed(1) + '%"></div></div>'
+        + '</div>'
+        + '<div class="hcard-stats">'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">CC Premiums</div><div class="hcard-stat-val green">$' + fmt(lot.lotPremiums) + '</div></div>'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">Cost Basis</div><div class="hcard-stat-val">$' + fmt(lot.costBasis) + '</div></div>'
+        + '</div>'
         + '</div>';
     });
   });
-  ncWrap.innerHTML = bannerHtml ? '<div style="padding:0 20px">' + bannerHtml + '</div>' : '';
+  if (cardsHtml) {
+    ncWrap.innerHTML = '<div class="sec holdings-sec">'
+      + '<div class="sec-hd">'
+      +   '<div class="sec-ttl"><span class="dot dg"></span>Holdings</div>'
+      +   '<span style="font-size:.6rem;color:var(--mu);font-family:var(--mono)">' + openLotCount + ' open lot' + (openLotCount !== 1 ? 's' : '') + '</span>'
+      + '</div>'
+      + '<div class="holdings-grid">' + cardsHtml + '</div>'
+      + (mergesHtml ? '<div class="holdings-merges">' + mergesHtml + '</div>' : '')
+      + '</div>';
+  } else {
+    ncWrap.innerHTML = '';
+  }
 
   // Split into open and history
   const openRows = displayRows.filter(r => r.outcome === 'OPEN' && r.type !== 'HOLDING');

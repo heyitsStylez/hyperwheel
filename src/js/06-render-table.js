@@ -253,39 +253,71 @@ function rTable(displayRows, streams, lots) {
 
   cntEl.textContent = displayRows.length + ' trade' + (displayRows.length !== 1 ? 's' : '');
 
-  // Net cost banners — one card per open LOT
-  let bannerHtml = '';
+  // Holdings cards — one card per open lot
+  const sym = { BTC:'&#9654;', ETH:'&#9670;', HYPE:'&#9632;', SOL:'&#9679;' };
+  let cardsHtml = '';
+  let mergesHtml = '';
+  let openLotCount = 0;
   ['BTC','ETH','HYPE','SOL'].forEach(a => {
     if (sFilter !== 'ALL' && sFilter !== a) return;
     const assetLots = (lots[a] || []).filter(l => l.open);
     if (!assetLots.length) return;
-    const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a] || 'mu2';
-    const totalLots = (lots[a] || []).length;
+    const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a];
+    const totalAssetLots = (lots[a] || []).length;
     if (assetLots.length >= 2) {
-      bannerHtml += '<div style="margin-bottom:4px;text-align:right"><button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button></div>';
+      mergesHtml += '<button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button>';
     }
     assetLots.forEach(lot => {
+      openLotCount++;
       const nc = lot.costBasis - (lot.lotPremiums / lot.size);
-      const lotLabel = totalLots > 1 ? a + ' Lot ' + lot.lotNum : a + ' Held';
       const reduction = lot.costBasis - nc;
+      const reductionPct = lot.costBasis > 0 ? (reduction / lot.costBasis * 100) : 0;
+      const lotBadge = totalAssetLots > 1 ? '<span class="lot-badge">Lot ' + lot.lotNum + '</span>' : '';
       const holdingTrade = trades.find(t => t.id === lot.tradeIds[0]);
       const isManualHolding = holdingTrade && holdingTrade.type === 'HOLDING';
       const editBtn = isManualHolding
-        ? '<button class="btn-qa" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding" style="margin-left:auto;color:var(--mu2);align-self:center">&#9998;</button>'
+        ? '<button class="hcard-edit" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding">&#9998;</button>'
         : '';
-      bannerHtml += '<div class="ncb" style="margin-bottom:8px">'
-        + '<div class="nci"><div class="ncl">' + lotLabel + '</div><div class="ncv ' + col + '">' + lot.size + ' ' + a + '</div></div>'
-        + '<div class="nci"><div class="ncl">Date Acquired</div><div class="ncv" style="color:var(--mu2)">' + (lot.startDate || '&mdash;') + '</div></div>'
-        + '<div class="nci"><div class="ncl">Cost Basis</div><div class="ncv" style="color:var(--mu2)">$' + fmt(lot.costBasis) + '</div></div>'
-        + '<div class="nci"><div class="ncl">CC Premiums</div><div class="ncv green">$' + fmt(lot.lotPremiums) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Net Cost / ' + a + '</div><div class="ncv orange">$' + fmt(nc) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Reduced by</div><div class="ncv green">$' + fmt(reduction) + '</div></div>'
-        + '<div class="nci"><div class="ncl">Breakeven</div><div class="ncv" style="color:var(--mu2)">$' + fmt(nc) + '</div></div>'
-        + editBtn
+      cardsHtml += '<div class="hcard hcard-' + col + '">'
+        + '<div class="hcard-hd">'
+        +   '<div class="hcard-asset">'
+        +     '<span class="hcard-ticker hct-' + col + '">' + sym[a] + ' ' + a + '</span>'
+        +     '<span class="hcard-size">' + lot.size + '</span>'
+        +     lotBadge
+        +   '</div>'
+        +   '<div style="display:flex;align-items:center;gap:8px">'
+        +     (lot.startDate ? '<span class="hcard-date">since ' + lot.startDate + '</span>' : '')
+        +     editBtn
+        +   '</div>'
+        + '</div>'
+        + '<div class="hcard-hero">'
+        +   '<div class="hcard-hero-lbl">Net Cost / ' + a + '</div>'
+        +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
+        +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
+        + '</div>'
+        + '<div class="hcard-bar-wrap">'
+        +   '<div class="hcard-bar-labels"><span>Premium reduction</span><span style="color:var(--green)">' + reductionPct.toFixed(1) + '%</span></div>'
+        +   '<div class="hcard-bar-track"><div class="hcard-bar-fill" style="width:' + Math.min(reductionPct, 100).toFixed(1) + '%"></div></div>'
+        + '</div>'
+        + '<div class="hcard-stats">'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">CC Premiums</div><div class="hcard-stat-val green">$' + fmt(lot.lotPremiums) + '</div></div>'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">Cost Basis</div><div class="hcard-stat-val">$' + fmt(lot.costBasis) + '</div></div>'
+        + '</div>'
         + '</div>';
     });
   });
-  ncWrap.innerHTML = bannerHtml ? '<div style="padding:0 20px">' + bannerHtml + '</div>' : '';
+  if (cardsHtml) {
+    ncWrap.innerHTML = '<div class="sec holdings-sec">'
+      + '<div class="sec-hd">'
+      +   '<div class="sec-ttl"><span class="dot dg"></span>Holdings</div>'
+      +   '<span style="font-size:.6rem;color:var(--mu);font-family:var(--mono)">' + openLotCount + ' open lot' + (openLotCount !== 1 ? 's' : '') + '</span>'
+      + '</div>'
+      + '<div class="holdings-grid">' + cardsHtml + '</div>'
+      + (mergesHtml ? '<div class="holdings-merges">' + mergesHtml + '</div>' : '')
+      + '</div>';
+  } else {
+    ncWrap.innerHTML = '';
+  }
 
   // Split into open and history
   const openRows = displayRows.filter(r => r.outcome === 'OPEN' && r.type !== 'HOLDING');
