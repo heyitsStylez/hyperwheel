@@ -1182,12 +1182,17 @@ function compute(assetFilter) {
           targetLot.lotPremiums += netPrem;
           targetLot.tradeIds.push(t.id);
           if (t.outcome === 'CALLED') {
-            // Lot closed — asset called away
-            portfolioPnl += t.strike * targetLot.size;
-            targetLot.open = false;
-            targetLot.endDate = t.date;
-            targetLot.exitStrike = t.strike;
-            if (openLot === targetLot) openLot = null;
+            // Partial or full call-away — credit only the called size
+            const calledSize = Math.min(t.size, targetLot.size);
+            portfolioPnl += t.strike * calledSize;
+            targetLot.size -= calledSize;
+            if (targetLot.size <= 0) {
+              // Entire lot called away — close it
+              targetLot.open = false;
+              targetLot.endDate = t.date;
+              targetLot.exitStrike = t.strike;
+              if (openLot === targetLot) openLot = null;
+            }
           }
           // CLOSED call: lot stays open — position was bought back early
         }
