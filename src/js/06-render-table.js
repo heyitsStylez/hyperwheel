@@ -199,6 +199,7 @@ function renderExpiryTable() {
       + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
       + '<td>' + t.type + '</td>'
       + '<td>$' + fmt(t.strike) + '</td>'
+      + '<td>' + fmt(t.size) + '</td>'
       + '<td>' + dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
       + '<td>' + aprHtml + '</td>'
@@ -208,7 +209,7 @@ function renderExpiryTable() {
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
-    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th></tr></thead>'
+    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table>';
 }
