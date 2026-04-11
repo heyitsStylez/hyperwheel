@@ -414,6 +414,19 @@ async function autoLoadChain(address) {
   if (!address || !address.startsWith('0x')) return;
   migrateCloseTrades();
   _setChainStatus('syncing chain…');
+
+  // Flip any OPEN trades whose expiry date has passed → EXPIRED, then auto-detect outcome
+  const todayStr = today();
+  const stale = trades.filter(t =>
+    t.outcome === 'OPEN' && t.expiry && t.expiry < todayStr &&
+    (t.type === 'CALL' || t.type === 'PUT')
+  );
+  stale.forEach(t => { t.outcome = 'EXPIRED'; });
+  if (stale.length) {
+    save(); render();
+    autoDetectOutcomes(stale).then(changed => { if (changed) { save(); render(); } });
+  }
+
   const [ryskResult, hsfcResult] = await Promise.allSettled([
     syncRysk(address),
     syncHypersurface(address),
