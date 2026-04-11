@@ -195,6 +195,15 @@ function renderExpiryTable() {
     const platBadge = (t.platform === 'HSFC')
       ? '<span class="bplat bplat-hsfc">HSFC</span>'
       : '<span class="bplat bplat-rysk">RYSK</span>';
+    let actionsHtml = '';
+    if (daysLeft <= 0) {
+      actionsHtml = '<div class="row-actions">'
+        + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
+        + (t.type === 'CALL'
+          ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
+          : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
+        + '</div>';
+    }
     return '<tr>'
       + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
       + '<td>' + t.type + '</td>'
@@ -205,11 +214,12 @@ function renderExpiryTable() {
       + '<td>' + aprHtml + '</td>'
       + '<td>' + statusHtml + '</td>'
       + '<td>' + platBadge + '</td>'
+      + '<td class="td-act">' + actionsHtml + '</td>'
       + '</tr>';
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
-    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th></tr></thead>'
+    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table>';
 }
