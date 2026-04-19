@@ -2016,16 +2016,19 @@ function rCharts(displayRows) {
     let otmCount = 0, itmCount = 0;
     let openCount = 0;
     let aprWeightedSum = 0, aprWeightTotal = 0;
+    let assignmentLoss = 0, callAwayCredit = 0, totalNotional = 0;
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
+      const notional = (r.strike || 0) * (r.size || 0);
       totalPrem += net;
+      totalNotional += notional;
       totalCount++;
-      if (r.outcome === 'OPEN') { openCount++; return; }
-      if (r.outcome === 'EXPIRED') otmCount++;
-      else if (r.outcome === 'ASSIGNED' || r.outcome === 'CALLED') itmCount++;
+      if (r.outcome === 'OPEN') { openCount++; }
+      else if (r.outcome === 'EXPIRED') otmCount++;
+      else if (r.outcome === 'ASSIGNED') { itmCount++; assignmentLoss += notional; }
+      else if (r.outcome === 'CALLED') { itmCount++; callAwayCredit += notional; }
       if (r.annual != null) {
-        const notional = (r.strike || 0) * (r.size || 0);
         aprWeightedSum += r.annual * notional;
         aprWeightTotal += notional;
       }
@@ -2033,7 +2036,8 @@ function rCharts(displayRows) {
     const settled = otmCount + itmCount;
     const returnRate = settled > 0 ? otmCount / settled * 100 : null;
     const portfolioAPR = aprWeightTotal > 0 ? aprWeightedSum / aprWeightTotal : null;
-    return { totalPrem, totalCount, otmCount, itmCount, openCount, returnRate, settled, portfolioAPR };
+    const netPnl = totalPrem - assignmentLoss + callAwayCredit;
+    return { totalPrem, totalCount, otmCount, itmCount, openCount, returnRate, settled, portfolioAPR, assignmentLoss, callAwayCredit, netPnl, totalNotional };
   }
 
   const pos = n => n === 1 ? '1 position' : n + ' positions';
@@ -2054,11 +2058,21 @@ function rCharts(displayRows) {
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
     }
+    const netPnlColor = s.netPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const netPnlStr = s.totalCount > 0
+      ? '<span style="color:' + netPnlColor + '">' + (s.netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(s.netPnl)) + '</span>'
+      : dash;
     el.className = 'ppnl-cards';
     el.innerHTML = [
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
+      card('Net P&amp;L',
+        netPnlStr,
+        s.assignmentLoss > 0 ? '$' + fmt(s.assignmentLoss) + ' assignment loss' : (s.totalCount > 0 ? 'no assignments' : '')),
+      card('Total Notional',
+        s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
+        s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
       card('Portfolio APR',
         s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash,
         s.settled > 0 ? 'notional-weighted · ' + s.settled + ' settled' : ''),
@@ -2089,9 +2103,14 @@ function rCharts(displayRows) {
     const rows = months.map(ym => {
       const s = calcStats(monthMap[ym]);
       const rateClass = s.returnRate === null ? '' : s.returnRate >= 70 ? ' class="rate-hi"' : s.returnRate < 50 ? ' class="rate-lo"' : '';
+      const mnColor = s.netPnl >= 0 ? 'var(--green)' : 'var(--red)';
+      const mnStr = s.totalCount > 0
+        ? '<span style="color:' + mnColor + '">' + (s.netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(s.netPnl)) + '</span>'
+        : dash;
       return '<tr>' +
         '<td>' + fmtMonth(ym) + '</td>' +
         '<td>' + (s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash) + '</td>' +
+        '<td>' + mnStr + '</td>' +
         '<td>' + (s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash) + '</td>' +
         '<td' + rateClass + '>' + (s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash) + '<span class="ppnl-sub" style="display:block">' + (s.settled > 0 ? s.otmCount + '/' + s.settled : '') + '</span></td>' +
       '</tr>';
@@ -2101,6 +2120,7 @@ function rCharts(displayRows) {
       '<thead><tr>' +
         '<th>Month</th>' +
         '<th>Premium</th>' +
+        '<th>Net P&amp;L</th>' +
         '<th>Portfolio APR</th>' +
         '<th>Return Rate</th>' +
       '</tr></thead>' +
