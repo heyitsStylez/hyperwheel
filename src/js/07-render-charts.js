@@ -385,6 +385,9 @@ function rCharts(displayRows) {
     let openCount = 0;
     let aprWeightedSum = 0, aprWeightTotal = 0;
     let assignmentLoss = 0, callAwayCredit = 0, totalNotional = 0;
+    // Only credit call-aways for lots opened via assignment, not spot HOLDINGs
+    const assignedLotNums = new Set();
+    rows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) assignedLotNums.add(r.lotNum); });
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
@@ -395,7 +398,10 @@ function rCharts(displayRows) {
       if (r.outcome === 'OPEN') { openCount++; }
       else if (r.outcome === 'EXPIRED') otmCount++;
       else if (r.outcome === 'ASSIGNED') { itmCount++; assignmentLoss += notional; }
-      else if (r.outcome === 'CALLED') { itmCount++; callAwayCredit += notional; }
+      else if (r.outcome === 'CALLED') {
+        itmCount++;
+        if (assignedLotNums.has(r.lotNum)) callAwayCredit += notional;
+      }
       if (r.annual != null) {
         aprWeightedSum += r.annual * notional;
         aprWeightTotal += notional;
