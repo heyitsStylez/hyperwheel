@@ -642,6 +642,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .npnl-spark-lbl { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px; color: var(--mu); font-family: var(--mono); }
 .npnl-spark-lbl::before { content: '// '; opacity: .7; }
 .npnl-spark-val { font-size: .9rem; font-weight: 700; font-family: var(--mono); color: var(--text); }
+.npnl-no-asgn { font-size: .65rem; font-family: var(--mono); color: var(--mu); padding: 10px 24px 14px; }
 
 /* ── MOBILE FAB (Add Trade) ── */
 .mobile-fab{position:fixed;bottom:72px;right:16px;z-index:150;font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:1px;width:52px;height:52px;background:var(--gd);color:var(--green);border:1px solid var(--gb);cursor:pointer;touch-action:manipulation;transition:all .15s;display:none;align-items:center;justify-content:center}
