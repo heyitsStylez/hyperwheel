@@ -293,7 +293,7 @@ function rTable(displayRows, streams, lots) {
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
         +     '<span class="hcard-ticker hct-' + col + '">' + sym[a] + ' ' + a + '</span>'
-        +     '<span class="hcard-size">' + lot.size + '</span>'
+        +     '<span class="hcard-size">' + fmt(lot.size) + '</span>'
         +     lotBadge
         +   '</div>'
         +   '<div style="display:flex;align-items:center;gap:8px">'
