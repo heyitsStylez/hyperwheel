@@ -645,6 +645,11 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 }
 .cpnl-tt-date { color: var(--mu); }
 .cpnl-tt-val  { font-weight: 600; }
+.npnl-spark { border-top: 1px solid var(--bd); margin-top: 4px; padding-top: 10px; }
+.npnl-spark-hd { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; margin-bottom: 4px; }
+.npnl-spark-lbl { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px; color: var(--mu); font-family: var(--mono); }
+.npnl-spark-lbl::before { content: '// '; opacity: .7; }
+.npnl-spark-val { font-size: .9rem; font-weight: 700; font-family: var(--mono); color: var(--text); }
 
 /* ── MOBILE FAB (Add Trade) ── */
 .mobile-fab{position:fixed;bottom:72px;right:16px;z-index:150;font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:1px;width:52px;height:52px;background:var(--gd);color:var(--green);border:1px solid var(--gb);cursor:pointer;touch-action:manipulation;transition:all .15s;display:none;align-items:center;justify-content:center}
@@ -689,11 +694,11 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 <main class="page-wrap">
 <div class="content-col">
 
-  <!-- CUMULATIVE P&L HERO -->
+  <!-- PREMIUM INCOME HERO -->
   <div class="cpnl-hero" id="cpnl-hero">
     <div class="cpnl-hero-hd">
       <div>
-        <div class="cpnl-hero-label">Cumulative P&amp;L</div>
+        <div class="cpnl-hero-label">Premium Income</div>
         <div class="cpnl-hero-val" id="cpnl-val">—</div>
         <div class="cpnl-hero-change" id="cpnl-change"></div>
       </div>
@@ -704,6 +709,13 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
       </div>
     </div>
     <div id="cpnl-chart-area"></div>
+    <div class="npnl-spark">
+      <div class="npnl-spark-hd">
+        <span class="npnl-spark-lbl">Net P&amp;L</span>
+        <span class="npnl-spark-val" id="npnl-val">—</span>
+      </div>
+      <div id="npnl-chart-area"></div>
+    </div>
   </div>
 
   <!-- ASSET FILTER TABS -->
@@ -2004,6 +2016,121 @@ function rCpnlChart() {
     if (dotEl) dotEl.style.display = 'block';
     if (ttEl) ttEl.style.display = 'none';
   });
+
+  // ── NET P&L SPARKLINE ─────────────────────────────────────────
+  const { allRows: cpnlAllRows } = compute('ALL');
+  const cpnlAssignedLots = new Set();
+  cpnlAllRows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) cpnlAssignedLots.add(r.lotNum); });
+
+  const netEvts = [];
+  cpnlAllRows.forEach(r => {
+    if (r.type === 'HOLDING') return;
+    const ed = r.outcome === 'OPEN' ? r.date : r.expiry;
+    if (!ed) return;
+    let delta = (r.premium || 0) - (r.closeCost || 0);
+    if (r.outcome === 'ASSIGNED') delta -= (r.strike || 0) * (r.size || 0);
+    if (r.outcome === 'CALLED' && cpnlAssignedLots.has(r.lotNum)) delta += (r.strike || 0) * (r.size || 0);
+    netEvts.push({ date: ed, delta });
+  });
+  netEvts.sort((a, b) => a.date.localeCompare(b.date));
+
+  let netRun = 0;
+  const netAllSeries = netEvts.length ? [{ date: netEvts[0].date, val: 0 }] : [];
+  netEvts.forEach(e => {
+    netRun += e.delta;
+    const nlast = netAllSeries[netAllSeries.length - 1];
+    if (nlast.date === e.date) nlast.val = netRun;
+    else netAllSeries.push({ date: e.date, val: netRun });
+  });
+
+  const nValEl = document.getElementById('npnl-val');
+  if (nValEl) {
+    nValEl.style.color = netRun >= 0 ? greenColor : redColor;
+    nValEl.textContent = netEvts.length ? (netRun >= 0 ? '+$' : '-$') + fmt(Math.abs(netRun)) : '—';
+  }
+
+  let netDisp;
+  if (!cutoff || !netAllSeries.length) {
+    netDisp = netAllSeries;
+  } else {
+    const cutStr = cutoff.toISOString().slice(0, 10);
+    const lastBefore = netAllSeries.filter(p => p.date < cutStr);
+    const baseline = lastBefore.length ? lastBefore[lastBefore.length - 1].val : 0;
+    const inPeriod = netAllSeries.filter(p => p.date >= cutStr);
+    netDisp = inPeriod.length
+      ? [{ date: cutStr, val: baseline }, ...inPeriod]
+      : [{ date: cutStr, val: netRun }, { date: todayStr, val: netRun }];
+  }
+  if (netDisp.length && netDisp[netDisp.length - 1].date < todayStr) {
+    netDisp = [...netDisp, { date: todayStr, val: netDisp[netDisp.length - 1].val }];
+  }
+
+  const nArea = document.getElementById('npnl-chart-area');
+  if (nArea && netDisp.length >= 2) {
+    const nW = nArea.clientWidth || W;
+    const nH = 72;
+    nArea.innerHTML = '<canvas id="npnl-canvas"></canvas>';
+    const nCanvas = document.getElementById('npnl-canvas');
+    nCanvas.width = nW * DPR; nCanvas.height = nH * DPR;
+    nCanvas.style.width = nW + 'px'; nCanvas.style.height = nH + 'px';
+    const nCtx = nCanvas.getContext('2d');
+    nCtx.scale(DPR, DPR);
+
+    const nPad = { top: 8, right: 24, bottom: 8, left: 56 };
+    const ncW = nW - nPad.left - nPad.right;
+    const ncH = nH - nPad.top - nPad.bottom;
+    const nVals = netDisp.map(p => p.val);
+    const nMinV = Math.min(0, ...nVals);
+    const nMaxV = Math.max(0, ...nVals);
+    const nSpread = nMaxV - nMinV || 1;
+    const nDates = netDisp.map(p => new Date(p.date + 'T12:00:00').getTime());
+    const nMinD = nDates[0], nMaxD = nDates[nDates.length - 1];
+    const nDateSpan = nMaxD - nMinD || 1;
+
+    function nToX(d) { return nPad.left + ((d - nMinD) / nDateSpan) * ncW; }
+    function nToY(v) { return nPad.top + (1 - (v - nMinV) / nSpread) * ncH; }
+
+    const nPts = netDisp.map((p, i) => ({ x: nToX(nDates[i]), y: nToY(p.val) }));
+    const nZeroY = nToY(0);
+    const nLineColor = netDisp[netDisp.length - 1].val >= netDisp[0].val ? greenColor : redColor;
+    const nGrad = nCtx.createLinearGradient(0, nPad.top, 0, nPad.top + ncH);
+    nGrad.addColorStop(0, toRgba(nLineColor, 0.18));
+    nGrad.addColorStop(1, toRgba(nLineColor, 0));
+
+    // Zero line
+    nCtx.save();
+    nCtx.strokeStyle = bdColor; nCtx.lineWidth = 1;
+    nCtx.setLineDash([3, 3]); nCtx.globalAlpha = 0.4;
+    nCtx.beginPath(); nCtx.moveTo(nPad.left, nZeroY); nCtx.lineTo(nPad.left + ncW, nZeroY);
+    nCtx.stroke(); nCtx.setLineDash([]); nCtx.globalAlpha = 1; nCtx.restore();
+
+    // Gradient fill
+    nCtx.save();
+    nCtx.beginPath(); nCtx.moveTo(nPts[0].x, nPts[0].y);
+    nPts.slice(1).forEach(pt => nCtx.lineTo(pt.x, pt.y));
+    nCtx.lineTo(nPts[nPts.length - 1].x, Math.min(nZeroY, nPad.top + ncH));
+    nCtx.lineTo(nPts[0].x, Math.min(nZeroY, nPad.top + ncH));
+    nCtx.closePath(); nCtx.fillStyle = nGrad; nCtx.fill(); nCtx.restore();
+
+    // Line
+    nCtx.save();
+    nCtx.strokeStyle = nLineColor; nCtx.lineWidth = 1.5;
+    nCtx.lineJoin = 'round'; nCtx.lineCap = 'round';
+    nCtx.beginPath(); nCtx.moveTo(nPts[0].x, nPts[0].y);
+    nPts.slice(1).forEach(pt => nCtx.lineTo(pt.x, pt.y));
+    nCtx.stroke(); nCtx.restore();
+
+    // Y labels (min and max)
+    nCtx.save();
+    nCtx.fillStyle = muColor; nCtx.font = '10px monospace'; nCtx.textAlign = 'right';
+    [nMinV, nMaxV].forEach(v => {
+      const lbl = (v >= 0 ? '' : '-') + '$' + (Math.abs(v) >= 1000 ? (Math.abs(v)/1000).toFixed(1) + 'k' : Math.abs(v).toFixed(0));
+      nCtx.fillText(lbl, nPad.left - 6, nToY(v) + 3.5);
+    });
+    nCtx.restore();
+  } else if (nArea) {
+    nArea.innerHTML = '';
+  }
 }
 
 function rCharts(displayRows) {
