@@ -94,8 +94,7 @@ function rCpnlChart() {
       const cls = periodChange >= 0 ? 'chg-pos' : 'chg-neg';
       cEl.innerHTML = '<span class="' + cls + '">' + sign + '$' + fmt(Math.abs(periodChange)) + '</span> this period';
     } else {
-      const trades_count = events.length;
-      cEl.innerHTML = trades_count + ' trade' + (trades_count !== 1 ? 's' : '');
+      cEl.innerHTML = '';
     }
   }
 
@@ -422,9 +421,12 @@ function rCpnlChart() {
   }
 
   const nArea = document.getElementById('npnl-chart-area');
-  if (nArea && netDisp.length >= 2) {
+  const hasAssignments = cpnlAllRows.some(r => r.outcome === 'ASSIGNED');
+  if (nArea && !hasAssignments) {
+    nArea.innerHTML = '<div class="npnl-no-asgn">No assignment losses &mdash; Net P&amp;L equals Premium Income</div>';
+  } else if (nArea && netDisp.length >= 2) {
     const nW = nArea.clientWidth || W;
-    const nH = 72;
+    const nH = 88;
     nArea.innerHTML = '<canvas id="npnl-canvas"></canvas>';
     const nCanvas = document.getElementById('npnl-canvas');
     nCanvas.width = nW * DPR; nCanvas.height = nH * DPR;
