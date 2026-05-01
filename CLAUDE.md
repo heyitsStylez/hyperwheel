@@ -43,7 +43,7 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `03-form-controls.js` | 211 | `setAsset/setType/setPlatform/setSizeUnit/setOut/setFilter/setPpnlTab`, `refreshLotPicker`, `autoFillFromLot`, `autoDTE`, history filters: `setHistOutcome/setHistFrom/setHistTo/clearHistFilters` |
 | `04-trade-crud.js` | 39 | `addTrade()` (HOLDING-only — adds spot from drawer), `clearForm`, `deleteTrade`, `quickOutcome` (fires toasts) |
 | `05-compute.js` | 170 | `compute(assetFilter)` → `{streams, lots, allRows, displayRows}`. Lot engine. **Key invariant:** assigned-PUT premium IS credited to the new lot's `lotPremiums` (line 61) — see Lot model below |
-| `06-render-table.js` | 426 | `sortOpen/sortHist`, `renderExpiryTable` (today badge + mobile cards), `fetchExpiryPrices` (CoinGecko, calls full `render()` on success), `rTable` (holdings cards, open & history tables, history filter application), `rStats` (just delegates to `renderExpiryTable`) |
+| `06-render-table.js` | 470 | `sortOpen/sortHist`, `renderExpiryTable` (today badge + mobile cards), `fetchExpiryPrices` (CoinGecko, calls full `render()` on success), `rTable` (holdings cards, open & history tables, history filter application), `rStats` (just delegates to `renderExpiryTable`), `exportHistoryCSV` (downloads filtered history as CSV) |
 | `07-render-charts.js` | 640 | `setCpnlPeriod` (1M/3M/ALL), `rCpnlChart` (cumulative premium hero + npnl sparkline), `rCharts` (Premium P&L total/monthly tabs), `cOpts` (Chart.js options factory) |
 | `08-render.js` | 7 | `render()` — orchestrator: `compute → rStats → rTable → rCharts` |
 | `09-drawer-modal.js` | 15 | `openTradeDrawer`, `closeTradeDrawer`, `focusForm` |

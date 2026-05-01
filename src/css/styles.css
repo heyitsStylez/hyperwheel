@@ -696,3 +696,5 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .hist-date{font-family:var(--mono);font-size:.7rem;background:var(--s2);color:var(--text);border:1px solid var(--bd);padding:5px 8px;color-scheme:dark}
 .hist-clear-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer}
 .hist-clear-btn:hover{color:var(--red);border-color:var(--rb)}
+.hist-export-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer}
+.hist-export-btn:hover{color:var(--green);border-color:var(--gb)}

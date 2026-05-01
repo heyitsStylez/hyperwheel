@@ -424,3 +424,43 @@ function rTable(displayRows, streams, lots) {
     ? sortedHist.map(_histRow).join('')
     : '<tr><td colspan="12" style="padding:14px 12px;color:var(--mu);font-size:.75rem;text-align:center;font-family:var(--mono)">No closed positions yet</td></tr>';
 }
+
+function exportHistoryCSV() {
+  const c = compute(sFilter);
+  let rows = c.displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
+  if (sHistOutcome && sHistOutcome !== 'ALL') rows = rows.filter(r => r.outcome === sHistOutcome);
+  if (sHistFrom) rows = rows.filter(r => r.date >= sHistFrom);
+  if (sHistTo)   rows = rows.filter(r => r.date <= sHistTo);
+  rows = _sortRows(rows, tSortHist);
+
+  if (!rows.length) { toast('No history rows to export', 'info'); return; }
+
+  const cols = ['date','asset','type','platform','expiry','dte','strike','size','premium','closeCost','net_premium','outcome','apr_pct','lotNum','txHash','notes','id'];
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [cols.join(',')];
+  rows.forEach(r => {
+    const net = (r.premium || 0) - (r.closeCost || 0);
+    lines.push([
+      r.date, r.asset, r.type, r.platform, r.expiry || '', r.dte || '',
+      r.strike, r.size, r.premium, r.closeCost || 0, net, r.outcome,
+      r.annual != null ? r.annual.toFixed(2) : '',
+      r.lotNum || '', r.txHash || '', r.notes || '', r.id
+    ].map(esc).join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[-:T]/g,'').slice(0,15);
+  a.href = url;
+  a.download = 'hyperwheel-history-' + stamp + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Exported ' + rows.length + ' row' + (rows.length !== 1 ? 's' : ''), 'ok');
+}
