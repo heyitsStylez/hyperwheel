@@ -120,6 +120,23 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .exp-otm{color:var(--green);font-weight:600}
 .exp-itm{color:var(--red);font-weight:600}
 .exp-empty{color:var(--mu);font-style:italic;padding:10px 4px;font-family:var(--mono);font-size:.72rem}
+.expiry-today-badge{display:inline-block;margin-left:10px;padding:2px 8px;font-size:.55rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);background:var(--rd);border:1px solid var(--rb);font-family:var(--mono);vertical-align:middle}
+/* Mobile expiry cards (hidden by default) */
+.exp-cards{display:none;flex-direction:column;gap:8px;padding:4px 0 10px}
+.exp-card{background:var(--s2);border:1px solid var(--bd);border-left:3px solid var(--bd2);padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-family:var(--mono);font-size:.72rem}
+.exp-card-today{border-left-color:var(--red)}
+.exp-card-row1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.exp-card-asset{font-weight:700;font-size:.8rem;letter-spacing:1px}
+.exp-card-type{font-weight:600;color:var(--mu2);font-size:.65rem;letter-spacing:1px}
+.exp-card-dte{margin-left:auto;font-weight:600}
+.exp-card-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;color:var(--text2)}
+.exp-card-row2 .exp-card-status{grid-column:1/-1}
+.exp-card-lbl{color:var(--mu);font-size:.55rem;letter-spacing:1px;text-transform:uppercase;margin-right:4px}
+.exp-card-row3{display:flex;justify-content:flex-end}
+@media(max-width:600px){
+  .expiry-tbl{display:none}
+  .exp-cards{display:flex}
+}
 
 /* SECTION */
 .sec{border-left:2px solid var(--green);background:var(--surface);padding:20px 24px}
@@ -250,6 +267,16 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .hcard-stat-lbl{font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:3px;font-family:var(--mono)}
 .hcard-stat-val{font-size:.8rem;font-weight:600;color:var(--text2);font-family:var(--mono)}
 .hcard-stat-val.green{color:var(--green)}
+.hcard-spot{padding:9px 13px 11px;border-top:1px solid var(--bd);background:var(--s2)}
+.hcard-spot-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-family:var(--mono)}
+.hcard-spot-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu)}
+.hcard-spot-val{font-size:.85rem;font-weight:700;color:var(--text)}
+.hcard-pnl{margin-left:auto;font-size:.72rem;font-weight:700}
+.hcard-pnl.green{color:var(--green)}
+.hcard-pnl.red{color:var(--red)}
+.hcard-hint{margin-top:6px;font-size:.6rem;color:var(--mu2);font-family:var(--mono);line-height:1.45}
+.hcard-hint b{color:var(--orange);font-weight:700}
+.hcard-hint-ok{color:var(--green)}
 .lot-badge{font-size:.5rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;background:var(--s3);border:1px solid var(--bd2);color:var(--mu2);font-family:var(--mono)}
 
 /* MERGE LOTS */
@@ -657,6 +684,27 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .mobile-fab{position:fixed;bottom:72px;right:16px;z-index:150;font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:1px;width:52px;height:52px;background:var(--gd);color:var(--green);border:1px solid var(--gb);cursor:pointer;touch-action:manipulation;transition:all .15s;display:none;align-items:center;justify-content:center}
 .mobile-fab:hover,.mobile-fab:active{background:var(--gb)}
 @media(max-width:720px){.mobile-fab{display:flex}}
+
+/* ── TOASTS ── */
+#toast-stack{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.5px;padding:9px 16px;background:var(--surface);border:1px solid var(--bd2);color:var(--text);box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;max-width:90vw}
+.toast-in{opacity:1;transform:translateY(0)}
+.toast-out{opacity:0;transform:translateY(-4px)}
+.toast-ok{border-left:3px solid var(--green)}
+.toast-err{border-left:3px solid var(--red);color:var(--red)}
+.toast-info{border-left:3px solid var(--blue)}
+@media(max-width:720px){#toast-stack{bottom:130px}}
+
+/* ── HISTORY FILTERS ── */
+.hist-filters{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:10px 0 14px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.hist-filter-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hist-filter-lbl{font-size:.55rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);font-family:var(--mono);margin-right:2px}
+.hist-out-btn{font-family:var(--mono);font-size:.65rem;font-weight:600;letter-spacing:.8px;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer;transition:all .15s}
+.hist-out-btn:hover{color:var(--text);border-color:var(--bd2)}
+.hist-out-btn.active{color:var(--green);border-color:var(--gb);background:var(--gd)}
+.hist-date{font-family:var(--mono);font-size:.7rem;background:var(--s2);color:var(--text);border:1px solid var(--bd);padding:5px 8px;color-scheme:dark}
+.hist-clear-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer}
+.hist-clear-btn:hover{color:var(--red);border-color:var(--rb)}
 </style>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -744,7 +792,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
   <!-- EXPIRY WATCH -->
   <div class="expiry-section">
     <div class="expiry-hd">
-      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week</span>
+      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week<span id="expiry-today-badge" class="expiry-today-badge" style="display:none"></span></span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
         <button class="expiry-refresh" onclick="fetchExpiryPrices()" title="Refresh live prices">&#8635; Refresh</button>
         <span id="expiry-last-refreshed" style="font-size:.55rem;font-family:var(--mono);color:var(--mu2)"></span>
@@ -827,6 +875,23 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
     </div>
     <!-- Position History -->
     <div class="tlog-sub-hd" style="margin-top:24px"><span>Position History</span><span id="hcnt" class="tlog-cnt"></span></div>
+    <div class="hist-filters">
+      <div class="hist-filter-group">
+        <span class="hist-filter-lbl">Outcome</span>
+        <button class="hist-out-btn active" id="ho-ALL"      onclick="setHistOutcome('ALL')">All</button>
+        <button class="hist-out-btn"        id="ho-EXPIRED"  onclick="setHistOutcome('EXPIRED')">Expired</button>
+        <button class="hist-out-btn"        id="ho-ASSIGNED" onclick="setHistOutcome('ASSIGNED')">Assigned</button>
+        <button class="hist-out-btn"        id="ho-CALLED"   onclick="setHistOutcome('CALLED')">Called</button>
+        <button class="hist-out-btn"        id="ho-CLOSED"   onclick="setHistOutcome('CLOSED')">Closed</button>
+      </div>
+      <div class="hist-filter-group">
+        <span class="hist-filter-lbl">From</span>
+        <input type="date" id="hist-from" class="hist-date" onchange="setHistFrom(this.value)">
+        <span class="hist-filter-lbl">To</span>
+        <input type="date" id="hist-to" class="hist-date" onchange="setHistTo(this.value)">
+        <button class="hist-clear-btn" onclick="clearHistFilters()">Clear</button>
+      </div>
+    </div>
     <div class="twrap">
       <table><thead><tr id="hist-hdr"></tr></thead><tbody id="ttbody-hist"></tbody></table>
     </div>
@@ -850,6 +915,9 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 
 <!-- MOBILE FAB -->
 <button class="mobile-fab" onclick="openTradeDrawer()" aria-label="Add trade">[ + ]</button>
+
+<!-- TOAST STACK -->
+<div id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
 </main>
 
@@ -881,6 +949,11 @@ const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9
 // Merge modal state
 let mergeAsset = null;
 
+// History filter state
+let sHistOutcome = 'ALL';  // ALL | EXPIRED | ASSIGNED | CALLED | CLOSED
+let sHistFrom = '';        // YYYY-MM-DD or empty
+let sHistTo   = '';
+
 function today() { return new Date().toISOString().split('T')[0]; }
 function save() {
   localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(trades));
@@ -893,6 +966,22 @@ function loadWallet() {
 }
 function saveWallet(addr) {
   localStorage.setItem(HW_WALLET_KEY, addr);
+}
+
+function toast(msg, kind) {
+  const c = document.getElementById('toast-stack');
+  if (!c) return;
+  const k = kind || 'ok';
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + k;
+  el.textContent = msg;
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('toast-in'));
+  setTimeout(() => {
+    el.classList.remove('toast-in');
+    el.classList.add('toast-out');
+    setTimeout(() => el.remove(), 220);
+  }, 2400);
 }
 
 // ── FORM CONTROLS
@@ -1085,6 +1174,28 @@ function autoDTE() {
   }
 }
 
+// History filters
+function setHistOutcome(o) {
+  sHistOutcome = o;
+  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+    const el = document.getElementById('ho-' + x);
+    if (el) el.classList.toggle('active', x === o);
+  });
+  render();
+}
+function setHistFrom(v) { sHistFrom = v; render(); }
+function setHistTo(v)   { sHistTo   = v; render(); }
+function clearHistFilters() {
+  sHistOutcome = 'ALL'; sHistFrom = ''; sHistTo = '';
+  const f = document.getElementById('hist-from'); if (f) f.value = '';
+  const t = document.getElementById('hist-to');   if (t) t.value = '';
+  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+    const el = document.getElementById('ho-' + x);
+    if (el) el.classList.toggle('active', x === 'ALL');
+  });
+  render();
+}
+
 // ── ADD TRADE
 function addTrade() {
   const errEl = document.getElementById('ferr');
@@ -1100,6 +1211,7 @@ function addTrade() {
   trades.push(tradeObj);
   save(); render(); clearForm();
   closeTradeDrawer();
+  toast(sAsset + ' holding added');
   document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1109,12 +1221,19 @@ function clearForm() {
   document.getElementById('ferr').style.display = 'none';
 }
 
-function deleteTrade(id) { trades = trades.filter(t => t.id !== id); save(); render(); }
+function deleteTrade(id) {
+  const t = trades.find(t => t.id === id);
+  trades = trades.filter(t => t.id !== id);
+  save(); render();
+  if (t) toast('Deleted ' + t.asset + ' ' + t.type);
+}
 function quickOutcome(id, outcome) {
   const t = trades.find(t => t.id === id);
   if (!t) return;
   t.outcome = outcome;
   save(); render();
+  const labels = { EXPIRED: 'expired', ASSIGNED: 'assigned', CALLED: 'called away', CLOSED: 'closed early' };
+  toast(t.asset + ' ' + t.type + ' marked ' + (labels[outcome] || outcome.toLowerCase()));
 }
 
 // ── COMPUTE (lot-aware, multi-wheel per asset) ───────────────
@@ -1450,6 +1569,21 @@ function renderExpiryTable() {
     return exp <= weekOut;
   }).sort((a, b) => new Date(a.expiry) - new Date(b.expiry) || a.asset.localeCompare(b.asset));
 
+  // Today badge in section header — count of trades expiring today or overdue
+  const todayBadge = document.getElementById('expiry-today-badge');
+  if (todayBadge) {
+    const todayCount = expiring.filter(t => {
+      const exp = new Date(t.expiry + 'T00:00:00');
+      return Math.round((exp - today) / 86400000) <= 0;
+    }).length;
+    if (todayCount > 0) {
+      todayBadge.textContent = todayCount + ' today';
+      todayBadge.style.display = '';
+    } else {
+      todayBadge.style.display = 'none';
+    }
+  }
+
   if (!expiring.length) {
     wrap.innerHTML = '<div class="exp-empty">No trades expiring this week</div>';
     return;
@@ -1457,19 +1591,17 @@ function renderExpiryTable() {
 
   const assetCol = { BTC: 'btc', ETH: 'eth', HYPE: 'hype', SOL: 'sol' };
 
-  const rows = expiring.map(t => {
+  const enriched = expiring.map(t => {
     const exp = new Date(t.expiry + 'T00:00:00');
     const daysLeft = Math.round((exp - today) / (1000 * 60 * 60 * 24));
     const dteLabel = daysLeft <= 0
       ? '<span style="color:var(--red);font-weight:700">today</span>'
       : daysLeft + 'd';
-
     let aprHtml = '—';
     if (t.dte > 0 && t.strike > 0 && t.size > 0) {
       const ann = (t.premium / (t.strike * t.size)) * (365 / t.dte) * 100;
       aprHtml = ann.toFixed(1) + '%';
     }
-
     let statusHtml = '<span style="color:var(--mu)">—</span>';
     const spot = livePrices[t.asset];
     if (spot) {
@@ -1480,38 +1612,60 @@ function renderExpiryTable() {
         ? '<span class="exp-otm">OTM ' + pct + '%</span>'
         : '<span class="exp-itm">ITM ' + pct + '%</span>';
     }
-
     const col = assetCol[t.asset] || 'mu2';
     const platBadge = (t.platform === 'HSFC')
       ? '<span class="bplat bplat-hsfc">HSFC</span>'
       : '<span class="bplat bplat-rysk">RYSK</span>';
-    let actionsHtml = '';
-    if (daysLeft <= 0) {
-      actionsHtml = '<div class="row-actions">'
-        + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
-        + (t.type === 'CALL'
-          ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
-          : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
-        + '</div>';
-    }
+    const actionsHtml = '<div class="row-actions">'
+      + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
+      + (t.type === 'CALL'
+        ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
+        : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
+      + '</div>';
+    return { t, col, dteLabel, aprHtml, statusHtml, platBadge, actionsHtml, daysLeft };
+  });
+
+  const rows = enriched.map(e => {
+    const t = e.t;
     return '<tr>'
-      + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
+      + '<td style="color:var(--' + e.col + ');font-weight:700">' + t.asset + '</td>'
       + '<td>' + t.type + '</td>'
       + '<td>$' + fmt(t.strike) + '</td>'
       + '<td>' + fmt(t.size) + '</td>'
-      + '<td>' + dteLabel + '</td>'
+      + '<td>' + e.dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
-      + '<td>' + aprHtml + '</td>'
-      + '<td>' + statusHtml + '</td>'
-      + '<td>' + platBadge + '</td>'
-      + '<td class="td-act">' + actionsHtml + '</td>'
+      + '<td>' + e.aprHtml + '</td>'
+      + '<td>' + e.statusHtml + '</td>'
+      + '<td>' + e.platBadge + '</td>'
+      + '<td class="td-act">' + e.actionsHtml + '</td>'
       + '</tr>';
+  }).join('');
+
+  const cards = enriched.map(e => {
+    const t = e.t;
+    return '<div class="exp-card' + (e.daysLeft <= 0 ? ' exp-card-today' : '') + '">'
+      + '<div class="exp-card-row1">'
+      +   '<span class="exp-card-asset" style="color:var(--' + e.col + ')">' + t.asset + '</span>'
+      +   '<span class="exp-card-type">' + t.type + '</span>'
+      +   '<span class="exp-card-dte">' + e.dteLabel + '</span>'
+      +   e.platBadge
+      + '</div>'
+      + '<div class="exp-card-row2">'
+      +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(t.strike) + '</div>'
+      +   '<div><span class="exp-card-lbl">Size</span> ' + fmt(t.size) + '</div>'
+      +   '<div><span class="exp-card-lbl">Prem</span> $' + fmt(t.premium) + '</div>'
+      +   '<div><span class="exp-card-lbl">APR</span> ' + e.aprHtml + '</div>'
+      +   '<div class="exp-card-status">' + e.statusHtml + '</div>'
+      + '</div>'
+      + '<div class="exp-card-row3">' + e.actionsHtml + '</div>'
+      + '</div>';
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
     + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
-    + '</table>';
+    + '</table>'
+    + '<div class="exp-cards">' + cards + '</div>';
 }
 
 function fetchExpiryPrices() {
@@ -1526,7 +1680,8 @@ function fetchExpiryPrices() {
       };
       const el = document.getElementById('expiry-last-refreshed');
       if (el) { const n = new Date(); el.textContent = 'refreshed ' + String(n.getUTCHours()).padStart(2,'0') + ':' + String(n.getUTCMinutes()).padStart(2,'0') + ' UTC'; }
-      renderExpiryTable();
+      // Re-render whole page so holdings cards pick up live spot too
+      if (typeof render === 'function') render(); else renderExpiryTable();
     })
     .catch(() => { /* silently fail — table shows — for status */ });
 }
@@ -1579,6 +1734,33 @@ function rTable(displayRows, streams, lots) {
       const editBtn = isManualHolding
         ? '<button class="hcard-edit" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding">&#9998;</button>'
         : '';
+      // Live spot, unrealized P&L vs net cost, breakeven hint
+      const spot = livePrices[a];
+      let spotBlock = '';
+      if (spot) {
+        const pnlPerToken = spot - nc;
+        const pnlTotal = pnlPerToken * lot.size;
+        const pnlPct = nc > 0 ? (pnlPerToken / nc * 100) : 0;
+        const cls = pnlTotal >= 0 ? 'green' : 'red';
+        const sign = pnlTotal >= 0 ? '+' : '';
+        let hint;
+        if (nc > spot) {
+          const need = ((nc - spot) / spot * 100).toFixed(1);
+          hint = '<div class="hcard-hint">Next call &ge; <b>$' + fmt(nc) + '</b> &mdash; ' + need + '% above spot to stay above net cost</div>';
+        } else {
+          const cushion = ((spot - nc) / spot * 100).toFixed(1);
+          hint = '<div class="hcard-hint hcard-hint-ok">Spot is ' + cushion + '% above net cost &mdash; any call &ge; spot is profitable</div>';
+        }
+        spotBlock = '<div class="hcard-spot">'
+          +   '<div class="hcard-spot-row">'
+          +     '<span class="hcard-spot-lbl">Spot</span>'
+          +     '<span class="hcard-spot-val">$' + fmt(spot) + '</span>'
+          +     '<span class="hcard-pnl ' + cls + '">' + sign + '$' + fmt(pnlTotal) + ' (' + sign + pnlPct.toFixed(1) + '%)</span>'
+          +   '</div>'
+          +   hint
+          + '</div>';
+      }
+
       cardsHtml += '<div class="hcard hcard-' + col + '">'
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
@@ -1596,6 +1778,7 @@ function rTable(displayRows, streams, lots) {
         +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
         +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
         + '</div>'
+        + spotBlock
         + '<div class="hcard-bar-wrap">'
         +   '<div class="hcard-bar-labels"><span>Premium reduction</span><span style="color:var(--green)">' + reductionPct.toFixed(1) + '%</span></div>'
         +   '<div class="hcard-bar-track"><div class="hcard-bar-fill" style="width:' + Math.min(reductionPct, 100).toFixed(1) + '%"></div></div>'
@@ -1622,7 +1805,14 @@ function rTable(displayRows, streams, lots) {
 
   // Split into open and history
   const openRows = displayRows.filter(r => r.outcome === 'OPEN' && r.type !== 'HOLDING');
-  const histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
+  let histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
+
+  // Apply history filters (outcome + date range, by trade open date)
+  if (sHistOutcome && sHistOutcome !== 'ALL') {
+    histRows = histRows.filter(r => r.outcome === sHistOutcome);
+  }
+  if (sHistFrom) histRows = histRows.filter(r => r.date >= sHistFrom);
+  if (sHistTo)   histRows = histRows.filter(r => r.date <= sHistTo);
 
   if (ocntEl) ocntEl.textContent = openRows.length ? String(openRows.length) : '';
   if (hcntEl) hcntEl.textContent = histRows.length ? String(histRows.length) : '';
@@ -2379,6 +2569,7 @@ async function cloudPush() {
     _setCloudStatus('ok');
   } catch {
     _setCloudStatus('err');
+    if (typeof toast === 'function') toast('Cloud sync failed', 'err');
   }
 }
 
@@ -2406,10 +2597,12 @@ async function cloudPull() {
       save();
       render();
       _suppressPush = false;
+      if (typeof toast === 'function') toast('Pulled ' + data.holdings.length + ' holding' + (data.holdings.length === 1 ? '' : 's') + ' from cloud', 'info');
     }
     _setCloudStatus('ok');
   } catch {
     _setCloudStatus('err');
+    if (typeof toast === 'function') toast('Cloud pull failed', 'err');
   }
 }
 
@@ -2507,6 +2700,7 @@ function saveEdit() {
   save();
   render();
   closeEditModal();
+  toast('Saved changes to ' + t.asset + ' ' + (isHolding ? 'holding' : t.type));
 }
 
 document.addEventListener('DOMContentLoaded', function() {

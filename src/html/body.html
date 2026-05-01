@@ -81,7 +81,7 @@
   <!-- EXPIRY WATCH -->
   <div class="expiry-section">
     <div class="expiry-hd">
-      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week</span>
+      <span class="expiry-ttl">&#9203;&nbsp; Expiring This Week<span id="expiry-today-badge" class="expiry-today-badge" style="display:none"></span></span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
         <button class="expiry-refresh" onclick="fetchExpiryPrices()" title="Refresh live prices">&#8635; Refresh</button>
         <span id="expiry-last-refreshed" style="font-size:.55rem;font-family:var(--mono);color:var(--mu2)"></span>
@@ -164,6 +164,23 @@
     </div>
     <!-- Position History -->
     <div class="tlog-sub-hd" style="margin-top:24px"><span>Position History</span><span id="hcnt" class="tlog-cnt"></span></div>
+    <div class="hist-filters">
+      <div class="hist-filter-group">
+        <span class="hist-filter-lbl">Outcome</span>
+        <button class="hist-out-btn active" id="ho-ALL"      onclick="setHistOutcome('ALL')">All</button>
+        <button class="hist-out-btn"        id="ho-EXPIRED"  onclick="setHistOutcome('EXPIRED')">Expired</button>
+        <button class="hist-out-btn"        id="ho-ASSIGNED" onclick="setHistOutcome('ASSIGNED')">Assigned</button>
+        <button class="hist-out-btn"        id="ho-CALLED"   onclick="setHistOutcome('CALLED')">Called</button>
+        <button class="hist-out-btn"        id="ho-CLOSED"   onclick="setHistOutcome('CLOSED')">Closed</button>
+      </div>
+      <div class="hist-filter-group">
+        <span class="hist-filter-lbl">From</span>
+        <input type="date" id="hist-from" class="hist-date" onchange="setHistFrom(this.value)">
+        <span class="hist-filter-lbl">To</span>
+        <input type="date" id="hist-to" class="hist-date" onchange="setHistTo(this.value)">
+        <button class="hist-clear-btn" onclick="clearHistFilters()">Clear</button>
+      </div>
+    </div>
     <div class="twrap">
       <table><thead><tr id="hist-hdr"></tr></thead><tbody id="ttbody-hist"></tbody></table>
     </div>
@@ -187,6 +204,9 @@
 
 <!-- MOBILE FAB -->
 <button class="mobile-fab" onclick="openTradeDrawer()" aria-label="Add trade">[ + ]</button>
+
+<!-- TOAST STACK -->
+<div id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
 </main>
 

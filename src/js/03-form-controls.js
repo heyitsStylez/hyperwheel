@@ -187,3 +187,25 @@ function autoDTE() {
     document.getElementById('f-dte').value = n > 0 ? n : '';
   }
 }
+
+// History filters
+function setHistOutcome(o) {
+  sHistOutcome = o;
+  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+    const el = document.getElementById('ho-' + x);
+    if (el) el.classList.toggle('active', x === o);
+  });
+  render();
+}
+function setHistFrom(v) { sHistFrom = v; render(); }
+function setHistTo(v)   { sHistTo   = v; render(); }
+function clearHistFilters() {
+  sHistOutcome = 'ALL'; sHistFrom = ''; sHistTo = '';
+  const f = document.getElementById('hist-from'); if (f) f.value = '';
+  const t = document.getElementById('hist-to');   if (t) t.value = '';
+  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+    const el = document.getElementById('ho-' + x);
+    if (el) el.classList.toggle('active', x === 'ALL');
+  });
+  render();
+}

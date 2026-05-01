@@ -92,6 +92,7 @@ function saveEdit() {
   save();
   render();
   closeEditModal();
+  toast('Saved changes to ' + t.asset + ' ' + (isHolding ? 'holding' : t.type));
 }
 
 document.addEventListener('DOMContentLoaded', function() {

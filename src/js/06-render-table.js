@@ -160,6 +160,21 @@ function renderExpiryTable() {
     return exp <= weekOut;
   }).sort((a, b) => new Date(a.expiry) - new Date(b.expiry) || a.asset.localeCompare(b.asset));
 
+  // Today badge in section header — count of trades expiring today or overdue
+  const todayBadge = document.getElementById('expiry-today-badge');
+  if (todayBadge) {
+    const todayCount = expiring.filter(t => {
+      const exp = new Date(t.expiry + 'T00:00:00');
+      return Math.round((exp - today) / 86400000) <= 0;
+    }).length;
+    if (todayCount > 0) {
+      todayBadge.textContent = todayCount + ' today';
+      todayBadge.style.display = '';
+    } else {
+      todayBadge.style.display = 'none';
+    }
+  }
+
   if (!expiring.length) {
     wrap.innerHTML = '<div class="exp-empty">No trades expiring this week</div>';
     return;
@@ -167,19 +182,17 @@ function renderExpiryTable() {
 
   const assetCol = { BTC: 'btc', ETH: 'eth', HYPE: 'hype', SOL: 'sol' };
 
-  const rows = expiring.map(t => {
+  const enriched = expiring.map(t => {
     const exp = new Date(t.expiry + 'T00:00:00');
     const daysLeft = Math.round((exp - today) / (1000 * 60 * 60 * 24));
     const dteLabel = daysLeft <= 0
       ? '<span style="color:var(--red);font-weight:700">today</span>'
       : daysLeft + 'd';
-
     let aprHtml = '—';
     if (t.dte > 0 && t.strike > 0 && t.size > 0) {
       const ann = (t.premium / (t.strike * t.size)) * (365 / t.dte) * 100;
       aprHtml = ann.toFixed(1) + '%';
     }
-
     let statusHtml = '<span style="color:var(--mu)">—</span>';
     const spot = livePrices[t.asset];
     if (spot) {
@@ -190,38 +203,60 @@ function renderExpiryTable() {
         ? '<span class="exp-otm">OTM ' + pct + '%</span>'
         : '<span class="exp-itm">ITM ' + pct + '%</span>';
     }
-
     const col = assetCol[t.asset] || 'mu2';
     const platBadge = (t.platform === 'HSFC')
       ? '<span class="bplat bplat-hsfc">HSFC</span>'
       : '<span class="bplat bplat-rysk">RYSK</span>';
-    let actionsHtml = '';
-    if (daysLeft <= 0) {
-      actionsHtml = '<div class="row-actions">'
-        + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
-        + (t.type === 'CALL'
-          ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
-          : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
-        + '</div>';
-    }
+    const actionsHtml = '<div class="row-actions">'
+      + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
+      + (t.type === 'CALL'
+        ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
+        : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
+      + '</div>';
+    return { t, col, dteLabel, aprHtml, statusHtml, platBadge, actionsHtml, daysLeft };
+  });
+
+  const rows = enriched.map(e => {
+    const t = e.t;
     return '<tr>'
-      + '<td style="color:var(--' + col + ');font-weight:700">' + t.asset + '</td>'
+      + '<td style="color:var(--' + e.col + ');font-weight:700">' + t.asset + '</td>'
       + '<td>' + t.type + '</td>'
       + '<td>$' + fmt(t.strike) + '</td>'
       + '<td>' + fmt(t.size) + '</td>'
-      + '<td>' + dteLabel + '</td>'
+      + '<td>' + e.dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
-      + '<td>' + aprHtml + '</td>'
-      + '<td>' + statusHtml + '</td>'
-      + '<td>' + platBadge + '</td>'
-      + '<td class="td-act">' + actionsHtml + '</td>'
+      + '<td>' + e.aprHtml + '</td>'
+      + '<td>' + e.statusHtml + '</td>'
+      + '<td>' + e.platBadge + '</td>'
+      + '<td class="td-act">' + e.actionsHtml + '</td>'
       + '</tr>';
+  }).join('');
+
+  const cards = enriched.map(e => {
+    const t = e.t;
+    return '<div class="exp-card' + (e.daysLeft <= 0 ? ' exp-card-today' : '') + '">'
+      + '<div class="exp-card-row1">'
+      +   '<span class="exp-card-asset" style="color:var(--' + e.col + ')">' + t.asset + '</span>'
+      +   '<span class="exp-card-type">' + t.type + '</span>'
+      +   '<span class="exp-card-dte">' + e.dteLabel + '</span>'
+      +   e.platBadge
+      + '</div>'
+      + '<div class="exp-card-row2">'
+      +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(t.strike) + '</div>'
+      +   '<div><span class="exp-card-lbl">Size</span> ' + fmt(t.size) + '</div>'
+      +   '<div><span class="exp-card-lbl">Prem</span> $' + fmt(t.premium) + '</div>'
+      +   '<div><span class="exp-card-lbl">APR</span> ' + e.aprHtml + '</div>'
+      +   '<div class="exp-card-status">' + e.statusHtml + '</div>'
+      + '</div>'
+      + '<div class="exp-card-row3">' + e.actionsHtml + '</div>'
+      + '</div>';
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
     + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
-    + '</table>';
+    + '</table>'
+    + '<div class="exp-cards">' + cards + '</div>';
 }
 
 function fetchExpiryPrices() {
@@ -236,7 +271,8 @@ function fetchExpiryPrices() {
       };
       const el = document.getElementById('expiry-last-refreshed');
       if (el) { const n = new Date(); el.textContent = 'refreshed ' + String(n.getUTCHours()).padStart(2,'0') + ':' + String(n.getUTCMinutes()).padStart(2,'0') + ' UTC'; }
-      renderExpiryTable();
+      // Re-render whole page so holdings cards pick up live spot too
+      if (typeof render === 'function') render(); else renderExpiryTable();
     })
     .catch(() => { /* silently fail — table shows — for status */ });
 }
@@ -289,6 +325,33 @@ function rTable(displayRows, streams, lots) {
       const editBtn = isManualHolding
         ? '<button class="hcard-edit" onclick="openEditModal(' + lot.tradeIds[0] + ')" title="Edit holding">&#9998;</button>'
         : '';
+      // Live spot, unrealized P&L vs net cost, breakeven hint
+      const spot = livePrices[a];
+      let spotBlock = '';
+      if (spot) {
+        const pnlPerToken = spot - nc;
+        const pnlTotal = pnlPerToken * lot.size;
+        const pnlPct = nc > 0 ? (pnlPerToken / nc * 100) : 0;
+        const cls = pnlTotal >= 0 ? 'green' : 'red';
+        const sign = pnlTotal >= 0 ? '+' : '';
+        let hint;
+        if (nc > spot) {
+          const need = ((nc - spot) / spot * 100).toFixed(1);
+          hint = '<div class="hcard-hint">Next call &ge; <b>$' + fmt(nc) + '</b> &mdash; ' + need + '% above spot to stay above net cost</div>';
+        } else {
+          const cushion = ((spot - nc) / spot * 100).toFixed(1);
+          hint = '<div class="hcard-hint hcard-hint-ok">Spot is ' + cushion + '% above net cost &mdash; any call &ge; spot is profitable</div>';
+        }
+        spotBlock = '<div class="hcard-spot">'
+          +   '<div class="hcard-spot-row">'
+          +     '<span class="hcard-spot-lbl">Spot</span>'
+          +     '<span class="hcard-spot-val">$' + fmt(spot) + '</span>'
+          +     '<span class="hcard-pnl ' + cls + '">' + sign + '$' + fmt(pnlTotal) + ' (' + sign + pnlPct.toFixed(1) + '%)</span>'
+          +   '</div>'
+          +   hint
+          + '</div>';
+      }
+
       cardsHtml += '<div class="hcard hcard-' + col + '">'
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
@@ -306,6 +369,7 @@ function rTable(displayRows, streams, lots) {
         +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
         +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
         + '</div>'
+        + spotBlock
         + '<div class="hcard-bar-wrap">'
         +   '<div class="hcard-bar-labels"><span>Premium reduction</span><span style="color:var(--green)">' + reductionPct.toFixed(1) + '%</span></div>'
         +   '<div class="hcard-bar-track"><div class="hcard-bar-fill" style="width:' + Math.min(reductionPct, 100).toFixed(1) + '%"></div></div>'
@@ -332,7 +396,14 @@ function rTable(displayRows, streams, lots) {
 
   // Split into open and history
   const openRows = displayRows.filter(r => r.outcome === 'OPEN' && r.type !== 'HOLDING');
-  const histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
+  let histRows = displayRows.filter(r => r.outcome !== 'OPEN' && r.type !== 'HOLDING');
+
+  // Apply history filters (outcome + date range, by trade open date)
+  if (sHistOutcome && sHistOutcome !== 'ALL') {
+    histRows = histRows.filter(r => r.outcome === sHistOutcome);
+  }
+  if (sHistFrom) histRows = histRows.filter(r => r.date >= sHistFrom);
+  if (sHistTo)   histRows = histRows.filter(r => r.date <= sHistTo);
 
   if (ocntEl) ocntEl.textContent = openRows.length ? String(openRows.length) : '';
   if (hcntEl) hcntEl.textContent = histRows.length ? String(histRows.length) : '';

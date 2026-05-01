@@ -28,6 +28,7 @@ async function cloudPush() {
     _setCloudStatus('ok');
   } catch {
     _setCloudStatus('err');
+    if (typeof toast === 'function') toast('Cloud sync failed', 'err');
   }
 }
 
@@ -55,9 +56,11 @@ async function cloudPull() {
       save();
       render();
       _suppressPush = false;
+      if (typeof toast === 'function') toast('Pulled ' + data.holdings.length + ' holding' + (data.holdings.length === 1 ? '' : 's') + ' from cloud', 'info');
     }
     _setCloudStatus('ok');
   } catch {
     _setCloudStatus('err');
+    if (typeof toast === 'function') toast('Cloud pull failed', 'err');
   }
 }

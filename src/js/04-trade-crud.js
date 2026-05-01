@@ -13,6 +13,7 @@ function addTrade() {
   trades.push(tradeObj);
   save(); render(); clearForm();
   closeTradeDrawer();
+  toast(sAsset + ' holding added');
   document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -22,10 +23,17 @@ function clearForm() {
   document.getElementById('ferr').style.display = 'none';
 }
 
-function deleteTrade(id) { trades = trades.filter(t => t.id !== id); save(); render(); }
+function deleteTrade(id) {
+  const t = trades.find(t => t.id === id);
+  trades = trades.filter(t => t.id !== id);
+  save(); render();
+  if (t) toast('Deleted ' + t.asset + ' ' + t.type);
+}
 function quickOutcome(id, outcome) {
   const t = trades.find(t => t.id === id);
   if (!t) return;
   t.outcome = outcome;
   save(); render();
+  const labels = { EXPIRED: 'expired', ASSIGNED: 'assigned', CALLED: 'called away', CLOSED: 'closed early' };
+  toast(t.asset + ' ' + t.type + ' marked ' + (labels[outcome] || outcome.toLowerCase()));
 }

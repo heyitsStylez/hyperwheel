@@ -11,3 +11,8 @@ const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9
 
 // Merge modal state
 let mergeAsset = null;
+
+// History filter state
+let sHistOutcome = 'ALL';  // ALL | EXPIRED | ASSIGNED | CALLED | CLOSED
+let sHistFrom = '';        // YYYY-MM-DD or empty
+let sHistTo   = '';
