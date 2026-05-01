@@ -1,59 +1,98 @@
-# Rysk Wheel P&L Tracker
+# HyperWheel
 
-A single-file options trading tracker for the **Wheel strategy** on [Rysk Finance](https://app.rysk.finance) and [Hypersurface](https://app.hypersurface.io) — DeFi options platforms on HyperEVM (HyperLiquid L2).
+A single-file P&L tracker for the **Wheel strategy** on
+[Rysk Finance](https://app.rysk.finance) and
+[Hypersurface](https://app.hypersurface.io) — DeFi options platforms on
+HyperEVM (HyperLiquid L2).
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Features
 
-- **Trade logging** — log puts, calls, and holdings with full details (strike, size, premium, expiry, DTE)
-- **Lot-based P&L tracking** — automatic lot creation on assignment, running lot premiums, net cost per token
-- **Multi-platform** — supports both Rysk Finance and Hypersurface, including early close tracking (buy-to-close with close cost)
-- **Close-at-profit alerts** — polls Hypersurface mark prices and alerts when open positions can be closed at 50%+ profit (configurable threshold)
-- **Merge lots** — combine open lots when selling larger covered calls across previously split positions
-- **Market scanner** — real-time spot prices, EMA/RSI technicals, support levels, and DVOL for BTC/ETH via CoinGecko and Deribit
-- **8 themes** — Abyss (default), Gold, Ocean, Terminal, Charcoal, Crimson, Paper, Arctic, Matrix
-- **Charts** — premium income over time and asset allocation breakdown
-- **Import / Export** — JSON and CSV for backup and portability
-- **Zero dependencies** — single HTML file, no build step, no npm. Chart.js loaded from CDN.
+- **Trade logging** — puts, calls, and spot holdings with strike, size, premium,
+  expiry, DTE
+- **Lot-based P&L** — automatic lot creation on assignment; assigned-put premium
+  credits the new lot's net cost; running call-premium accumulation per lot;
+  net cost per token
+- **Holdings cards** — live spot price, unrealized P&L per lot, and a hint for
+  the minimum next-call strike to stay above net cost
+- **Premium income & Net P&L charts** — cumulative hero with 1M / 3M / ALL
+  ranges plus a Net P&L sparkline
+- **Premium P&L stats** — total + monthly tabs (premium collected, net P&L,
+  notional, portfolio APR, return rate)
+- **Expiring This Week** — table view with live OTM/ITM status, today-count
+  badge, and quick Exp/Asgn/Called buttons on every row. Mobile card layout.
+- **History filters** — outcome pills (Expired / Assigned / Called / Closed)
+  and From/To date range
+- **Multi-platform** — Rysk and Hypersurface, including buy-to-close (CLOSED
+  outcome with close cost) on Hypersurface
+- **Merge lots** — combine open lots when scaling up covered calls
+- **Cloud sync** — wallet-keyed sync of spot holdings via Vercel KV
+- **Chain sync** — auto-import trade history from Rysk and Hypersurface via
+  serverless proxy
+- **Toasts** — non-blocking confirmations for adds, edits, deletes, and sync
+  events
+- **Zero runtime dependencies** — single HTML file, no bundler. Chart.js loaded
+  from CDN.
 
-## Supported Assets
+## Supported assets
 
-| Asset | Min Size (Rysk) | Notes |
-|-------|----------------|-------|
-| BTC   | 0.05           | Traded as UBTC on HyperEVM |
-| ETH   | 0.5            | Traded as UETH on HyperEVM |
-| HYPE  | 50             | wstHYPE / kHYPE map to HYPE |
-| SOL   | 10             | Traded as uSOL on Rysk |
+| Asset | Min size (Rysk) | Notes |
+|-------|----------------:|-------|
+| BTC   | 0.05 | UBTC on HyperEVM |
+| ETH   | 0.5  | UETH on HyperEVM |
+| HYPE  | 50   | wstHYPE / kHYPE / WHYPE all map to HYPE |
+| SOL   | 10   | uSOL on Rysk |
 
-Hypersurface has no minimum contract size for any asset.
+Hypersurface has no minimum contract size.
 
 ## Usage
 
 ### Local
-Just open `rysk-pnl-tracker.html` in your browser. No server needed.
+Open `hyperwheel.html` in any browser. Cloud sync and chain sync require the
+serverless API endpoints, which are only active on a hosted deployment.
 
 ### Hosted
-Deploy as a static site on Vercel or Render:
+Deploy as a static site on Vercel (the included `api/` functions are
+zero-config Vercel serverless handlers). Set `KV_REST_API_URL` and
+`KV_REST_API_TOKEN` env vars to enable cloud sync.
 
-**Vercel** — import the repo, `vercel.json` handles routing automatically.
+## Development
 
-**Render** — create a Static Site, `render.yaml` is pre-configured.
+This repo uses a small build step (no npm). Edit modular sources under `src/`,
+then rebuild:
 
-## Data Storage
+```bash
+python3 build.py --check
+```
 
-Trade data is stored in **localStorage** (`rysk_wheel_v4`). Data lives in your browser only — use the JSON export feature to back up regularly.
+That assembles `hyperwheel.html` and `public/index.html` and runs a Node
+syntax check on the assembled script. **Never edit the built files directly.**
 
-## Wheel Strategy Overview
+See [`CLAUDE.md`](./CLAUDE.md) for the full source map, file-by-file function
+index, lot model, and architectural notes.
 
-The tracker is built around a premium-enhanced accumulation approach:
+## Data storage
 
-1. **Sell cash-secured puts** — collect premium while waiting to buy at your target price
-2. **Get assigned** — acquire the asset at strike price minus premiums collected
-3. **Sell covered calls** — collect premium on held assets
-4. **Get called away / close early** — exit the position, start a new wheel cycle
+Trade data lives in browser localStorage:
 
-Key metric: **net cost per token** = cost basis − (total lot premiums ÷ size)
+| Key | Contents |
+|-----|----------|
+| `hw_wallet` | Connected wallet address |
+| `hw_holdings` | Trade array (JSON) |
+| `hw_synced_v1` | Set of chain-imported trade IDs |
+| `hw_cloud_ts` | Last cloud-sync timestamp |
+
+Use cloud sync (or copy `hw_holdings` from devtools) to back up.
+
+## Wheel strategy in one paragraph
+
+Sell cash-secured puts to collect premium while waiting to buy at a target
+price. If assigned, you acquire the asset at strike *minus* premiums collected.
+Sell covered calls on the held asset to keep collecting premium. If called away,
+exit at the call strike and start a new wheel cycle. The tracker's key metric
+is **net cost per token = cost basis − (lot premiums ÷ size)**, which falls
+every cycle the position survives.
 
 ## License
 
