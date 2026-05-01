@@ -11,3 +11,19 @@ function loadWallet() {
 function saveWallet(addr) {
   localStorage.setItem(HW_WALLET_KEY, addr);
 }
+
+function toast(msg, kind) {
+  const c = document.getElementById('toast-stack');
+  if (!c) return;
+  const k = kind || 'ok';
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + k;
+  el.textContent = msg;
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('toast-in'));
+  setTimeout(() => {
+    el.classList.remove('toast-in');
+    el.classList.add('toast-out');
+    setTimeout(() => el.remove(), 220);
+  }, 2400);
+}

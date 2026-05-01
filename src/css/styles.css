@@ -111,6 +111,23 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .exp-otm{color:var(--green);font-weight:600}
 .exp-itm{color:var(--red);font-weight:600}
 .exp-empty{color:var(--mu);font-style:italic;padding:10px 4px;font-family:var(--mono);font-size:.72rem}
+.expiry-today-badge{display:inline-block;margin-left:10px;padding:2px 8px;font-size:.55rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);background:var(--rd);border:1px solid var(--rb);font-family:var(--mono);vertical-align:middle}
+/* Mobile expiry cards (hidden by default) */
+.exp-cards{display:none;flex-direction:column;gap:8px;padding:4px 0 10px}
+.exp-card{background:var(--s2);border:1px solid var(--bd);border-left:3px solid var(--bd2);padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-family:var(--mono);font-size:.72rem}
+.exp-card-today{border-left-color:var(--red)}
+.exp-card-row1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.exp-card-asset{font-weight:700;font-size:.8rem;letter-spacing:1px}
+.exp-card-type{font-weight:600;color:var(--mu2);font-size:.65rem;letter-spacing:1px}
+.exp-card-dte{margin-left:auto;font-weight:600}
+.exp-card-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;color:var(--text2)}
+.exp-card-row2 .exp-card-status{grid-column:1/-1}
+.exp-card-lbl{color:var(--mu);font-size:.55rem;letter-spacing:1px;text-transform:uppercase;margin-right:4px}
+.exp-card-row3{display:flex;justify-content:flex-end}
+@media(max-width:600px){
+  .expiry-tbl{display:none}
+  .exp-cards{display:flex}
+}
 
 /* SECTION */
 .sec{border-left:2px solid var(--green);background:var(--surface);padding:20px 24px}
@@ -241,6 +258,16 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .hcard-stat-lbl{font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:3px;font-family:var(--mono)}
 .hcard-stat-val{font-size:.8rem;font-weight:600;color:var(--text2);font-family:var(--mono)}
 .hcard-stat-val.green{color:var(--green)}
+.hcard-spot{padding:9px 13px 11px;border-top:1px solid var(--bd);background:var(--s2)}
+.hcard-spot-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-family:var(--mono)}
+.hcard-spot-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu)}
+.hcard-spot-val{font-size:.85rem;font-weight:700;color:var(--text)}
+.hcard-pnl{margin-left:auto;font-size:.72rem;font-weight:700}
+.hcard-pnl.green{color:var(--green)}
+.hcard-pnl.red{color:var(--red)}
+.hcard-hint{margin-top:6px;font-size:.6rem;color:var(--mu2);font-family:var(--mono);line-height:1.45}
+.hcard-hint b{color:var(--orange);font-weight:700}
+.hcard-hint-ok{color:var(--green)}
 .lot-badge{font-size:.5rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;background:var(--s3);border:1px solid var(--bd2);color:var(--mu2);font-family:var(--mono)}
 
 /* MERGE LOTS */
@@ -648,3 +675,24 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .mobile-fab{position:fixed;bottom:72px;right:16px;z-index:150;font-family:var(--mono);font-size:.82rem;font-weight:700;letter-spacing:1px;width:52px;height:52px;background:var(--gd);color:var(--green);border:1px solid var(--gb);cursor:pointer;touch-action:manipulation;transition:all .15s;display:none;align-items:center;justify-content:center}
 .mobile-fab:hover,.mobile-fab:active{background:var(--gb)}
 @media(max-width:720px){.mobile-fab{display:flex}}
+
+/* ── TOASTS ── */
+#toast-stack{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.5px;padding:9px 16px;background:var(--surface);border:1px solid var(--bd2);color:var(--text);box-shadow:0 6px 18px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;max-width:90vw}
+.toast-in{opacity:1;transform:translateY(0)}
+.toast-out{opacity:0;transform:translateY(-4px)}
+.toast-ok{border-left:3px solid var(--green)}
+.toast-err{border-left:3px solid var(--red);color:var(--red)}
+.toast-info{border-left:3px solid var(--blue)}
+@media(max-width:720px){#toast-stack{bottom:130px}}
+
+/* ── HISTORY FILTERS ── */
+.hist-filters{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:10px 0 14px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.hist-filter-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hist-filter-lbl{font-size:.55rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);font-family:var(--mono);margin-right:2px}
+.hist-out-btn{font-family:var(--mono);font-size:.65rem;font-weight:600;letter-spacing:.8px;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer;transition:all .15s}
+.hist-out-btn:hover{color:var(--text);border-color:var(--bd2)}
+.hist-out-btn.active{color:var(--green);border-color:var(--gb);background:var(--gd)}
+.hist-date{font-family:var(--mono);font-size:.7rem;background:var(--s2);color:var(--text);border:1px solid var(--bd);padding:5px 8px;color-scheme:dark}
+.hist-clear-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer}
+.hist-clear-btn:hover{color:var(--red);border-color:var(--rb)}
