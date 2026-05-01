@@ -58,7 +58,7 @@ function compute(assetFilter) {
           startDate: t.date,
           costBasis: t.strike,
           size: t.size,
-          lotPremiums: 0,
+          lotPremiums: netPrem,
           open: true,
           endDate: null,
           exitStrike: null,
