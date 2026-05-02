@@ -71,6 +71,13 @@ tradeAccounting }` that walks one asset's trades in date order and produces
 the per-asset accounting model. The single source of truth for the wheel
 invariants. Lives in `src/js/04b-lot-engine.js`.
 
+### Outcomes registry
+The `OUTCOMES` table in `src/js/01a-outcomes.js`: a single source of truth for
+outcome **display data** (title, badge class) and **picker membership** (which
+platforms allow which outcomes). Lot-lifecycle and P&L effects are *not* in
+the registry — those live imperatively in the Lot Engine and chart code,
+where the wheel-strategy invariants are written prose-style.
+
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
 by the engine: `{ lotNum, lotSize, lotPremiums, lotCostBasis }`. Captured

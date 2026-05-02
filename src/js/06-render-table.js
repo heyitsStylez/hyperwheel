@@ -43,20 +43,6 @@ function _th(label, col, s, fn) {
     + label + (active ? '<span class="sort-arrow">' + arrow + '</span>' : '') + '</th>';
 }
 
-function _outcomeLabel(r) {
-  if (r.outcome === 'EXPIRED')  return r.type === 'CALL' ? 'Returned (Kept Asset)' : 'Returned (Kept Premium)';
-  if (r.outcome === 'ASSIGNED') return 'Assigned (Bought at Strike)';
-  if (r.outcome === 'CALLED')   return 'Called Away (Sold at Strike)';
-  if (r.outcome === 'CLOSED')   return 'Closed Early (Bought Back)';
-  return r.outcome;
-}
-
-function _outcomeCls(r) {
-  if (r.outcome === 'ASSIGNED') return 'bass';
-  if (r.outcome === 'CALLED')   return 'bcal';
-  return 'bexp';
-}
-
 function _openHeaders() {
   const s = tSortOpen, fn = 'sortOpen';
   return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
@@ -131,7 +117,7 @@ function _histRow(r) {
         ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
         : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
-    + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
+    + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">' + corrBtn
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'

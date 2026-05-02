@@ -39,12 +39,11 @@ function openEditModal(id) {
     html += f('strike',  'Strike ($)',   'number', t.strike, 'step="0.01" min="0"');
     html += f('size',    'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
-    html += sel('outcome', 'Outcome', [
-      { v: 'OPEN',     l: 'Open' },
-      { v: 'EXPIRED',  l: 'Expired' },
-      { v: 'ASSIGNED', l: 'Assigned' },
-      { v: 'CALLED',   l: 'Called Away' },
-    ], t.outcome);
+    html += sel('outcome', 'Outcome',
+      Object.entries(OUTCOMES)
+        .filter(([code]) => code !== 'CLOSED')
+        .map(([code, o]) => ({ v: code, l: o.title })),
+      t.outcome);
     html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
   }
 
