@@ -34,6 +34,6 @@ function quickOutcome(id, outcome) {
   if (!t) return;
   t.outcome = outcome;
   save(); render();
-  const labels = { EXPIRED: 'expired', ASSIGNED: 'assigned', CALLED: 'called away', CLOSED: 'closed early' };
-  toast(t.asset + ' ' + t.type + ' marked ' + (labels[outcome] || outcome.toLowerCase()));
+  const title = OUTCOMES[outcome] && OUTCOMES[outcome].title;
+  toast(t.asset + ' ' + t.type + ' marked ' + (title ? title.toLowerCase() : outcome.toLowerCase()));
 }

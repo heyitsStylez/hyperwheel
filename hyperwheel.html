@@ -957,6 +957,39 @@ let sHistOutcome = 'ALL';  // ALL | EXPIRED | ASSIGNED | CALLED | CLOSED
 let sHistFrom = '';        // YYYY-MM-DD or empty
 let sHistTo   = '';
 
+// ── OUTCOMES REGISTRY ────────────────────────────────────────
+// Single source of truth for trade outcome metadata: display
+// labels, badge class, and which platforms allow each outcome.
+//
+// Lot-lifecycle effects (open/reduce lot, debit/credit P&L) are
+// NOT in this registry — they live imperatively in the lot engine
+// (04b-lot-engine.js) where the wheel-strategy invariants are
+// expressed prose-style.
+
+const OUTCOMES = {
+  OPEN:     { title: 'Open',          badge: 'bexp', terminal: false, platforms: ['RYSK','HSFC','SPOT'] },
+  EXPIRED:  { title: 'Expired',       badge: 'bexp', terminal: true,  platforms: ['RYSK','HSFC','SPOT'] },
+  ASSIGNED: { title: 'Assigned',      badge: 'bass', terminal: true,  platforms: ['RYSK','HSFC','SPOT'] },
+  CALLED:   { title: 'Called Away',   badge: 'bcal', terminal: true,  platforms: ['RYSK','HSFC','SPOT'] },
+  CLOSED:   { title: 'Closed Early',  badge: 'bexp', terminal: true,  platforms: ['HSFC'] },
+};
+
+// Long descriptive label used in the position table. EXPIRED varies
+// by trade type (call vs put) so this is type-aware.
+function outcomeLabel(t) {
+  switch (t.outcome) {
+    case 'EXPIRED':  return t.type === 'CALL' ? 'Returned (Kept Asset)' : 'Returned (Kept Premium)';
+    case 'ASSIGNED': return 'Assigned (Bought at Strike)';
+    case 'CALLED':   return 'Called Away (Sold at Strike)';
+    case 'CLOSED':   return 'Closed Early (Bought Back)';
+    default:         return t.outcome;
+  }
+}
+
+function outcomeBadge(outcome) {
+  return (OUTCOMES[outcome] && OUTCOMES[outcome].badge) || 'bexp';
+}
+
 function today() { return new Date().toISOString().split('T')[0]; }
 function save() {
   localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(trades));
@@ -1066,11 +1099,12 @@ function setPlatform(p) {
     const btn = document.getElementById('tog-'+x);
     if (btn) btn.classList.toggle('active', x===p);
   });
-  // CLOSED outcome only available on HSFC
-  const closedBtn = document.getElementById('tog-CLOSED');
-  if (closedBtn) closedBtn.style.display = (p === 'HSFC') ? '' : 'none';
-  // If switching to RYSK while CLOSED is selected, reset to OPEN
-  if (p === 'RYSK' && sOut === 'CLOSED') setOut('OPEN');
+  // Hide outcome buttons not allowed on this platform; reset selection if invalidated
+  Object.entries(OUTCOMES).forEach(([code, o]) => {
+    const btn = document.getElementById('tog-' + code);
+    if (btn) btn.style.display = o.platforms.includes(p) ? '' : 'none';
+  });
+  if (OUTCOMES[sOut] && !OUTCOMES[sOut].platforms.includes(p)) setOut('OPEN');
   // Update size hint and default
   const sizeHint = document.getElementById('f-size-hint');
   if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
@@ -1105,7 +1139,7 @@ function setSizeUnit(unit) {
 }
 function setOut(o) {
   sOut = o;
-  ['OPEN','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  Object.keys(OUTCOMES).forEach(x => {
     const btn = document.getElementById('tog-'+x);
     if (btn) btn.classList.toggle('active', x===o);
   });
@@ -1180,7 +1214,7 @@ function autoDTE() {
 // History filters
 function setHistOutcome(o) {
   sHistOutcome = o;
-  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {
     const el = document.getElementById('ho-' + x);
     if (el) el.classList.toggle('active', x === o);
   });
@@ -1192,7 +1226,7 @@ function clearHistFilters() {
   sHistOutcome = 'ALL'; sHistFrom = ''; sHistTo = '';
   const f = document.getElementById('hist-from'); if (f) f.value = '';
   const t = document.getElementById('hist-to');   if (t) t.value = '';
-  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {
     const el = document.getElementById('ho-' + x);
     if (el) el.classList.toggle('active', x === 'ALL');
   });
@@ -1235,8 +1269,8 @@ function quickOutcome(id, outcome) {
   if (!t) return;
   t.outcome = outcome;
   save(); render();
-  const labels = { EXPIRED: 'expired', ASSIGNED: 'assigned', CALLED: 'called away', CLOSED: 'closed early' };
-  toast(t.asset + ' ' + t.type + ' marked ' + (labels[outcome] || outcome.toLowerCase()));
+  const title = OUTCOMES[outcome] && OUTCOMES[outcome].title;
+  toast(t.asset + ' ' + t.type + ' marked ' + (title ? title.toLowerCase() : outcome.toLowerCase()));
 }
 
 // ── LOT ENGINE ───────────────────────────────────────────────
@@ -1500,20 +1534,6 @@ function _th(label, col, s, fn) {
     + label + (active ? '<span class="sort-arrow">' + arrow + '</span>' : '') + '</th>';
 }
 
-function _outcomeLabel(r) {
-  if (r.outcome === 'EXPIRED')  return r.type === 'CALL' ? 'Returned (Kept Asset)' : 'Returned (Kept Premium)';
-  if (r.outcome === 'ASSIGNED') return 'Assigned (Bought at Strike)';
-  if (r.outcome === 'CALLED')   return 'Called Away (Sold at Strike)';
-  if (r.outcome === 'CLOSED')   return 'Closed Early (Bought Back)';
-  return r.outcome;
-}
-
-function _outcomeCls(r) {
-  if (r.outcome === 'ASSIGNED') return 'bass';
-  if (r.outcome === 'CALLED')   return 'bcal';
-  return 'bexp';
-}
-
 function _openHeaders() {
   const s = tSortOpen, fn = 'sortOpen';
   return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
@@ -1588,7 +1608,7 @@ function _histRow(r) {
         ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
         : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
-    + '<td><span class="badge ' + _outcomeCls(r) + '">' + _outcomeLabel(r) + '</span></td>'
+    + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span></td>'
     + '<td class="td-act"><div class="row-actions">' + corrBtn
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
@@ -2735,12 +2755,11 @@ function openEditModal(id) {
     html += f('strike',  'Strike ($)',   'number', t.strike, 'step="0.01" min="0"');
     html += f('size',    'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
-    html += sel('outcome', 'Outcome', [
-      { v: 'OPEN',     l: 'Open' },
-      { v: 'EXPIRED',  l: 'Expired' },
-      { v: 'ASSIGNED', l: 'Assigned' },
-      { v: 'CALLED',   l: 'Called Away' },
-    ], t.outcome);
+    html += sel('outcome', 'Outcome',
+      Object.entries(OUTCOMES)
+        .filter(([code]) => code !== 'CLOSED')
+        .map(([code, o]) => ({ v: code, l: o.title })),
+      t.outcome);
     html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
   }
 

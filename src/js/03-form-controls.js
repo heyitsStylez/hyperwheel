@@ -77,11 +77,12 @@ function setPlatform(p) {
     const btn = document.getElementById('tog-'+x);
     if (btn) btn.classList.toggle('active', x===p);
   });
-  // CLOSED outcome only available on HSFC
-  const closedBtn = document.getElementById('tog-CLOSED');
-  if (closedBtn) closedBtn.style.display = (p === 'HSFC') ? '' : 'none';
-  // If switching to RYSK while CLOSED is selected, reset to OPEN
-  if (p === 'RYSK' && sOut === 'CLOSED') setOut('OPEN');
+  // Hide outcome buttons not allowed on this platform; reset selection if invalidated
+  Object.entries(OUTCOMES).forEach(([code, o]) => {
+    const btn = document.getElementById('tog-' + code);
+    if (btn) btn.style.display = o.platforms.includes(p) ? '' : 'none';
+  });
+  if (OUTCOMES[sOut] && !OUTCOMES[sOut].platforms.includes(p)) setOut('OPEN');
   // Update size hint and default
   const sizeHint = document.getElementById('f-size-hint');
   if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
@@ -116,7 +117,7 @@ function setSizeUnit(unit) {
 }
 function setOut(o) {
   sOut = o;
-  ['OPEN','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  Object.keys(OUTCOMES).forEach(x => {
     const btn = document.getElementById('tog-'+x);
     if (btn) btn.classList.toggle('active', x===o);
   });
@@ -191,7 +192,7 @@ function autoDTE() {
 // History filters
 function setHistOutcome(o) {
   sHistOutcome = o;
-  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {
     const el = document.getElementById('ho-' + x);
     if (el) el.classList.toggle('active', x === o);
   });
@@ -203,7 +204,7 @@ function clearHistFilters() {
   sHistOutcome = 'ALL'; sHistFrom = ''; sHistTo = '';
   const f = document.getElementById('hist-from'); if (f) f.value = '';
   const t = document.getElementById('hist-to');   if (t) t.value = '';
-  ['ALL','EXPIRED','ASSIGNED','CALLED','CLOSED'].forEach(x => {
+  ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {
     const el = document.getElementById('ho-' + x);
     if (el) el.classList.toggle('active', x === 'ALL');
   });
