@@ -246,3 +246,19 @@ DTE targets: BTC 21–28d, ETH/HYPE/SOL 14–21d.
 Each entry: `expiry`, `timeToExpiryDays`, `strike`, `isPut`, `apy`, `index`
 (spot), `bidIv`/`askIv`, `delta`, `products`. Useful if a future feature wants
 suggested strikes inside the form.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues at `heyitsStylez/rysk-pnl-tracker` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical defaults (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
