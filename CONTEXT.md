@@ -43,15 +43,33 @@ The running total of net premiums (premium − closeCost) collected against a
 single Lot. Includes the premium of the originating assigned PUT (see above)
 plus every CALL written against the lot. Used for net-cost arithmetic.
 
-### Portfolio P&L
-The asset-level realised P&L, distinct from per-lot accounting. Aggregates:
+### Realised P&L
+The user-facing settled-events P&L, computed under a **cash-flow lens**:
+
+```
+realised = Σ (netPrem of every settled non-HOLDING trade)
+         + Σ over CALLED events of (strike − costBasis) × calledSize
+```
+
+Open options and open lots contribute zero. CLOSED CALLs with `closeCost >
+premium` go negative cleanly (no special case). HOLDING-originated and
+ASSIGNED-originated lots realise capital gain symmetrically on call-away — the
+old `assignedLotNums` workaround is gone.
+
+Lives in `src/js/05b-pnl.js` as the pure function `computePnl(trades,
+assetFilter) → { realised, ... }`. Dual-exported. The single source of truth
+for the headline number on the Premium P&L Total tab and the cumulative-P&L
+hero sparkline. ADR: `docs/adr/0001-pnl-cash-flow-lens.md`.
+
+### Portfolio P&L (internal)
+Engine field `lotEngine.portfolioPnl`. Aggregates:
 
 - All net premiums (puts + calls, regardless of outcome)
 - Minus `strike × size` debit on each ASSIGNED PUT
 - Plus `strike × calledSize` credit on each CALLED CALL
 
-Independent of unrealised P&L on currently-held lots (which is computed from
-live spot prices, not from the engine).
+**No longer the user-facing headline** — superseded by Realised P&L. Retained
+in the engine output for now; treat as internal.
 
 ### Trade
 A single recorded action: a PUT, a CALL, or a HOLDING (spot purchase). Has an

@@ -372,19 +372,26 @@ function rCpnlChart() {
     if (ttEl) ttEl.style.display = 'none';
   });
 
-  // ── NET P&L SPARKLINE ─────────────────────────────────────────
-  const { allRows: cpnlAllRows } = compute('ALL');
-  const cpnlAssignedLots = new Set();
-  cpnlAllRows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) cpnlAssignedLots.add(r.lotNum); });
+  // ── REALISED P&L SPARKLINE ────────────────────────────────────
+  const { lots: cpnlLotsByAsset } = compute('ALL');
+  const lotByTradeId = {};
+  Object.keys(cpnlLotsByAsset).forEach(a => {
+    cpnlLotsByAsset[a].forEach(lot => {
+      lot.tradeIds.forEach(tid => { lotByTradeId[tid] = lot; });
+    });
+  });
 
   const netEvts = [];
-  cpnlAllRows.forEach(r => {
-    if (r.type === 'HOLDING') return;
-    const ed = r.outcome === 'OPEN' ? r.date : r.expiry;
+  trades.forEach(t => {
+    if (t.type === 'HOLDING') return;
+    if (t.outcome === 'OPEN') return;
+    const ed = t.expiry || t.date;
     if (!ed) return;
-    let delta = (r.premium || 0) - (r.closeCost || 0);
-    if (r.outcome === 'ASSIGNED') delta -= (r.strike || 0) * (r.size || 0);
-    if (r.outcome === 'CALLED' && cpnlAssignedLots.has(r.lotNum)) delta += (r.strike || 0) * (r.size || 0);
+    let delta = (t.premium || 0) - (t.closeCost || 0);
+    if (t.type === 'CALL' && t.outcome === 'CALLED') {
+      const lot = lotByTradeId[t.id];
+      if (lot) delta += (t.strike - lot.costBasis) * t.size;
+    }
     netEvts.push({ date: ed, delta });
   });
   netEvts.sort((a, b) => a.date.localeCompare(b.date));
@@ -421,9 +428,8 @@ function rCpnlChart() {
   }
 
   const nArea = document.getElementById('npnl-chart-area');
-  const hasAssignments = cpnlAllRows.some(r => r.outcome === 'ASSIGNED');
-  if (nArea && !hasAssignments) {
-    nArea.innerHTML = '<div class="npnl-no-asgn">No assignment losses &mdash; Net P&amp;L equals Premium Income</div>';
+  if (nArea && !netEvts.length) {
+    nArea.innerHTML = '<div class="npnl-no-asgn">No settled trades yet &mdash; Realised P&amp;L starts at $0</div>';
   } else if (nArea && netDisp.length >= 2) {
     const nW = nArea.clientWidth || W;
     const nH = 88;
@@ -542,25 +548,29 @@ function rCharts(displayRows) {
 
   if (sPpnlTab === 'total') {
     const s = calcStats(displayRows);
-    function card(label, main, sub) {
-      return '<div class="ppnl-card">' +
+    const { realised } = computePnl(trades, sFilter);
+    function card(label, main, sub, tip) {
+      const tipAttr = tip ? ' title="' + tip.replace(/"/g, '&quot;') + '"' : '';
+      return '<div class="ppnl-card"' + tipAttr + '>' +
         '<div class="ppnl-lbl">' + label + '</div>' +
         '<div class="ppnl-main">' + main + '</div>' +
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
     }
-    const netPnlColor = s.netPnl >= 0 ? 'var(--green)' : 'var(--red)';
-    const netPnlStr = s.totalCount > 0
-      ? '<span style="color:' + netPnlColor + '">' + (s.netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(s.netPnl)) + '</span>'
+    const realisedColor = realised >= 0 ? 'var(--green)' : 'var(--red)';
+    const realisedStr = s.totalCount > 0
+      ? '<span style="color:' + realisedColor + '">' + (realised >= 0 ? '+$' : '-$') + fmt(Math.abs(realised)) + '</span>'
       : dash;
+    const realisedTip = 'Realised P&L = settled premiums + capital gains on call-aways. Open options and open lots contribute zero.';
     el.className = 'ppnl-cards';
     el.innerHTML = [
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
-      card('Net P&amp;L',
-        netPnlStr,
-        s.assignmentLoss > 0 ? '$' + fmt(s.assignmentLoss) + ' assignment loss' : (s.totalCount > 0 ? 'no assignments' : '')),
+      card('Realised P&amp;L',
+        realisedStr,
+        s.totalCount > 0 ? 'settled events only' : '',
+        realisedTip),
       card('Total Notional',
         s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
         s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
