@@ -17,13 +17,12 @@ function openMergeModal(asset) {
     totalCCPrem += l.lotPremiums;
   });
   const avgCost = weightedCost / totalSize;
-  const mergedNC = avgCost - (totalCCPrem / totalSize);
+  const mergedNC = lotNetCost(avgCost, totalCCPrem, totalSize);
 
   let html = '<div class="merge-preview">';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Lots being merged</div>';
   assetLots.forEach(l => {
-    const nc = l.costBasis - (l.lotPremiums / l.size);
-    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(nc) + ')</span></div>';
+    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(l.netCost) + ')</span></div>';
   });
   html += '<div style="border-top:1px solid var(--bd2);margin:8px 0"></div>';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Merged result</div>';

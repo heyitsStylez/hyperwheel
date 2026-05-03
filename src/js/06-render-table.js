@@ -302,7 +302,7 @@ function rTable(displayRows, streams, lots) {
     }
     assetLots.forEach(lot => {
       openLotCount++;
-      const nc = lot.costBasis - (lot.lotPremiums / lot.size);
+      const nc = lot.netCost;
       const reduction = lot.costBasis - nc;
       const reductionPct = lot.costBasis > 0 ? (reduction / lot.costBasis * 100) : 0;
       const lotBadge = totalAssetLots > 1 ? '<span class="lot-badge">Lot ' + lot.lotNum + '</span>' : '';

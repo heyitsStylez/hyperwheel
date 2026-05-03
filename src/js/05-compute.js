@@ -29,7 +29,7 @@ function compute(assetFilter) {
 
       let nc = null, lotNum = null, lotSize = null, lotCostBasis = null;
       if (snap) {
-        nc = snap.lotCostBasis - (snap.lotPremiums / snap.lotSize);
+        nc = snap.netCost;
         lotNum = snap.lotNum;
         lotSize = snap.lotSize;
         lotCostBasis = snap.lotCostBasis;

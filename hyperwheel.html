@@ -1298,6 +1298,10 @@ function quickOutcome(id, outcome) {
 //     size, closes the lot if size hits zero
 //   - CLOSED CALL: lot stays open (Hypersurface buy-to-close)
 
+function lotNetCost(costBasis, lotPremiums, size) {
+  return size > 0 ? costBasis - (lotPremiums / size) : null;
+}
+
 function lotEngine(assetTrades) {
   const sorted = assetTrades.slice()
     .sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id);
@@ -1393,12 +1397,15 @@ function lotEngine(assetTrades) {
             lotSize: snapLot.size,
             lotPremiums: snapLot.lotPremiums,
             lotCostBasis: snapLot.costBasis,
+            netCost: lotNetCost(snapLot.costBasis, snapLot.lotPremiums, snapLot.size),
           }
         : null,
       runningPnl: portfolioPnl,
       runningPremiums: portfolioPremiums,
     };
   });
+
+  lots.forEach(l => { l.netCost = lotNetCost(l.costBasis, l.lotPremiums, l.size); });
 
   return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
 }
@@ -1434,7 +1441,7 @@ function compute(assetFilter) {
 
       let nc = null, lotNum = null, lotSize = null, lotCostBasis = null;
       if (snap) {
-        nc = snap.lotCostBasis - (snap.lotPremiums / snap.lotSize);
+        nc = snap.netCost;
         lotNum = snap.lotNum;
         lotSize = snap.lotSize;
         lotCostBasis = snap.lotCostBasis;
@@ -1793,7 +1800,7 @@ function rTable(displayRows, streams, lots) {
     }
     assetLots.forEach(lot => {
       openLotCount++;
-      const nc = lot.costBasis - (lot.lotPremiums / lot.size);
+      const nc = lot.netCost;
       const reduction = lot.costBasis - nc;
       const reductionPct = lot.costBasis > 0 ? (reduction / lot.costBasis * 100) : 0;
       const lotBadge = totalAssetLots > 1 ? '<span class="lot-badge">Lot ' + lot.lotNum + '</span>' : '';
@@ -2836,13 +2843,12 @@ function openMergeModal(asset) {
     totalCCPrem += l.lotPremiums;
   });
   const avgCost = weightedCost / totalSize;
-  const mergedNC = avgCost - (totalCCPrem / totalSize);
+  const mergedNC = lotNetCost(avgCost, totalCCPrem, totalSize);
 
   let html = '<div class="merge-preview">';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Lots being merged</div>';
   assetLots.forEach(l => {
-    const nc = l.costBasis - (l.lotPremiums / l.size);
-    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(nc) + ')</span></div>';
+    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(l.netCost) + ')</span></div>';
   });
   html += '<div style="border-top:1px solid var(--bd2);margin:8px 0"></div>';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Merged result</div>';

@@ -23,6 +23,10 @@
 //     size, closes the lot if size hits zero
 //   - CLOSED CALL: lot stays open (Hypersurface buy-to-close)
 
+function lotNetCost(costBasis, lotPremiums, size) {
+  return size > 0 ? costBasis - (lotPremiums / size) : null;
+}
+
 function lotEngine(assetTrades) {
   const sorted = assetTrades.slice()
     .sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id);
@@ -118,12 +122,15 @@ function lotEngine(assetTrades) {
             lotSize: snapLot.size,
             lotPremiums: snapLot.lotPremiums,
             lotCostBasis: snapLot.costBasis,
+            netCost: lotNetCost(snapLot.costBasis, snapLot.lotPremiums, snapLot.size),
           }
         : null,
       runningPnl: portfolioPnl,
       runningPremiums: portfolioPremiums,
     };
   });
+
+  lots.forEach(l => { l.netCost = lotNetCost(l.costBasis, l.lotPremiums, l.size); });
 
   return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
 }
