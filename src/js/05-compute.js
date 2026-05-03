@@ -36,17 +36,10 @@ function compute(assetFilter) {
       }
 
       const collateral = t.strike * t.size;
-      const returnPct  = collateral > 0 ? (netPrem / collateral) * 100 : null;
       const dte        = t.dte && t.dte > 0 ? t.dte : null;
-      const monthly    = (returnPct !== null && dte) ? returnPct / dte * 30  : null;
-      const annual     = (returnPct !== null && dte) ? returnPct / dte * 365 : null;
+      // display fields (returnPct/monthly/annual/lotPnl) are computed in the renderer
+      // compute() only provides accounting snapshot fields (nc, lotNum, lotSize, lotCostBasis)
 
-      let lotPnl = null;
-      if (t.type === 'CALL' && snap) {
-        lotPnl = snap.lotPremiums;
-      } else if (t.type === 'PUT' && t.outcome !== 'ASSIGNED') {
-        lotPnl = netPrem;
-      }
 
       return {
         ...t,
@@ -54,12 +47,10 @@ function compute(assetFilter) {
         pnl: acc.runningPnl,
         totPr: acc.runningPremiums,
         nc,
-        lotPnl,
         held: openNow ? openNow.size : null,
         lotNum,
         lotSize,
         lotCostBasis,
-        returnPct, monthly, annual,
       };
     });
 

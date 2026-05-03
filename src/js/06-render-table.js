@@ -4,6 +4,18 @@ let tSortHist = { col: 'date', dir: 'desc' };
 
 const _SORT_DESC_DEFAULT = ['date', 'expiry', 'strike', 'premium', 'annual'];
 
+// Compute annual APR for a given row on-demand (renderer-level)
+function computeAnnualForRow(r) {
+  if (!r || r.type === 'HOLDING') return null;
+  const collateral = (r.strike || 0) * (r.size || 0);
+  const netPrem = (r.premium || 0) - (r.closeCost || 0);
+  const dte = r.dte && r.dte > 0 ? r.dte : null;
+  if (collateral > 0 && dte) {
+    return (netPrem / collateral) * (365 / dte) * 100;
+  }
+  return null;
+}
+
 function sortOpen(col) {
   if (tSortOpen.col === col) {
     tSortOpen.dir = tSortOpen.dir === 'asc' ? 'desc' : 'asc';
@@ -68,9 +80,10 @@ function _openRow(r) {
   const platBadge = isHolding
     ? '<span class="mu" style="font-size:.65rem">&mdash;</span>'
     : (r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>');
+  const annualLocal = computeAnnualForRow(r);
   const aprStr = isHolding ? '&mdash;'
-    : '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
-      + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+    : '<span style="font-weight:700;color:' + (annualLocal > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+      + (annualLocal !== null ? annualLocal.toFixed(1) + '%' : '&mdash;') + '</span>';
   const actions = isHolding ? '' : (r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
       + '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
@@ -97,8 +110,9 @@ function _histRow(r) {
   const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-  const aprStr = '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
-    + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  const histAnnual = computeAnnualForRow(r);
+  const aprStr = '<span style="font-weight:700;color:' + (histAnnual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+    + (histAnnual !== null ? histAnnual.toFixed(1) + '%' : '&mdash;') + '</span>';
   const corrBtn = r.outcome === 'EXPIRED' && r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
     : r.outcome === 'EXPIRED' && r.type === 'PUT'
@@ -433,7 +447,7 @@ function exportHistoryCSV() {
     lines.push([
       r.date, r.asset, r.type, r.platform, r.expiry || '', r.dte || '',
       r.strike, r.size, r.premium, r.closeCost || 0, net, r.outcome,
-      r.annual != null ? r.annual.toFixed(2) : '',
+      (function(){ const a = computeAnnualForRow(r); return a != null ? a.toFixed(2) : ''; })(),
       r.lotNum || '', r.txHash || '', r.notes || '', r.id
     ].map(esc).join(','));
   });

@@ -519,8 +519,9 @@ function rCharts(displayRows) {
         itmCount++;
         if (assignedLotNums.has(r.lotNum)) callAwayCredit += notional;
       }
-      if (r.annual != null) {
-        aprWeightedSum += r.annual * notional;
+      const a = computeAnnualForRow(r);
+      if (a != null) {
+        aprWeightedSum += a * notional;
         aprWeightTotal += notional;
       }
     });
