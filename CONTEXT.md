@@ -66,10 +66,21 @@ The terminal state of a Trade.
 - `CLOSED` — Hypersurface only, position bought back early; lot stays open
 
 ### Lot Engine
-The pure function `lotEngine(assetTrades) → { lots, portfolioPnl, …,
-tradeAccounting }` that walks one asset's trades in date order and produces
-the per-asset accounting model. The single source of truth for the wheel
-invariants. Lives in `src/js/04b-lot-engine.js`.
+The pure function `lotEngine(assetTrades) → { lots, portfolioPnl,
+portfolioPremiums, putOnlyPnl, tradeAccounting }` that walks one asset's
+trades in date order and produces the per-asset accounting model. The single
+source of truth for the wheel invariants. Lives in `src/js/04b-lot-engine.js`,
+which also exports `lotNetCost(costBasis, lotPremiums, size)` — the only
+place the Net Cost formula is written. Both are dual-exported (browser global
++ Node `module.exports`) so the engine can be exercised by `node --test`.
+
+### Merge open lots
+The pure function `mergeOpenLots(trades, asset) → trades'` in
+`src/js/05a-merge-open-lots.js`. Combines all open lots for one asset into a
+single lot using a size-weighted `costBasis` and summed `lotPremiums`, keeps
+the earliest lot-opener and removes the others, and clears `lotNum`
+references on the asset's CALL trades so they reattach to the surviving lot.
+The merge modal is view + confirmation only; the wheel arithmetic is here.
 
 ### Outcomes registry
 The `OUTCOMES` table in `src/js/01a-outcomes.js`: a single source of truth for

@@ -69,8 +69,16 @@ python3 build.py --check
 That assembles `hyperwheel.html` and `public/index.html` and runs a Node
 syntax check on the assembled script. **Never edit the built files directly.**
 
+Pure modules (Lot Engine, `mergeOpenLots`, `lotNetCost`) have a Node-only
+test harness — no npm, no bundler:
+
+```bash
+node --test test/
+```
+
 See [`CLAUDE.md`](./CLAUDE.md) for the full source map, file-by-file function
-index, lot model, and architectural notes.
+index, lot model, and architectural notes. See [`CONTEXT.md`](./CONTEXT.md)
+for the wheel-strategy domain glossary.
 
 ## Data storage
 
