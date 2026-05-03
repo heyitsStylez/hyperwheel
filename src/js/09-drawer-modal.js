@@ -1,5 +1,7 @@
 // ── UTILS
 function openTradeDrawer() {
+  if (typeof TradeDraft !== 'undefined') TradeDraft.initFromGlobals();
+
   document.getElementById('trade-drawer').classList.add('open');
   document.getElementById('trade-drawer-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';

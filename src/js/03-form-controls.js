@@ -1,6 +1,7 @@
 // ── FORM CONTROLS
-function setAsset(a) {
-  sAsset = a;
+
+// renderFormDOM(draft) updates only the drawer DOM from the provided draft object
+function renderFormDOM(d) {
   const assetVars = {
     BTC:  { c: 'var(--btc)',  b: 'var(--btcb)',  bg: 'var(--btcd)',  placeholder: '75000' },
     ETH:  { c: 'var(--eth)',  b: 'var(--ethb)',  bg: 'var(--ethd)',  placeholder: '3200'  },
@@ -11,164 +12,121 @@ function setAsset(a) {
   ['BTC','ETH','HYPE','SOL'].forEach(x => {
     const btn = document.getElementById('ab-' + x);
     if (!btn) return;
-    if (x === a) {
+    if (x === d.asset) {
       const v = assetVars[x];
       btn.style.cssText = `${baseStyle} ${v.b};color:${v.c};background:${v.bg}`;
     } else {
       btn.style.cssText = `${baseStyle} var(--bd2);color:var(--mu);background:transparent`;
     }
   });
-  document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : MIN_SIZE[a];
-  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? '' : 'min ' + MIN_SIZE[a] + ' ' + a;
-  document.getElementById('f-strike').placeholder = assetVars[a]?.placeholder || '100';
-  refreshLotPicker();
-}
 
-function setType(t) {
-  sType = t;
-  ['PUT','CALL','HOLDING'].forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (!btn) return;
-    btn.classList.toggle('active', x===t);
-  });
+  // size field and hint
+  const sizeEl = document.getElementById('f-size');
+  if (sizeEl) sizeEl.value = d.size || (d.platform === 'HSFC' ? '' : MIN_SIZE[d.asset]);
+  const sizeHintEl = document.getElementById('f-size-hint');
+  if (sizeHintEl) sizeHintEl.textContent = d.platform === 'HSFC' ? '' : 'min ' + MIN_SIZE[d.asset] + ' ' + d.asset;
 
-  const isHolding = t === 'HOLDING';
+  const strikeInp = document.getElementById('f-strike');
+  if (strikeInp) strikeInp.placeholder = assetVars[d.asset]?.placeholder || '100';
 
-  // Fully hide fields that don't apply to spot holding entries
+  // type toggle appearance and conditional fields
+  ['PUT','CALL','HOLDING'].forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.type); });
+  const isHolding = d.type === 'HOLDING';
   ['field-expiry','field-dte','field-platform','field-premium','field-outcome'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isHolding ? 'none' : '';
   });
-
-  // Update strike label and placeholder
   const strikeLbl = document.getElementById('f-strike-lbl');
-  const strikeInp = document.getElementById('f-strike');
   if (strikeLbl) strikeLbl.textContent = isHolding ? 'Cost Basis ($)' : 'Strike ($)';
-  if (strikeInp) strikeInp.placeholder = isHolding
-    ? (sAsset === 'ETH' ? '3200' : '85000')
-    : (sAsset === 'BTC' ? '75000' : '3200');
-
-  // Show/hide hint
-  const hint = document.getElementById('holding-hint');
-  if (hint) hint.style.display = isHolding ? 'block' : 'none';
-
-  // Hide size hint for holdings (no min size), show for options
-  const sizeHintEl = document.getElementById('f-size-hint');
-  if (sizeHintEl) sizeHintEl.style.display = isHolding ? 'none' : '';
-
-  // If switching to holding, force premium to 0, clear size default, outcome to OPEN
+  const hint = document.getElementById('holding-hint'); if (hint) hint.style.display = isHolding ? 'block' : 'none';
   if (isHolding) {
-    document.getElementById('f-prem').value = '0';
-    document.getElementById('f-size').value = '';
-    setOut('OPEN'); // internal state — compute() handles holding specially
+    const premEl = document.getElementById('f-prem'); if (premEl) premEl.value = '0';
+    if (sizeEl) sizeEl.value = '';
   } else {
-    if (document.getElementById('f-prem').value === '0') {
-      document.getElementById('f-prem').value = '';
-    }
-    document.getElementById('f-size').value = MIN_SIZE[sAsset];
+    const premEl = document.getElementById('f-prem'); if (premEl && premEl.value === '0') premEl.value = '';
+    if (sizeEl && !sizeEl.value) sizeEl.value = MIN_SIZE[d.asset];
   }
-  refreshLotPicker();
-  refreshSizeUnitToggle();
-  if (t !== 'PUT') setSizeUnit('contracts');
-}
-function setPlatform(p) {
-  sPlatform = p;
-  ['RYSK','HSFC'].forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (btn) btn.classList.toggle('active', x===p);
-  });
-  // Hide outcome buttons not allowed on this platform; reset selection if invalidated
+
+  // platform toggle
+  ['RYSK','HSFC'].forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.platform); });
   Object.entries(OUTCOMES).forEach(([code, o]) => {
     const btn = document.getElementById('tog-' + code);
-    if (btn) btn.style.display = o.platforms.includes(p) ? '' : 'none';
+    if (btn) btn.style.display = o.platforms.includes(d.platform) ? '' : 'none';
   });
-  if (OUTCOMES[sOut] && !OUTCOMES[sOut].platforms.includes(p)) setOut('OPEN');
-  // Update size hint and default
-  const sizeHint = document.getElementById('f-size-hint');
-  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
-  const sizeEl = document.getElementById('f-size');
-  if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
-  // Show/hide size unit toggle (only for HSFC puts)
-  refreshSizeUnitToggle();
-  // Reset to contracts when switching away from HSFC
-  if (p !== 'HSFC') setSizeUnit('contracts');
-}
-
-function refreshSizeUnitToggle() {
+  // size unit toggle visibility
   const tog = document.getElementById('field-size-unit-toggle');
-  if (tog) tog.style.display = (sPlatform === 'HSFC' && sType === 'PUT') ? 'inline-flex' : 'none';
+  if (tog) tog.style.display = (d.platform === 'HSFC' && d.type === 'PUT') ? 'inline-flex' : 'none';
+  ['contracts','usdc'].forEach(u => { const btn = document.getElementById('szu-' + u); if (btn) btn.classList.toggle('active', u === d.sizeUnit); });
+  const sizeElPlaceholder = document.getElementById('f-size');
+  const sizeHint = document.getElementById('f-size-hint');
+  if (d.sizeUnit === 'usdc') { if (sizeElPlaceholder) { sizeElPlaceholder.placeholder = '3400'; sizeElPlaceholder.value = d.size || ''; } if (sizeHint) sizeHint.textContent = 'USDC collateral'; }
+  else { if (sizeElPlaceholder) { sizeElPlaceholder.placeholder = ''; if (!d.size) sizeElPlaceholder.value = ''; } if (sizeHint) sizeHint.textContent = ''; }
+
+  // outcome toggles
+  Object.keys(OUTCOMES).forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.outcome); });
+  const ccField = document.getElementById('field-closecost'); if (ccField) ccField.style.display = (d.outcome === 'CLOSED') ? '' : 'none';
+
+  // fill simple inputs
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+  setVal('f-date', d.date || ''); setVal('f-expiry', d.expiry || ''); setVal('f-dte', d.dte || ''); setVal('f-strike', d.strike || ''); setVal('f-prem', d.premium == null ? '' : d.premium);
+  const notesEl = document.getElementById('f-notes'); if (notesEl) notesEl.value = d.notes || '';
+
+  // refresh lot picker using draft asset/type
+  refreshLotPickerFromDraft(d);
 }
 
-function setSizeUnit(unit) {
-  sSizeUnit = unit;
-  ['contracts','usdc'].forEach(u => {
-    const btn = document.getElementById('szu-' + u);
-    if (btn) btn.classList.toggle('active', u === unit);
-  });
-  const sizeEl = document.getElementById('f-size');
-  const sizeHint = document.getElementById('f-size-hint');
-  if (unit === 'usdc') {
-    if (sizeEl) { sizeEl.placeholder = '3400'; sizeEl.value = ''; }
-    if (sizeHint) sizeHint.textContent = 'USDC collateral';
-  } else {
-    if (sizeEl) { sizeEl.placeholder = ''; sizeEl.value = ''; }
-    if (sizeHint) sizeHint.textContent = '';
-  }
-}
-function setOut(o) {
-  sOut = o;
-  Object.keys(OUTCOMES).forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (btn) btn.classList.toggle('active', x===o);
-  });
-  // Show close cost field only when CLOSED
-  const ccField = document.getElementById('field-closecost');
-  if (ccField) ccField.style.display = (o === 'CLOSED') ? '' : 'none';
-  autoFillFromLot();
-}
-function refreshLotPicker() {
+// Form setters now mutate the TradeDraft and call renderForm (so no full render())
+function setAsset(a) { TradeDraft.setAsset(a); }
+function setType(t)  { TradeDraft.setType(t); }
+function setPlatform(p) { TradeDraft.setPlatform(p); }
+function setSizeUnit(unit) { TradeDraft.setSizeUnit(unit); }
+function setOut(o)   { TradeDraft.setOut(o); }
+
+// Lot picker & autofill adapted to draft
+function refreshLotPickerFromDraft(d) {
   const row = document.getElementById('field-lot-row');
   const sel = document.getElementById('f-lot');
   if (!row || !sel) return;
-  if (sType !== 'CALL') { row.style.display = 'none'; return; }
+  if (d.type !== 'CALL') { row.style.display = 'none'; return; }
   const { lots } = compute();
-  const openLots = (lots[sAsset] || []).filter(l => l.open);
+  const openLots = (lots[d.asset] || []).filter(l => l.open);
   if (openLots.length < 2) { row.style.display = 'none'; return; }
   sel.innerHTML = openLots.map(l =>
-    '<option value="' + l.lotNum + '">Lot ' + l.lotNum + ' \u2014 ' + l.size + ' ' + sAsset + ' @ $' + fmt(l.costBasis) + '</option>'
+    '<option value="' + l.lotNum + '">Lot ' + l.lotNum +  ' ' + l.size + ' ' + d.asset + ' @ $' + fmt(l.costBasis) + '</option>'
   ).join('');
   row.style.display = '';
-  autoFillFromLot(); // auto-fill if outcome is already EXPIRED/CALLED
+  // if draft has lotNum, select it
+  if (d.lotNum) {
+    sel.value = d.lotNum;
+  }
+  // auto-fill using draft context
+  autoFillFromLotDraft(d);
 }
-function autoFillFromLot() {
-  // Only applies when logging an expiry or called-away event on a CALL
-  if (sType !== 'CALL') return;
-  if (sOut !== 'EXPIRED' && sOut !== 'CALLED') return;
 
-  // Determine which lot's history to search
+function autoFillFromLotDraft(d) {
+  if (d.type !== 'CALL') return;
+  if (d.outcome !== 'EXPIRED' && d.outcome !== 'CALLED') return;
   const lotRow = document.getElementById('field-lot-row');
   const pickerVisible = lotRow && lotRow.style.display !== 'none';
   const lotNum = pickerVisible ? (parseInt(document.getElementById('f-lot').value) || null) : null;
 
-  // Find the most recent CALL for this asset on the selected lot
-  let candidates = trades.filter(t => t.asset === sAsset && t.type === 'CALL');
+  let candidates = trades.filter(t => t.asset === d.asset && t.type === 'CALL');
   if (lotNum !== null) {
     const withLot = candidates.filter(t => t.lotNum === lotNum);
-    // Prefer explicit-lot matches; fall back to all asset calls for old trades without lotNum
     if (withLot.length) candidates = withLot;
   }
-  candidates.sort((a, b) => b.id - a.id);
+  candidates.sort((a,b) => b.id - a.id);
   if (!candidates.length) return;
-
   const prev = candidates[0];
   const strikeEl = document.getElementById('f-strike');
   const sizeEl   = document.getElementById('f-size');
   const premEl   = document.getElementById('f-prem');
   if (strikeEl) strikeEl.value = prev.strike;
   if (sizeEl)   sizeEl.value   = prev.size;
-  // EXPIRED / CALLED = closing event; premium was already collected at OPEN, set to 0
   if (premEl && !premEl.readOnly) premEl.value = '0';
 }
+
+// Filters (unchanged behaviour: continue to trigger full render)
 function setFilter(f) {
   sFilter = f;
   ['ALL','BTC','ETH','HYPE','SOL'].forEach(x => { const el = document.getElementById('fb-'+x); if(el) el.classList.toggle('active', x===f); });
@@ -181,6 +139,7 @@ function setPpnlTab(t) {
   render();
 }
 function autoDTE() {
+  // uses DOM values (date/expiry) directly
   const d = document.getElementById('f-date').value;
   const e = document.getElementById('f-expiry').value;
   if (d && e) {
@@ -189,7 +148,7 @@ function autoDTE() {
   }
 }
 
-// History filters
+// History filters (unchanged)
 function setHistOutcome(o) {
   sHistOutcome = o;
   ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {

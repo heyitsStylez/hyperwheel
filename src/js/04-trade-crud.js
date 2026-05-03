@@ -2,25 +2,41 @@
 function addTrade() {
   const errEl = document.getElementById('ferr');
   errEl.style.display = 'none';
-  const g = id => document.getElementById(id).value;
-  const date = g('f-date');
-  const strike = parseFloat(g('f-strike')), size = parseFloat(g('f-size'));
+  const d = TradeDraft.draft;
   function err(m) { errEl.textContent = '⚠ ' + m; errEl.style.display = 'block'; }
-  if (!date)   return err('Purchase date required.');
+  if (!d.date)   return err('Purchase date required.');
+  const strike = parseFloat(d.strike), size = parseFloat(d.size);
   if (!strike || strike <= 0) return err('Cost basis required.');
   if (!size || size <= 0)     return err('Size required.');
-  const tradeObj = { id: Date.now(), asset: sAsset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', platform: 'SPOT' };
+  const tradeObj = {
+    id: Date.now(),
+    asset: d.asset,
+    type: d.type || 'HOLDING',
+    date: d.date,
+    expiry: d.expiry || '',
+    dte: d.dte || null,
+    strike: strike,
+    size: size,
+    premium: parseFloat(d.premium) || 0,
+    outcome: d.outcome || 'OPEN',
+    platform: d.platform || 'SPOT',
+    lotNum: d.lotNum || null,
+    txHash: '',
+    notes: d.notes || ''
+  };
   trades.push(tradeObj);
   save(); render(); clearForm();
   closeTradeDrawer();
-  toast(sAsset + ' holding added');
-  document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast(d.asset + ' holding added');
+  const tlog = document.getElementById('tlog'); if (tlog) tlog.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function clearForm() {
+  // reset draft and a few DOM fields
+  if (typeof TradeDraft !== 'undefined' && TradeDraft.draft) TradeDraft.initFromGlobals ? TradeDraft.initFromGlobals() : TradeDraft.renderForm();
   ['f-strike','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('f-size').value = MIN_SIZE[sAsset];
-  document.getElementById('ferr').style.display = 'none';
+  const sizeEl = document.getElementById('f-size'); if (sizeEl) sizeEl.value = MIN_SIZE[(TradeDraft && TradeDraft.draft && TradeDraft.draft.asset) ? TradeDraft.draft.asset : sAsset];
+  const ferr = document.getElementById('ferr'); if (ferr) ferr.style.display = 'none';
 }
 
 function deleteTrade(id) {
