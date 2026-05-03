@@ -1,6 +1,7 @@
 .DS_Store
 public/
-rysk-pnl-tracker-backup.html
-options-btc-analysis-prompt.md
-options-eth-analysis-prompt.md
-options-hype-analysis-prompt.md
+.copilot-loop/
+memory/
+*.backup.html
+*-mock.html
+options-*-analysis-prompt.md
