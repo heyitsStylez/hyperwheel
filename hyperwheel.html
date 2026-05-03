@@ -995,6 +995,19 @@ function save() {
   localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(trades));
   if (typeof scheduleCloudPush === 'function') scheduleCloudPush();
 }
+
+// commitTrades(mutator) — write seam for trades. The mutator receives the
+// current trades array and may either mutate it in-place or return a new array.
+// After the mutator runs, persistence and UI update are performed once.
+function commitTrades(mutator) {
+  if (typeof mutator === 'function') {
+    const res = mutator(trades);
+    if (res !== undefined) trades = res;
+  }
+  save();
+  render();
+}
+
 function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
 function sk(v)   { return Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/,'')+'K' : fmt(v); }
 function loadWallet() {
@@ -1020,9 +1033,65 @@ function toast(msg, kind) {
   }, 2400);
 }
 
+// ── TRADE DRAFT MODULE
+// Holds in-progress trade form fields and exposes setters that call renderFormDOM(draft)
+var TradeDraft = (function(){
+  const draft = {
+    asset: (typeof sAsset !== 'undefined') ? sAsset : 'BTC',
+    type: (typeof sType !== 'undefined') ? sType : 'HOLDING',
+    platform: (typeof sPlatform !== 'undefined') ? sPlatform : 'SPOT',
+    sizeUnit: (typeof sSizeUnit !== 'undefined') ? sSizeUnit : 'contracts',
+    outcome: (typeof sOut !== 'undefined') ? sOut : 'OPEN',
+    lotNum: null,
+    date: (typeof today === 'function') ? today() : '',
+    expiry: '',
+    dte: '',
+    strike: '',
+    size: '',
+    premium: '',
+    notes: ''
+  };
+  function renderForm() { if (typeof renderFormDOM === 'function') renderFormDOM(draft); }
+  return {
+    draft,
+    setAsset(a){ draft.asset = a; renderForm(); },
+    setType(t){ draft.type = t; renderForm(); },
+    setPlatform(p){ draft.platform = p; renderForm(); },
+    setSizeUnit(u){ draft.sizeUnit = u; renderForm(); },
+    setOut(o){ draft.outcome = o; renderForm(); },
+    setLotNum(n){ draft.lotNum = n; renderForm(); },
+    setDate(v){ draft.date = v; renderForm(); },
+    setExpiry(v){ draft.expiry = v; renderForm(); },
+    setDte(v){ draft.dte = v; renderForm(); },
+    setStrike(v){ draft.strike = v; renderForm(); },
+    setSize(v){ draft.size = v; renderForm(); },
+    setPremium(v){ draft.premium = v; renderForm(); },
+    setNotes(v){ draft.notes = v; renderForm(); },
+    renderForm,
+    // initialize draft from current globals when opening drawer
+    initFromGlobals(){
+      draft.asset = (typeof sAsset !== 'undefined') ? sAsset : draft.asset;
+      draft.type = (typeof sType !== 'undefined') ? sType : draft.type;
+      draft.platform = (typeof sPlatform !== 'undefined') ? sPlatform : draft.platform;
+      draft.sizeUnit = (typeof sSizeUnit !== 'undefined') ? sSizeUnit : draft.sizeUnit;
+      draft.outcome = (typeof sOut !== 'undefined') ? sOut : draft.outcome;
+      draft.date = (typeof today === 'function') ? today() : draft.date;
+      draft.expiry = '';
+      draft.dte = '';
+      draft.strike = '';
+      draft.size = '';
+      draft.premium = '';
+      draft.notes = '';
+      draft.lotNum = null;
+      renderForm();
+    }
+  };
+})();
+
 // ── FORM CONTROLS
-function setAsset(a) {
-  sAsset = a;
+
+// renderFormDOM(draft) updates only the drawer DOM from the provided draft object
+function renderFormDOM(d) {
   const assetVars = {
     BTC:  { c: 'var(--btc)',  b: 'var(--btcb)',  bg: 'var(--btcd)',  placeholder: '75000' },
     ETH:  { c: 'var(--eth)',  b: 'var(--ethb)',  bg: 'var(--ethd)',  placeholder: '3200'  },
@@ -1033,164 +1102,121 @@ function setAsset(a) {
   ['BTC','ETH','HYPE','SOL'].forEach(x => {
     const btn = document.getElementById('ab-' + x);
     if (!btn) return;
-    if (x === a) {
+    if (x === d.asset) {
       const v = assetVars[x];
       btn.style.cssText = `${baseStyle} ${v.b};color:${v.c};background:${v.bg}`;
     } else {
       btn.style.cssText = `${baseStyle} var(--bd2);color:var(--mu);background:transparent`;
     }
   });
-  document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : MIN_SIZE[a];
-  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? '' : 'min ' + MIN_SIZE[a] + ' ' + a;
-  document.getElementById('f-strike').placeholder = assetVars[a]?.placeholder || '100';
-  refreshLotPicker();
-}
 
-function setType(t) {
-  sType = t;
-  ['PUT','CALL','HOLDING'].forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (!btn) return;
-    btn.classList.toggle('active', x===t);
-  });
+  // size field and hint
+  const sizeEl = document.getElementById('f-size');
+  if (sizeEl) sizeEl.value = d.size || (d.platform === 'HSFC' ? '' : MIN_SIZE[d.asset]);
+  const sizeHintEl = document.getElementById('f-size-hint');
+  if (sizeHintEl) sizeHintEl.textContent = d.platform === 'HSFC' ? '' : 'min ' + MIN_SIZE[d.asset] + ' ' + d.asset;
 
-  const isHolding = t === 'HOLDING';
+  const strikeInp = document.getElementById('f-strike');
+  if (strikeInp) strikeInp.placeholder = assetVars[d.asset]?.placeholder || '100';
 
-  // Fully hide fields that don't apply to spot holding entries
+  // type toggle appearance and conditional fields
+  ['PUT','CALL','HOLDING'].forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.type); });
+  const isHolding = d.type === 'HOLDING';
   ['field-expiry','field-dte','field-platform','field-premium','field-outcome'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isHolding ? 'none' : '';
   });
-
-  // Update strike label and placeholder
   const strikeLbl = document.getElementById('f-strike-lbl');
-  const strikeInp = document.getElementById('f-strike');
   if (strikeLbl) strikeLbl.textContent = isHolding ? 'Cost Basis ($)' : 'Strike ($)';
-  if (strikeInp) strikeInp.placeholder = isHolding
-    ? (sAsset === 'ETH' ? '3200' : '85000')
-    : (sAsset === 'BTC' ? '75000' : '3200');
-
-  // Show/hide hint
-  const hint = document.getElementById('holding-hint');
-  if (hint) hint.style.display = isHolding ? 'block' : 'none';
-
-  // Hide size hint for holdings (no min size), show for options
-  const sizeHintEl = document.getElementById('f-size-hint');
-  if (sizeHintEl) sizeHintEl.style.display = isHolding ? 'none' : '';
-
-  // If switching to holding, force premium to 0, clear size default, outcome to OPEN
+  const hint = document.getElementById('holding-hint'); if (hint) hint.style.display = isHolding ? 'block' : 'none';
   if (isHolding) {
-    document.getElementById('f-prem').value = '0';
-    document.getElementById('f-size').value = '';
-    setOut('OPEN'); // internal state — compute() handles holding specially
+    const premEl = document.getElementById('f-prem'); if (premEl) premEl.value = '0';
+    if (sizeEl) sizeEl.value = '';
   } else {
-    if (document.getElementById('f-prem').value === '0') {
-      document.getElementById('f-prem').value = '';
-    }
-    document.getElementById('f-size').value = MIN_SIZE[sAsset];
+    const premEl = document.getElementById('f-prem'); if (premEl && premEl.value === '0') premEl.value = '';
+    if (sizeEl && !sizeEl.value) sizeEl.value = MIN_SIZE[d.asset];
   }
-  refreshLotPicker();
-  refreshSizeUnitToggle();
-  if (t !== 'PUT') setSizeUnit('contracts');
-}
-function setPlatform(p) {
-  sPlatform = p;
-  ['RYSK','HSFC'].forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (btn) btn.classList.toggle('active', x===p);
-  });
-  // Hide outcome buttons not allowed on this platform; reset selection if invalidated
+
+  // platform toggle
+  ['RYSK','HSFC'].forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.platform); });
   Object.entries(OUTCOMES).forEach(([code, o]) => {
     const btn = document.getElementById('tog-' + code);
-    if (btn) btn.style.display = o.platforms.includes(p) ? '' : 'none';
+    if (btn) btn.style.display = o.platforms.includes(d.platform) ? '' : 'none';
   });
-  if (OUTCOMES[sOut] && !OUTCOMES[sOut].platforms.includes(p)) setOut('OPEN');
-  // Update size hint and default
-  const sizeHint = document.getElementById('f-size-hint');
-  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
-  const sizeEl = document.getElementById('f-size');
-  if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
-  // Show/hide size unit toggle (only for HSFC puts)
-  refreshSizeUnitToggle();
-  // Reset to contracts when switching away from HSFC
-  if (p !== 'HSFC') setSizeUnit('contracts');
-}
-
-function refreshSizeUnitToggle() {
+  // size unit toggle visibility
   const tog = document.getElementById('field-size-unit-toggle');
-  if (tog) tog.style.display = (sPlatform === 'HSFC' && sType === 'PUT') ? 'inline-flex' : 'none';
+  if (tog) tog.style.display = (d.platform === 'HSFC' && d.type === 'PUT') ? 'inline-flex' : 'none';
+  ['contracts','usdc'].forEach(u => { const btn = document.getElementById('szu-' + u); if (btn) btn.classList.toggle('active', u === d.sizeUnit); });
+  const sizeElPlaceholder = document.getElementById('f-size');
+  const sizeHint = document.getElementById('f-size-hint');
+  if (d.sizeUnit === 'usdc') { if (sizeElPlaceholder) { sizeElPlaceholder.placeholder = '3400'; sizeElPlaceholder.value = d.size || ''; } if (sizeHint) sizeHint.textContent = 'USDC collateral'; }
+  else { if (sizeElPlaceholder) { sizeElPlaceholder.placeholder = ''; if (!d.size) sizeElPlaceholder.value = ''; } if (sizeHint) sizeHint.textContent = ''; }
+
+  // outcome toggles
+  Object.keys(OUTCOMES).forEach(x => { const btn = document.getElementById('tog-'+x); if (btn) btn.classList.toggle('active', x===d.outcome); });
+  const ccField = document.getElementById('field-closecost'); if (ccField) ccField.style.display = (d.outcome === 'CLOSED') ? '' : 'none';
+
+  // fill simple inputs
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+  setVal('f-date', d.date || ''); setVal('f-expiry', d.expiry || ''); setVal('f-dte', d.dte || ''); setVal('f-strike', d.strike || ''); setVal('f-prem', d.premium == null ? '' : d.premium);
+  const notesEl = document.getElementById('f-notes'); if (notesEl) notesEl.value = d.notes || '';
+
+  // refresh lot picker using draft asset/type
+  refreshLotPickerFromDraft(d);
 }
 
-function setSizeUnit(unit) {
-  sSizeUnit = unit;
-  ['contracts','usdc'].forEach(u => {
-    const btn = document.getElementById('szu-' + u);
-    if (btn) btn.classList.toggle('active', u === unit);
-  });
-  const sizeEl = document.getElementById('f-size');
-  const sizeHint = document.getElementById('f-size-hint');
-  if (unit === 'usdc') {
-    if (sizeEl) { sizeEl.placeholder = '3400'; sizeEl.value = ''; }
-    if (sizeHint) sizeHint.textContent = 'USDC collateral';
-  } else {
-    if (sizeEl) { sizeEl.placeholder = ''; sizeEl.value = ''; }
-    if (sizeHint) sizeHint.textContent = '';
-  }
-}
-function setOut(o) {
-  sOut = o;
-  Object.keys(OUTCOMES).forEach(x => {
-    const btn = document.getElementById('tog-'+x);
-    if (btn) btn.classList.toggle('active', x===o);
-  });
-  // Show close cost field only when CLOSED
-  const ccField = document.getElementById('field-closecost');
-  if (ccField) ccField.style.display = (o === 'CLOSED') ? '' : 'none';
-  autoFillFromLot();
-}
-function refreshLotPicker() {
+// Form setters now mutate the TradeDraft and call renderForm (so no full render())
+function setAsset(a) { TradeDraft.setAsset(a); }
+function setType(t)  { TradeDraft.setType(t); }
+function setPlatform(p) { TradeDraft.setPlatform(p); }
+function setSizeUnit(unit) { TradeDraft.setSizeUnit(unit); }
+function setOut(o)   { TradeDraft.setOut(o); }
+
+// Lot picker & autofill adapted to draft
+function refreshLotPickerFromDraft(d) {
   const row = document.getElementById('field-lot-row');
   const sel = document.getElementById('f-lot');
   if (!row || !sel) return;
-  if (sType !== 'CALL') { row.style.display = 'none'; return; }
+  if (d.type !== 'CALL') { row.style.display = 'none'; return; }
   const { lots } = compute();
-  const openLots = (lots[sAsset] || []).filter(l => l.open);
+  const openLots = (lots[d.asset] || []).filter(l => l.open);
   if (openLots.length < 2) { row.style.display = 'none'; return; }
   sel.innerHTML = openLots.map(l =>
-    '<option value="' + l.lotNum + '">Lot ' + l.lotNum + ' \u2014 ' + l.size + ' ' + sAsset + ' @ $' + fmt(l.costBasis) + '</option>'
+    '<option value="' + l.lotNum + '">Lot ' + l.lotNum +  ' ' + l.size + ' ' + d.asset + ' @ $' + fmt(l.costBasis) + '</option>'
   ).join('');
   row.style.display = '';
-  autoFillFromLot(); // auto-fill if outcome is already EXPIRED/CALLED
+  // if draft has lotNum, select it
+  if (d.lotNum) {
+    sel.value = d.lotNum;
+  }
+  // auto-fill using draft context
+  autoFillFromLotDraft(d);
 }
-function autoFillFromLot() {
-  // Only applies when logging an expiry or called-away event on a CALL
-  if (sType !== 'CALL') return;
-  if (sOut !== 'EXPIRED' && sOut !== 'CALLED') return;
 
-  // Determine which lot's history to search
+function autoFillFromLotDraft(d) {
+  if (d.type !== 'CALL') return;
+  if (d.outcome !== 'EXPIRED' && d.outcome !== 'CALLED') return;
   const lotRow = document.getElementById('field-lot-row');
   const pickerVisible = lotRow && lotRow.style.display !== 'none';
   const lotNum = pickerVisible ? (parseInt(document.getElementById('f-lot').value) || null) : null;
 
-  // Find the most recent CALL for this asset on the selected lot
-  let candidates = trades.filter(t => t.asset === sAsset && t.type === 'CALL');
+  let candidates = trades.filter(t => t.asset === d.asset && t.type === 'CALL');
   if (lotNum !== null) {
     const withLot = candidates.filter(t => t.lotNum === lotNum);
-    // Prefer explicit-lot matches; fall back to all asset calls for old trades without lotNum
     if (withLot.length) candidates = withLot;
   }
-  candidates.sort((a, b) => b.id - a.id);
+  candidates.sort((a,b) => b.id - a.id);
   if (!candidates.length) return;
-
   const prev = candidates[0];
   const strikeEl = document.getElementById('f-strike');
   const sizeEl   = document.getElementById('f-size');
   const premEl   = document.getElementById('f-prem');
   if (strikeEl) strikeEl.value = prev.strike;
   if (sizeEl)   sizeEl.value   = prev.size;
-  // EXPIRED / CALLED = closing event; premium was already collected at OPEN, set to 0
   if (premEl && !premEl.readOnly) premEl.value = '0';
 }
+
+// Filters (unchanged behaviour: continue to trigger full render)
 function setFilter(f) {
   sFilter = f;
   ['ALL','BTC','ETH','HYPE','SOL'].forEach(x => { const el = document.getElementById('fb-'+x); if(el) el.classList.toggle('active', x===f); });
@@ -1203,6 +1229,7 @@ function setPpnlTab(t) {
   render();
 }
 function autoDTE() {
+  // uses DOM values (date/expiry) directly
   const d = document.getElementById('f-date').value;
   const e = document.getElementById('f-expiry').value;
   if (d && e) {
@@ -1211,7 +1238,7 @@ function autoDTE() {
   }
 }
 
-// History filters
+// History filters (unchanged)
 function setHistOutcome(o) {
   sHistOutcome = o;
   ['ALL', ...Object.keys(OUTCOMES).filter(k => OUTCOMES[k].terminal)].forEach(x => {
@@ -1237,38 +1264,52 @@ function clearHistFilters() {
 function addTrade() {
   const errEl = document.getElementById('ferr');
   errEl.style.display = 'none';
-  const g = id => document.getElementById(id).value;
-  const date = g('f-date');
-  const strike = parseFloat(g('f-strike')), size = parseFloat(g('f-size'));
+  const d = TradeDraft.draft;
   function err(m) { errEl.textContent = '⚠ ' + m; errEl.style.display = 'block'; }
-  if (!date)   return err('Purchase date required.');
+  if (!d.date)   return err('Purchase date required.');
+  const strike = parseFloat(d.strike), size = parseFloat(d.size);
   if (!strike || strike <= 0) return err('Cost basis required.');
   if (!size || size <= 0)     return err('Size required.');
-  const tradeObj = { id: Date.now(), asset: sAsset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', platform: 'SPOT' };
-  trades.push(tradeObj);
-  save(); render(); clearForm();
+  const tradeObj = {
+    id: Date.now(),
+    asset: d.asset,
+    type: d.type || 'HOLDING',
+    date: d.date,
+    expiry: d.expiry || '',
+    dte: d.dte || null,
+    strike: strike,
+    size: size,
+    premium: parseFloat(d.premium) || 0,
+    outcome: d.outcome || 'OPEN',
+    platform: d.platform || 'SPOT',
+    lotNum: d.lotNum || null,
+    txHash: '',
+    notes: d.notes || ''
+  };
+  commitTrades(t => { t.push(tradeObj); });
+  clearForm();
   closeTradeDrawer();
-  toast(sAsset + ' holding added');
-  document.getElementById('tlog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast(d.asset + ' holding added');
+  const tlog = document.getElementById('tlog'); if (tlog) tlog.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function clearForm() {
+  // reset draft and a few DOM fields
+  if (typeof TradeDraft !== 'undefined' && TradeDraft.draft) TradeDraft.initFromGlobals ? TradeDraft.initFromGlobals() : TradeDraft.renderForm();
   ['f-strike','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('f-size').value = MIN_SIZE[sAsset];
-  document.getElementById('ferr').style.display = 'none';
+  const sizeEl = document.getElementById('f-size'); if (sizeEl) sizeEl.value = MIN_SIZE[(TradeDraft && TradeDraft.draft && TradeDraft.draft.asset) ? TradeDraft.draft.asset : sAsset];
+  const ferr = document.getElementById('ferr'); if (ferr) ferr.style.display = 'none';
 }
 
 function deleteTrade(id) {
   const t = trades.find(t => t.id === id);
-  trades = trades.filter(t => t.id !== id);
-  save(); render();
+  commitTrades(ts => { return ts.filter(x => x.id !== id); });
   if (t) toast('Deleted ' + t.asset + ' ' + t.type);
 }
 function quickOutcome(id, outcome) {
   const t = trades.find(t => t.id === id);
   if (!t) return;
-  t.outcome = outcome;
-  save(); render();
+  commitTrades(ts => { const tt = ts.find(u => u.id === id); if (!tt) return; tt.outcome = outcome; });
   const title = OUTCOMES[outcome] && OUTCOMES[outcome].title;
   toast(t.asset + ' ' + t.type + ' marked ' + (title ? title.toLowerCase() : outcome.toLowerCase()));
 }
@@ -1441,17 +1482,10 @@ function compute(assetFilter) {
       }
 
       const collateral = t.strike * t.size;
-      const returnPct  = collateral > 0 ? (netPrem / collateral) * 100 : null;
       const dte        = t.dte && t.dte > 0 ? t.dte : null;
-      const monthly    = (returnPct !== null && dte) ? returnPct / dte * 30  : null;
-      const annual     = (returnPct !== null && dte) ? returnPct / dte * 365 : null;
+      // display fields (returnPct/monthly/annual/lotPnl) are computed in the renderer
+      // compute() only provides accounting snapshot fields (nc, lotNum, lotSize, lotCostBasis)
 
-      let lotPnl = null;
-      if (t.type === 'CALL' && snap) {
-        lotPnl = snap.lotPremiums;
-      } else if (t.type === 'PUT' && t.outcome !== 'ASSIGNED') {
-        lotPnl = netPrem;
-      }
 
       return {
         ...t,
@@ -1459,12 +1493,10 @@ function compute(assetFilter) {
         pnl: acc.runningPnl,
         totPr: acc.runningPremiums,
         nc,
-        lotPnl,
         held: openNow ? openNow.size : null,
         lotNum,
         lotSize,
         lotCostBasis,
-        returnPct, monthly, annual,
       };
     });
 
@@ -1494,6 +1526,18 @@ let tSortOpen = { col: 'date', dir: 'desc' };
 let tSortHist = { col: 'date', dir: 'desc' };
 
 const _SORT_DESC_DEFAULT = ['date', 'expiry', 'strike', 'premium', 'annual'];
+
+// Compute annual APR for a given row on-demand (renderer-level)
+function computeAnnualForRow(r) {
+  if (!r || r.type === 'HOLDING') return null;
+  const collateral = (r.strike || 0) * (r.size || 0);
+  const netPrem = (r.premium || 0) - (r.closeCost || 0);
+  const dte = r.dte && r.dte > 0 ? r.dte : null;
+  if (collateral > 0 && dte) {
+    return (netPrem / collateral) * (365 / dte) * 100;
+  }
+  return null;
+}
 
 function sortOpen(col) {
   if (tSortOpen.col === col) {
@@ -1559,9 +1603,10 @@ function _openRow(r) {
   const platBadge = isHolding
     ? '<span class="mu" style="font-size:.65rem">&mdash;</span>'
     : (r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>');
+  const annualLocal = computeAnnualForRow(r);
   const aprStr = isHolding ? '&mdash;'
-    : '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
-      + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+    : '<span style="font-weight:700;color:' + (annualLocal > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+      + (annualLocal !== null ? annualLocal.toFixed(1) + '%' : '&mdash;') + '</span>';
   const actions = isHolding ? '' : (r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
       + '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
@@ -1588,8 +1633,9 @@ function _histRow(r) {
   const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-  const aprStr = '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
-    + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  const histAnnual = computeAnnualForRow(r);
+  const aprStr = '<span style="font-weight:700;color:' + (histAnnual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+    + (histAnnual !== null ? histAnnual.toFixed(1) + '%' : '&mdash;') + '</span>';
   const corrBtn = r.outcome === 'EXPIRED' && r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
     : r.outcome === 'EXPIRED' && r.type === 'PUT'
@@ -1924,7 +1970,7 @@ function exportHistoryCSV() {
     lines.push([
       r.date, r.asset, r.type, r.platform, r.expiry || '', r.dte || '',
       r.strike, r.size, r.premium, r.closeCost || 0, net, r.outcome,
-      r.annual != null ? r.annual.toFixed(2) : '',
+      (function(){ const a = computeAnnualForRow(r); return a != null ? a.toFixed(2) : ''; })(),
       r.lotNum || '', r.txHash || '', r.notes || '', r.id
     ].map(esc).join(','));
   });
@@ -2463,8 +2509,9 @@ function rCharts(displayRows) {
         itmCount++;
         if (assignedLotNums.has(r.lotNum)) callAwayCredit += notional;
       }
-      if (r.annual != null) {
-        aprWeightedSum += r.annual * notional;
+      const a = computeAnnualForRow(r);
+      if (a != null) {
+        aprWeightedSum += a * notional;
         aprWeightTotal += notional;
       }
     });
@@ -2593,6 +2640,8 @@ function render() {
 
 // ── UTILS
 function openTradeDrawer() {
+  if (typeof TradeDraft !== 'undefined') TradeDraft.initFromGlobals();
+
   document.getElementById('trade-drawer').classList.add('open');
   document.getElementById('trade-drawer-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -2609,7 +2658,7 @@ function focusForm() { openTradeDrawer(); }
 
 function showReset()  { document.getElementById('rovl').classList.add('open'); }
 function closeReset() { document.getElementById('rovl').classList.remove('open'); }
-function doReset()    { trades = []; save(); render(); closeReset(); }
+function doReset()    { commitTrades(() => { trades = []; return trades; }); closeReset(); }
 document.getElementById('rovl').addEventListener('click', function(e) { if(e.target===this) closeReset(); });
 
 // ── WALLET POPUP (first visit) ─────────────────────────
@@ -2699,11 +2748,13 @@ async function cloudPull() {
     const localTs  = parseInt(localStorage.getItem('hw_cloud_ts') || '0');
     if (Array.isArray(data.holdings) && data.holdings.length > 0 && remoteTs > localTs) {
       _suppressPush = true;
-      trades = trades.filter(t => t.type !== 'HOLDING');
-      trades.push(...data.holdings);
+      commitTrades(ts => {
+        const nonHold = ts.filter(t => t.type !== 'HOLDING');
+        nonHold.push(...data.holdings);
+        trades = nonHold;
+        return trades;
+      });
       localStorage.setItem('hw_cloud_ts', String(remoteTs));
-      save();
-      render();
       _suppressPush = false;
       if (typeof toast === 'function') toast('Pulled ' + data.holdings.length + ' holding' + (data.holdings.length === 1 ? '' : 's') + ' from cloud', 'info');
     }
@@ -2804,8 +2855,7 @@ function saveEdit() {
     t.outcome  = get('outcome').value;
   }
 
-  save();
-  render();
+  commitTrades(() => {});
   closeEditModal();
   toast('Saved changes to ' + t.asset + ' ' + (isHolding ? 'holding' : t.type));
 }
@@ -2911,8 +2961,7 @@ function confirmMerge() {
   // Remove the extra lot-opening trades
   trades = trades.filter(t => !removeIds.has(t.id));
 
-  save();
-  render();
+  commitTrades(() => {});
   closeMergeModal();
 }
 
@@ -3129,16 +3178,16 @@ async function syncRysk(address) {
   const openTrades  = newTrades.filter(t => !t.isClose);
   const closeTrades = newTrades.filter(t =>  t.isClose);
   let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  commitTrades(ts => {
+    openTrades.forEach(t => ts.push(t));
+    closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  });
 
   if (openTrades.length > 0 || closedCount > 0 || corrected > 0) {
-    save();
-    render();
     saveSynced(synced);
     const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) commitTrades(() => {}); });
     }
   }
 
@@ -3277,16 +3326,16 @@ async function syncHypersurface(address) {
   const openTrades  = newTrades.filter(t => !t.isClose);
   const closeTrades = newTrades.filter(t =>  t.isClose);
   let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  commitTrades(ts => {
+    openTrades.forEach(t => ts.push(t));
+    closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  });
 
   if (openTrades.length > 0 || closedCount > 0) {
-    save();
-    render();
     saveSynced(synced);
     const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) commitTrades(() => {}); });
     }
   }
 
@@ -3336,7 +3385,7 @@ function migrateCloseTrades() {
       changed = true;
     }
   }
-  if (changed) { save(); render(); }
+  if (changed) commitTrades(() => {});
 }
 
 // ── OUTCOME AUTO-DETECTION ────────────────────────────────
@@ -3411,8 +3460,8 @@ async function autoLoadChain(address) {
   );
   stale.forEach(t => { t.outcome = 'EXPIRED'; });
   if (stale.length) {
-    save(); render();
-    autoDetectOutcomes(stale).then(changed => { if (changed) { save(); render(); } });
+    commitTrades(() => {});
+    autoDetectOutcomes(stale).then(changed => { if (changed) commitTrades(() => {}); });
   }
 
   const [ryskResult, hsfcResult] = await Promise.allSettled([

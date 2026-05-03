@@ -92,8 +92,7 @@ function confirmMerge() {
   // Remove the extra lot-opening trades
   trades = trades.filter(t => !removeIds.has(t.id));
 
-  save();
-  render();
+  commitTrades(() => {});
   closeMergeModal();
 }
 

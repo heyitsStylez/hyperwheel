@@ -88,8 +88,7 @@ function saveEdit() {
     t.outcome  = get('outcome').value;
   }
 
-  save();
-  render();
+  commitTrades(() => {});
   closeEditModal();
   toast('Saved changes to ' + t.asset + ' ' + (isHolding ? 'holding' : t.type));
 }

@@ -3,6 +3,19 @@ function save() {
   localStorage.setItem(HW_HOLDINGS_KEY, JSON.stringify(trades));
   if (typeof scheduleCloudPush === 'function') scheduleCloudPush();
 }
+
+// commitTrades(mutator) — write seam for trades. The mutator receives the
+// current trades array and may either mutate it in-place or return a new array.
+// After the mutator runs, persistence and UI update are performed once.
+function commitTrades(mutator) {
+  if (typeof mutator === 'function') {
+    const res = mutator(trades);
+    if (res !== undefined) trades = res;
+  }
+  save();
+  render();
+}
+
 function fmt(n)  { return Number(n).toLocaleString('en', {maximumFractionDigits: 2, minimumFractionDigits: 0}); }
 function sk(v)   { return Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/,'')+'K' : fmt(v); }
 function loadWallet() {
