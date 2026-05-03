@@ -40,11 +40,11 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 |------|------:|-----------------------|
 | `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sHistOutcome/sHistFrom/sHistTo`, `livePrices{}`, `MIN_SIZE`, `ASSET_COLORS`, `mergeAsset` |
 | `01a-outcomes.js` | 32 | `OUTCOMES` registry: per-outcome `{title, badgeClass, platforms}`. Single source of truth for outcome display data + picker membership. Lot-lifecycle effects live in the Lot Engine, not here |
-| `02-utils.js` | 29 | `today()`, `save()` (also kicks `scheduleCloudPush`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`) |
+| `02-utils.js` | 33 | `today()`, `save()` (also kicks `scheduleCloudPush`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`). Dual-exports `today/fmt/sk` for Node tests |
 | `03-form-controls.js` | 212 | `setAsset/setType/setPlatform/setSizeUnit/setOut/setFilter/setPpnlTab`, `refreshLotPicker`, `autoFillFromLot`, `autoDTE`, history filters: `setHistOutcome/setHistFrom/setHistTo/clearHistFilters` |
 | `04-trade-crud.js` | 39 | `addTrade()` (HOLDING-only — adds spot from drawer), `clearForm`, `deleteTrade`, `quickOutcome` (fires toasts) |
-| `04b-lot-engine.js` | 136 | `lotNetCost(costBasis, lotPremiums, size)` and `lotEngine(assetTrades)` → `{lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting}`. **Single source of truth** for wheel invariants (see Lot model below). Pure; dual-exported for Node. **Key invariant:** assigned-PUT premium IS credited to the new lot's `lotPremiums` |
-| `05-compute.js` | 85 | `compute(assetFilter)` → `{streams, lots, allRows, displayRows}`. Cross-asset orchestrator: per-asset grouping, calls `lotEngine`, applies asset filter, sorts, assigns idx, derives display fields (`returnPct`, `monthly`, `annual`, `lotPnl`) |
+| `04b-lot-engine.js` | 140 | `lotNetCost(costBasis, lotPremiums, size)` and `lotEngine(assetTrades)` → `{lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting}`. **Single source of truth** for wheel invariants (see Lot model below). Pure; dual-exported for Node. **Key invariant:** assigned-PUT premium IS credited to the new lot's `lotPremiums` |
+| `05-compute.js` | 89 | `compute(assetFilter)` → `{streams, lots, allRows, displayRows}`. Cross-asset orchestrator: per-asset grouping, calls `lotEngine`, applies asset filter, sorts, assigns idx, derives display fields (`returnPct`, `monthly`, `annual`, `lotPnl`). Dual-exports `compute` for Node tests (reads `trades`/`lotEngine` from globals — set them before `require`) |
 | `05a-merge-open-lots.js` | 113 | `mergeOpenLots(trades, asset)` → `trades'`. Pure helper that merges all open lots for one asset (size-weighted `costBasis`, summed `lotPremiums`, earliest opener kept, CALL `lotNum` cleared). Prefers `lotEngine`, falls back to `compute` or a HOLDING/ASSIGNED heuristic for Node tests |
 | `06-render-table.js` | 452 | `sortOpen/sortHist`, `renderExpiryTable` (today badge + mobile cards), `fetchExpiryPrices` (CoinGecko, calls full `render()` on success), `rTable` (holdings cards, open & history tables, history filter application), `rStats` (just delegates to `renderExpiryTable`), `exportHistoryCSV` (downloads filtered history as CSV) |
 | `07-render-charts.js` | 640 | `setCpnlPeriod` (1M/3M/ALL), `rCpnlChart` (cumulative premium hero + npnl sparkline), `rCharts` (Premium P&L total/monthly tabs), `cOpts` (Chart.js options factory) |
@@ -74,6 +74,34 @@ as starting anchors, not exact addresses. Re-grep if a function moved.
 4. **Don't wrap the script in `DOMContentLoaded`.** Inline `onclick=` handlers
    need globals, and `17-boot.js` runs at parse time.
 5. **Don't use `maximumFractionDigits: 0` in `fmt()`** — it would round strikes.
+6. **Run `npm test` after touching anything covered by tests** (lot engine,
+   compute, merge, fmt, addTrade/quickOutcome flows). CI gates on it.
+
+---
+
+## Tests
+
+- **Install once:** `npm install` (only devDep is `jsdom`; runtime stays zero-dep).
+- **Run:** `npm test` → `node --test test/unit/*.test.js test/integration/*.test.js`.
+- **Layout:**
+  - `test/unit/*.test.js` — pure-logic (lot-engine, compute, merge, fmt). Each
+    test `require()`s the source module directly via the dual-export footer.
+  - `test/integration/*.test.js` — jsdom; boots the full app via `setupJsdom()`,
+    drives globals like `addTrade()` / `quickOutcome()`, asserts on
+    `localStorage` and DOM.
+  - `test/helpers/loadApp.js` — concatenates `src/js/*.js` and injects as a
+    `<script>` element so classic-script semantics put `function` decls on `window`.
+  - `test/helpers/setupJsdom.js` — preseeds wallet, stubs `fetch` (never resolves,
+    so post-test render() callbacks don't fire after teardown), `Chart`, canvas
+    `getContext`, `scrollIntoView`. Returns `{ window, teardown }`; jsdom tests
+    must call `t.after(teardown)` to release the clock interval.
+- **Dual-export pattern** (used by `02-utils.js`, `04b-lot-engine.js`,
+  `05-compute.js`, `05a-merge-open-lots.js`): a guarded footer
+  `if (typeof module !== 'undefined' && module.exports) module.exports = {...}`.
+  No-op in the browser; `require()`-able from Node tests. `build.py` does no
+  stripping — the footer ships into `hyperwheel.html` and is harmless.
+- **CI:** `.github/workflows/test.yml` runs `npm ci && npm test` separately from
+  the build job.
 
 ---
 

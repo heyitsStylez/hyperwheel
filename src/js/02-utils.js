@@ -27,3 +27,7 @@ function toast(msg, kind) {
     setTimeout(() => el.remove(), 220);
   }, 2400);
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { today, fmt, sk };
+}

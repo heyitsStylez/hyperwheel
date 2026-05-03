@@ -1020,6 +1020,10 @@ function toast(msg, kind) {
   }, 2400);
 }
 
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { today, fmt, sk };
+}
+
 // ── FORM CONTROLS
 function setAsset(a) {
   sAsset = a;
@@ -1410,6 +1414,10 @@ function lotEngine(assetTrades) {
   return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
 }
 
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { lotEngine, lotNetCost };
+}
+
 // ── COMPUTE ──────────────────────────────────────────────────
 // Orchestrator: per-asset, runs the lot engine then enriches each
 // trade with display fields (return%, monthly/annual, lotPnl, net
@@ -1494,6 +1502,10 @@ function compute(assetFilter) {
     : allRows;
 
   return { streams, lots, allRows, displayRows };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { compute };
 }
 
 // ── MERGE OPEN LOTS (pure helper) ─────────────────────────────

@@ -83,3 +83,7 @@ function compute(assetFilter) {
 
   return { streams, lots, allRows, displayRows };
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { compute };
+}

@@ -134,3 +134,7 @@ function lotEngine(assetTrades) {
 
   return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { lotEngine, lotNetCost };
+}

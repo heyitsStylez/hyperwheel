@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { mergeOpenLots } = require('../src/js/05a-merge-open-lots.js');
+const { mergeOpenLots } = require('../../src/js/05a-merge-open-lots.js');
 
 test('merging two open HOLDING lots for an asset produces a single merged lot with weighted cost and summed size', () => {
   const trades = [

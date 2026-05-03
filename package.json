@@ -1,0 +1,13 @@
+{
+  "name": "hyperwheel",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Single-file wheel-strategy options tracker. Tests only — runtime ships zero dependencies.",
+  "scripts": {
+    "build": "python3 build.py --check",
+    "test": "node --test test/unit/*.test.js test/integration/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
