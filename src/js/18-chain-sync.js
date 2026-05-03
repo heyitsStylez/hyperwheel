@@ -141,16 +141,16 @@ async function syncRysk(address) {
   const openTrades  = newTrades.filter(t => !t.isClose);
   const closeTrades = newTrades.filter(t =>  t.isClose);
   let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  commitTrades(ts => {
+    openTrades.forEach(t => ts.push(t));
+    closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  });
 
   if (openTrades.length > 0 || closedCount > 0 || corrected > 0) {
-    save();
-    render();
     saveSynced(synced);
     const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) commitTrades(() => {}); });
     }
   }
 
@@ -289,16 +289,16 @@ async function syncHypersurface(address) {
   const openTrades  = newTrades.filter(t => !t.isClose);
   const closeTrades = newTrades.filter(t =>  t.isClose);
   let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  commitTrades(ts => {
+    openTrades.forEach(t => ts.push(t));
+    closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  });
 
   if (openTrades.length > 0 || closedCount > 0) {
-    save();
-    render();
     saveSynced(synced);
     const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
     if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+      autoDetectOutcomes(expiredNew).then(changed => { if (changed) commitTrades(() => {}); });
     }
   }
 
@@ -348,7 +348,7 @@ function migrateCloseTrades() {
       changed = true;
     }
   }
-  if (changed) { save(); render(); }
+  if (changed) commitTrades(() => {});
 }
 
 // ── OUTCOME AUTO-DETECTION ────────────────────────────────
@@ -423,8 +423,8 @@ async function autoLoadChain(address) {
   );
   stale.forEach(t => { t.outcome = 'EXPIRED'; });
   if (stale.length) {
-    save(); render();
-    autoDetectOutcomes(stale).then(changed => { if (changed) { save(); render(); } });
+    commitTrades(() => {});
+    autoDetectOutcomes(stale).then(changed => { if (changed) commitTrades(() => {}); });
   }
 
   const [ryskResult, hsfcResult] = await Promise.allSettled([

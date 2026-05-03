@@ -50,11 +50,13 @@ async function cloudPull() {
     const localTs  = parseInt(localStorage.getItem('hw_cloud_ts') || '0');
     if (Array.isArray(data.holdings) && data.holdings.length > 0 && remoteTs > localTs) {
       _suppressPush = true;
-      trades = trades.filter(t => t.type !== 'HOLDING');
-      trades.push(...data.holdings);
+      commitTrades(ts => {
+        const nonHold = ts.filter(t => t.type !== 'HOLDING');
+        nonHold.push(...data.holdings);
+        trades = nonHold;
+        return trades;
+      });
       localStorage.setItem('hw_cloud_ts', String(remoteTs));
-      save();
-      render();
       _suppressPush = false;
       if (typeof toast === 'function') toast('Pulled ' + data.holdings.length + ' holding' + (data.holdings.length === 1 ? '' : 's') + ' from cloud', 'info');
     }

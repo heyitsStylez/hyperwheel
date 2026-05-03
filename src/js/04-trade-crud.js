@@ -24,8 +24,8 @@ function addTrade() {
     txHash: '',
     notes: d.notes || ''
   };
-  trades.push(tradeObj);
-  save(); render(); clearForm();
+  commitTrades(t => { t.push(tradeObj); });
+  clearForm();
   closeTradeDrawer();
   toast(d.asset + ' holding added');
   const tlog = document.getElementById('tlog'); if (tlog) tlog.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -41,15 +41,13 @@ function clearForm() {
 
 function deleteTrade(id) {
   const t = trades.find(t => t.id === id);
-  trades = trades.filter(t => t.id !== id);
-  save(); render();
+  commitTrades(ts => { return ts.filter(x => x.id !== id); });
   if (t) toast('Deleted ' + t.asset + ' ' + t.type);
 }
 function quickOutcome(id, outcome) {
   const t = trades.find(t => t.id === id);
   if (!t) return;
-  t.outcome = outcome;
-  save(); render();
+  commitTrades(ts => { const tt = ts.find(u => u.id === id); if (!tt) return; tt.outcome = outcome; });
   const title = OUTCOMES[outcome] && OUTCOMES[outcome].title;
   toast(t.asset + ' ' + t.type + ' marked ' + (title ? title.toLowerCase() : outcome.toLowerCase()));
 }
