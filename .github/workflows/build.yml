@@ -1,0 +1,26 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build and syntax-check
+        run: python3 build.py --check
+      - name: Verify built files match committed artifacts
+        run: |
+          git diff --exit-code hyperwheel.html public/index.html || {
+            echo "Built output differs from committed files. Run 'python3 build.py --check' locally and commit the result."
+            exit 1
+          }

@@ -94,6 +94,21 @@ exit at the call strike and start a new wheel cycle. The tracker's key metric
 is **net cost per token = cost basis − (lot premiums ÷ size)**, which falls
 every cycle the position survives.
 
+## Disclaimer
+
+This is a personal-use tracker, not financial advice. Options trading carries
+substantial risk — you can lose more than your premium on naked or
+inadequately-collateralised positions. Numbers shown are computed from data
+you (or the chain-sync importer) entered; bugs in the lot engine could
+mis-state cost basis, P&L, or net cost. Verify against your platform's own
+records before making decisions. Provided **as is**, with no warranty — see
+[`LICENSE`](./LICENSE).
+
+## Contributing
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md). TL;DR: edit `src/`, run
+`python3 build.py --check`, open a PR.
+
 ## License
 
-MIT
+MIT — see [`LICENSE`](./LICENSE).
