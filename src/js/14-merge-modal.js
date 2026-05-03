@@ -4,24 +4,45 @@ function openMergeModal(asset) {
   mergeAsset = asset;
   document.getElementById('merge-title').textContent = 'Merge ' + asset + ' Lots';
 
-  // Run compute to get current lot state
-  const result = compute('ALL');
-  const assetLots = (result.lots[asset] || []).filter(l => l.open);
-  if (assetLots.length < 2) return;
+  // Build a preview by using the pure merge helper on a cloned trades array.
+  // This keeps arithmetic out of the modal and ensures preview computation
+  // matches the merge operation performed on confirm.
+  const previewTrades = mergeOpenLots(JSON.parse(JSON.stringify(trades)), asset);
 
-  // Calculate merged values
-  let totalSize = 0, weightedCost = 0, totalCCPrem = 0;
-  assetLots.forEach(l => {
-    totalSize += l.size;
-    weightedCost += l.costBasis * l.size;
-    totalCCPrem += l.lotPremiums;
-  });
-  const avgCost = weightedCost / totalSize;
-  const mergedNC = lotNetCost(avgCost, totalCCPrem, totalSize);
+  // Temporarily run compute against the preview trades to extract the merged lot info
+  let mergedLot = null;
+  if (typeof window !== 'undefined') window.__merge_preview_trades = window.trades;
+  else if (typeof global !== 'undefined') global.__merge_preview_trades = global.trades;
+  try {
+    if (typeof window !== 'undefined') window.trades = previewTrades;
+    if (typeof global !== 'undefined') global.trades = previewTrades;
+    const previewResult = compute('ALL');
+    const lots = (previewResult.lots && previewResult.lots[asset]) || [];
+    mergedLot = lots.find(l => l.open) || null;
+  } finally {
+    if (typeof window !== 'undefined') {
+      window.trades = window.__merge_preview_trades;
+      delete window.__merge_preview_trades;
+    }
+    if (typeof global !== 'undefined') {
+      global.trades = global.__merge_preview_trades;
+      delete global.__merge_preview_trades;
+    }
+  }
+
+  if (!mergedLot) return;
+
+  const totalSize = mergedLot.size;
+  const avgCost = mergedLot.costBasis;
+  const totalCCPrem = mergedLot.lotPremiums;
+  const mergedNC = mergedLot.netCost;
 
   let html = '<div class="merge-preview">';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Lots being merged</div>';
-  assetLots.forEach(l => {
+  // Show the lot rows from compute's preview (tradeIds -> lotNum may be present)
+  const resultNow = compute('ALL');
+  const assetLotsNow = (resultNow.lots[asset] || []).filter(l => l.open);
+  assetLotsNow.forEach(l => {
     html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(l.netCost) + ')</span></div>';
   });
   html += '<div style="border-top:1px solid var(--bd2);margin:8px 0"></div>';
@@ -45,52 +66,17 @@ function confirmMerge() {
   if (!mergeAsset) return;
   const asset = mergeAsset;
 
-  // Find all lot-opening trades (HOLDING or ASSIGNED) for this asset that lead to open lots
-  // We need to run compute to know which lots are open
+  // Quick guard: if fewer than two open lots, no-op
   const result = compute('ALL');
   const openLots = (result.lots[asset] || []).filter(l => l.open);
   if (openLots.length < 2) { closeMergeModal(); return; }
 
-  // Calculate merged values
-  let totalSize = 0, weightedCost = 0, totalCCPrem = 0;
-  const allTradeIds = [];
-  openLots.forEach(l => {
-    totalSize += l.size;
-    weightedCost += l.costBasis * l.size;
-    totalCCPrem += l.lotPremiums;
-    allTradeIds.push(...l.tradeIds);
-  });
-  const avgCost = weightedCost / totalSize;
+  // Use the pure helper to produce the merged trades array, then persist
+  const merged = mergeOpenLots(trades, asset);
+  // If mergeOpenLots returned the same shape, assume no-op
+  if (!merged || merged.length === 0) { closeMergeModal(); return; }
 
-  // Find the lot-opening trade IDs (HOLDING or ASSIGNED outcomes)
-  const lotOpenIds = new Set();
-  openLots.forEach(l => {
-    // First trade in each lot's tradeIds is the lot opener
-    if (l.tradeIds.length) lotOpenIds.add(l.tradeIds[0]);
-  });
-
-  // Keep the earliest lot opener, remove the rest
-  const lotOpeners = trades.filter(t => lotOpenIds.has(t.id) && t.asset === asset);
-  lotOpeners.sort((a, b) => a.id - b.id);
-  const keepTrade = lotOpeners[0];
-  const removeIds = new Set(lotOpeners.slice(1).map(t => t.id));
-
-  // Update the kept trade to have merged values
-  keepTrade.strike = avgCost;
-  keepTrade.size = totalSize;
-
-  // Reassign all CALL trades from other lots to have no explicit lotNum
-  // (they'll naturally attach to the single remaining lot via compute)
-  trades.forEach(t => {
-    if (t.asset === asset && t.type === 'CALL' && t.lotNum != null) {
-      // Clear lotNum so compute assigns to the single open lot
-      delete t.lotNum;
-    }
-  });
-
-  // Remove the extra lot-opening trades
-  trades = trades.filter(t => !removeIds.has(t.id));
-
+  trades = merged;
   save();
   render();
   closeMergeModal();
