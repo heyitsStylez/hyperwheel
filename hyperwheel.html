@@ -1519,9 +1519,38 @@ function mergeOpenLots(inputTrades, asset) {
       global.trades = JSON.parse(JSON.stringify(tradesCopy));
     }
 
-    // Call compute to get current lots for the asset
-    const result = typeof compute === 'function' ? compute('ALL') : null;
-    const assetLots = (result && result.lots && result.lots[asset]) ? result.lots[asset].filter(l => l.open) : [];
+    // Prefer lotEngine if available (pure per-asset engine)
+    let assetLots = [];
+    if (typeof lotEngine === 'function') {
+      const assetTrades = tradesCopy.filter(t => t.asset === asset).sort((a,b) => a.date.localeCompare(b.date) || a.id - b.id);
+      const engine = lotEngine(assetTrades);
+      assetLots = (engine && engine.lots) ? engine.lots.filter(l => l.open) : [];
+    } else if (typeof compute === 'function') {
+      // Temporarily swap global trades so compute() operates on our copy
+      if (typeof window !== 'undefined') window.__merge_tmp_trades = window.trades;
+      else if (typeof global !== 'undefined') global.__merge_tmp_trades = global.trades;
+      try {
+        if (typeof window !== 'undefined') window.trades = JSON.parse(JSON.stringify(tradesCopy));
+        if (typeof global !== 'undefined') global.trades = JSON.parse(JSON.stringify(tradesCopy));
+        const result = compute('ALL');
+        assetLots = (result && result.lots && result.lots[asset]) ? result.lots[asset].filter(l => l.open) : [];
+      } finally {
+        if (typeof window !== 'undefined') {
+          window.trades = window.__merge_tmp_trades;
+          delete window.__merge_tmp_trades;
+        }
+        if (typeof global !== 'undefined') {
+          global.trades = global.__merge_tmp_trades;
+          delete global.__merge_tmp_trades;
+        }
+      }
+    } else {
+      // Fallback heuristic: treat HOLDING and ASSIGNED PUTs for this asset as open lot openers
+      const openers = tradesCopy.filter(t => t.asset === asset && (t.type === 'HOLDING' || (t.type === 'PUT' && t.outcome === 'ASSIGNED')))
+        .sort((a,b) => a.date.localeCompare(b.date) || a.id - b.id);
+      assetLots = openers.map((t, idx) => ({ lotNum: idx+1, startDate: t.date, costBasis: t.strike, size: t.size, lotPremiums: t.premium || 0, open: true, tradeIds: [t.id], netCost: (t.strike - ((t.premium||0)/t.size)) }));
+    }
+
     if (assetLots.length < 2) return tradesCopy; // no-op
 
     // Gather merged totals
@@ -1530,7 +1559,7 @@ function mergeOpenLots(inputTrades, asset) {
     assetLots.forEach(l => {
       totalSize += l.size;
       weightedCost += l.costBasis * l.size;
-      totalCCPrem += l.lotPremiums;
+      totalCCPrem += l.lotPremiums || 0;
       if (l.tradeIds && l.tradeIds.length) lotOpenIds.add(l.tradeIds[0]);
     });
     const avgCost = weightedCost / totalSize;
@@ -1542,10 +1571,7 @@ function mergeOpenLots(inputTrades, asset) {
     const removeIds = new Set(lotOpeners.slice(1).map(t => t.id));
 
     // Build new trades array: update kept opener, remove others, and clear CALL lotNum refs for this asset
-    const newTrades = tradesCopy.map(t => {
-      // clone each trade to avoid mutating input objects
-      return Object.assign({}, t);
-    }).filter(t => !removeIds.has(t.id));
+    const newTrades = tradesCopy.map(t => Object.assign({}, t)).filter(t => !removeIds.has(t.id));
 
     if (keepTrade) {
       // Find the kept trade in newTrades and update
