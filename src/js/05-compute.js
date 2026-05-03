@@ -12,12 +12,14 @@ function compute(assetFilter) {
   const assets = ['BTC', 'ETH', 'HYPE', 'SOL'];
   const streams = {};
   const lots = {};
+  const engines = {};
 
   assets.forEach(a => {
     const assetTrades = trades.filter(t => t.asset === a)
       .sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id);
 
     const engine = lotEngine(assetTrades);
+    engines[a] = engine;
     lots[a] = engine.lots;
     const openNow = engine.lots.find(l => l.open);
 
@@ -29,7 +31,7 @@ function compute(assetFilter) {
 
       let nc = null, lotNum = null, lotSize = null, lotCostBasis = null;
       if (snap) {
-        nc = snap.lotCostBasis - (snap.lotPremiums / snap.lotSize);
+        nc = lotNetCost(snap.lotSize, snap.lotCostBasis, snap.lotPremiums);
         lotNum = snap.lotNum;
         lotSize = snap.lotSize;
         lotCostBasis = snap.lotCostBasis;
@@ -57,6 +59,29 @@ function compute(assetFilter) {
     streams[a] = enriched;
   });
 
+  // Build combined timeline from per-asset engines (one snapshot per processed trade)
+  const events = [];
+  assets.forEach(a => {
+    const eng = engines[a];
+    if (!eng || !eng.timeline) return;
+    let prevPnl = 0, prevPrem = 0;
+    eng.timeline.forEach(entry => {
+      const dPnl = entry.runningPnl - prevPnl;
+      const dPrem = entry.runningPremiums - prevPrem;
+      events.push({ date: entry.date, dPnl, dPrem });
+      prevPnl = entry.runningPnl;
+      prevPrem = entry.runningPremiums;
+    });
+  });
+  events.sort((x, y) => x.date.localeCompare(y.date));
+  let runningPnl = 0, runningPremiums = 0;
+  const timeline = [];
+  events.forEach(e => {
+    runningPnl += e.dPnl;
+    runningPremiums += e.dPrem;
+    timeline.push({ date: e.date, runningPnl, runningPremiums });
+  });
+
   let allRows = [];
   assets.forEach(a => streams[a].forEach(r => allRows.push(r)));
   allRows.sort((a, b) => {
@@ -72,5 +97,5 @@ function compute(assetFilter) {
     ? allRows.filter(r => r.asset === assetFilter)
     : allRows;
 
-  return { streams, lots, allRows, displayRows };
+  return { streams, lots, allRows, displayRows, timeline };
 }

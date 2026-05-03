@@ -5,25 +5,15 @@ function setCpnlPeriod(p) {
     const b = document.getElementById('cpnl-btn-' + x);
     if (b) b.classList.toggle('active', x === p);
   });
-  rCpnlChart();
+  rCpnlChart(typeof window !== 'undefined' ? window.__cpnlTimeline : undefined);
 }
 
-function rCpnlChart() {
+function rCpnlChart(timeline) {
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
-  // Build time series from all non-HOLDING trades
-  const events = [];
-  trades.forEach(t => {
-    if (t.type === 'HOLDING') return;
-    const eventDate = t.outcome === 'OPEN' ? t.date : t.expiry;
-    if (!eventDate) return;
-    const prem = (t.premium || 0) - (t.closeCost || 0);
-    events.push({ date: eventDate, prem });
-  });
-  events.sort((a, b) => a.date.localeCompare(b.date));
-
-  if (!events.length) {
+  // Use provided timeline (from compute) if available
+  if (!timeline || !timeline.length) {
     area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No trades yet</div>';
     const vEl = document.getElementById('cpnl-val');
     if (vEl) vEl.textContent = '—';
@@ -31,6 +21,16 @@ function rCpnlChart() {
     if (cEl) cEl.innerHTML = '';
     return;
   }
+
+  // Build cumulative series from timeline (timeline entries are date-ordered snapshots)
+  const allSeries = [{ date: timeline[0].date, val: 0 }];
+  timeline.forEach(e => {
+    const val = e.runningPremiums;
+    const last = allSeries[allSeries.length - 1];
+    if (last.date === e.date) { last.val = val; }
+    else { allSeries.push({ date: e.date, val }); }
+  });
+  const totalPnl = allSeries.length ? allSeries[allSeries.length - 1].val : 0;
 
   // Period filter cutoff
   const today = new Date();
@@ -40,17 +40,6 @@ function rCpnlChart() {
   } else if (sCpnlPeriod === '3M') {
     cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
   }
-
-  // Build cumulative series for ALL time first (for total shown in header)
-  let runAll = 0;
-  const allSeries = [{ date: events[0].date, val: 0 }];
-  events.forEach(e => {
-    runAll += e.prem;
-    const last = allSeries[allSeries.length - 1];
-    if (last.date === e.date) { last.val = runAll; }
-    else { allSeries.push({ date: e.date, val: runAll }); }
-  });
-  const totalPnl = runAll;
 
   // Filter series for display period
   let dispSeries;
@@ -491,8 +480,8 @@ function rCpnlChart() {
   }
 }
 
-function rCharts(displayRows) {
-  rCpnlChart();
+function rCharts(displayRows, timeline) {
+  rCpnlChart(timeline);
   const el = document.getElementById('ppnl-body');
   if (!el) return;
 

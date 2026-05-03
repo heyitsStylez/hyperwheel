@@ -1351,6 +1351,7 @@ function lotEngine(assetTrades) {
 
   const lots = [];
   const tradeAccounting = {};
+  const timeline = [];
 
   sorted.forEach(t => {
     const cc = t.closeCost || 0;
@@ -1439,10 +1440,27 @@ function lotEngine(assetTrades) {
       runningPnl: portfolioPnl,
       runningPremiums: portfolioPremiums,
     };
+
+    // Append timeline snapshot (one per processed trade)
+    timeline.push({ date: t.date, runningPnl: portfolioPnl, runningPremiums: portfolioPremiums });
   });
 
-  return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
+  return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting, timeline };
 }
+
+// Node export for tests
+if (typeof module !== 'undefined') module.exports = { lotEngine };
+
+// ── LOT NET COST HELPERS ─────────────────────────────────────
+
+function lotNetCost(lotSize, lotCostBasis, lotPremiums) {
+  // size === 0 guard returns null
+  if (!lotSize || lotSize === 0) return null;
+  return lotCostBasis - (lotPremiums / lotSize);
+}
+
+// Node export for tests
+if (typeof module !== 'undefined') module.exports = { lotNetCost };
 
 // ── COMPUTE ──────────────────────────────────────────────────
 // Orchestrator: per-asset, runs the lot engine then enriches each
@@ -1458,12 +1476,14 @@ function compute(assetFilter) {
   const assets = ['BTC', 'ETH', 'HYPE', 'SOL'];
   const streams = {};
   const lots = {};
+  const engines = {};
 
   assets.forEach(a => {
     const assetTrades = trades.filter(t => t.asset === a)
       .sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id);
 
     const engine = lotEngine(assetTrades);
+    engines[a] = engine;
     lots[a] = engine.lots;
     const openNow = engine.lots.find(l => l.open);
 
@@ -1475,7 +1495,7 @@ function compute(assetFilter) {
 
       let nc = null, lotNum = null, lotSize = null, lotCostBasis = null;
       if (snap) {
-        nc = snap.lotCostBasis - (snap.lotPremiums / snap.lotSize);
+        nc = lotNetCost(snap.lotSize, snap.lotCostBasis, snap.lotPremiums);
         lotNum = snap.lotNum;
         lotSize = snap.lotSize;
         lotCostBasis = snap.lotCostBasis;
@@ -1503,6 +1523,29 @@ function compute(assetFilter) {
     streams[a] = enriched;
   });
 
+  // Build combined timeline from per-asset engines (one snapshot per processed trade)
+  const events = [];
+  assets.forEach(a => {
+    const eng = engines[a];
+    if (!eng || !eng.timeline) return;
+    let prevPnl = 0, prevPrem = 0;
+    eng.timeline.forEach(entry => {
+      const dPnl = entry.runningPnl - prevPnl;
+      const dPrem = entry.runningPremiums - prevPrem;
+      events.push({ date: entry.date, dPnl, dPrem });
+      prevPnl = entry.runningPnl;
+      prevPrem = entry.runningPremiums;
+    });
+  });
+  events.sort((x, y) => x.date.localeCompare(y.date));
+  let runningPnl = 0, runningPremiums = 0;
+  const timeline = [];
+  events.forEach(e => {
+    runningPnl += e.dPnl;
+    runningPremiums += e.dPrem;
+    timeline.push({ date: e.date, runningPnl, runningPremiums });
+  });
+
   let allRows = [];
   assets.forEach(a => streams[a].forEach(r => allRows.push(r)));
   allRows.sort((a, b) => {
@@ -1518,7 +1561,7 @@ function compute(assetFilter) {
     ? allRows.filter(r => r.asset === assetFilter)
     : allRows;
 
-  return { streams, lots, allRows, displayRows };
+  return { streams, lots, allRows, displayRows, timeline };
 }
 
 // Sort state — persists across renders
@@ -1995,25 +2038,15 @@ function setCpnlPeriod(p) {
     const b = document.getElementById('cpnl-btn-' + x);
     if (b) b.classList.toggle('active', x === p);
   });
-  rCpnlChart();
+  rCpnlChart(typeof window !== 'undefined' ? window.__cpnlTimeline : undefined);
 }
 
-function rCpnlChart() {
+function rCpnlChart(timeline) {
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
-  // Build time series from all non-HOLDING trades
-  const events = [];
-  trades.forEach(t => {
-    if (t.type === 'HOLDING') return;
-    const eventDate = t.outcome === 'OPEN' ? t.date : t.expiry;
-    if (!eventDate) return;
-    const prem = (t.premium || 0) - (t.closeCost || 0);
-    events.push({ date: eventDate, prem });
-  });
-  events.sort((a, b) => a.date.localeCompare(b.date));
-
-  if (!events.length) {
+  // Use provided timeline (from compute) if available
+  if (!timeline || !timeline.length) {
     area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No trades yet</div>';
     const vEl = document.getElementById('cpnl-val');
     if (vEl) vEl.textContent = '—';
@@ -2021,6 +2054,16 @@ function rCpnlChart() {
     if (cEl) cEl.innerHTML = '';
     return;
   }
+
+  // Build cumulative series from timeline (timeline entries are date-ordered snapshots)
+  const allSeries = [{ date: timeline[0].date, val: 0 }];
+  timeline.forEach(e => {
+    const val = e.runningPremiums;
+    const last = allSeries[allSeries.length - 1];
+    if (last.date === e.date) { last.val = val; }
+    else { allSeries.push({ date: e.date, val }); }
+  });
+  const totalPnl = allSeries.length ? allSeries[allSeries.length - 1].val : 0;
 
   // Period filter cutoff
   const today = new Date();
@@ -2030,17 +2073,6 @@ function rCpnlChart() {
   } else if (sCpnlPeriod === '3M') {
     cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
   }
-
-  // Build cumulative series for ALL time first (for total shown in header)
-  let runAll = 0;
-  const allSeries = [{ date: events[0].date, val: 0 }];
-  events.forEach(e => {
-    runAll += e.prem;
-    const last = allSeries[allSeries.length - 1];
-    if (last.date === e.date) { last.val = runAll; }
-    else { allSeries.push({ date: e.date, val: runAll }); }
-  });
-  const totalPnl = runAll;
 
   // Filter series for display period
   let dispSeries;
@@ -2481,8 +2513,8 @@ function rCpnlChart() {
   }
 }
 
-function rCharts(displayRows) {
-  rCpnlChart();
+function rCharts(displayRows, timeline) {
+  rCpnlChart(timeline);
   const el = document.getElementById('ppnl-body');
   if (!el) return;
 
@@ -2632,10 +2664,12 @@ function cOpts(ttFmt, yFmt) {
 
 // ── RENDER
 function render() {
-  const { streams, lots, allRows, displayRows } = compute(sFilter);
+  const { streams, lots, allRows, displayRows, timeline } = compute(sFilter);
   rStats(streams, lots, displayRows);
   rTable(displayRows, streams, lots);
-  rCharts(displayRows);
+  // expose for UI controls that invoke rCpnlChart without args
+  if (typeof window !== 'undefined') window.__cpnlTimeline = timeline;
+  rCharts(displayRows, timeline);
 }
 
 // ── UTILS

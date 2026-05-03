@@ -35,6 +35,7 @@ function lotEngine(assetTrades) {
 
   const lots = [];
   const tradeAccounting = {};
+  const timeline = [];
 
   sorted.forEach(t => {
     const cc = t.closeCost || 0;
@@ -123,7 +124,13 @@ function lotEngine(assetTrades) {
       runningPnl: portfolioPnl,
       runningPremiums: portfolioPremiums,
     };
+
+    // Append timeline snapshot (one per processed trade)
+    timeline.push({ date: t.date, runningPnl: portfolioPnl, runningPremiums: portfolioPremiums });
   });
 
-  return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting };
+  return { lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting, timeline };
 }
+
+// Node export for tests
+if (typeof module !== 'undefined') module.exports = { lotEngine };
