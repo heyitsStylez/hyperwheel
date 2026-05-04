@@ -7,6 +7,8 @@ HyperEVM (HyperLiquid L2).
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+![HyperWheel dashboard](./docs/images/hyperwheel-dashboard.png)
+
 ## Features
 
 - **Trade logging** — puts, calls, and spot holdings with strike, size, premium,
