@@ -447,6 +447,9 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .footer-live { color: var(--green); }
 .footer-live::before { content: '● '; }
 .footer-sep { color: var(--bd2); }
+.footer-source { margin-left: auto; display: inline-flex; align-items: center; color: var(--mu); transition: color .15s; }
+.footer-source:hover { color: var(--green); }
+.footer-source svg { display: block; }
 
 /* ─── WALLET POPUP ────────────────────────────────────── */
 .wallet-popup {
