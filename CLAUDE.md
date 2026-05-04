@@ -284,7 +284,7 @@ suggested strikes inside the form.
 
 ### Issue tracker
 
-GitHub Issues at `heyitsStylez/rysk-pnl-tracker` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+GitHub Issues at `heyitsStylez/hyperwheel` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

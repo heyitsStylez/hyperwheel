@@ -89,6 +89,15 @@ platforms allow which outcomes). Lot-lifecycle and P&L effects are *not* in
 the registry — those live imperatively in the Lot Engine and chart code,
 where the wheel-strategy invariants are written prose-style.
 
+### Version
+The git tag of the deployed build, displayed in the footer and the first-visit
+wallet popup. Source of truth is `git describe --tags --always --dirty`,
+substituted into a `{{VERSION}}` placeholder by `build.py`. A `-dirty` suffix
+means the build contains uncommitted changes — useful for spotting
+not-from-a-clean-tag deploys. Tags are created automatically by a GitHub Action
+on every merge to `main` (see ADR 0001), so the footer always reflects current
+shipped code without manual bookkeeping.
+
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
 by the engine: `{ lotNum, lotSize, lotPremiums, lotCostBasis }`. Captured
