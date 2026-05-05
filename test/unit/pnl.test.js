@@ -108,6 +108,90 @@ test('empty trades → realised = 0', () => {
   assert.strictEqual(computePnl([]).realised, 0);
 });
 
+test('unrealised marks open HOLDING lot to market: (spot − costBasis) × size', () => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 2, premium: 0, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const livePrices = { ETH: 3500 };
+  const { unrealised } = computePnl(trades, 'ALL', livePrices);
+  assert.strictEqual(unrealised, 1000); // (3500 - 3000) * 2
+});
+
+test('unrealised on ASSIGNED-originated lot uses raw costBasis (not netCost)', () => {
+  // PUT assigned at 50000 size 0.1 with premium 200. costBasis=50000, lotPremiums=200.
+  // netCost would be 50000 - (200/0.1) = 48000. Unrealised must use costBasis (50000).
+  // Spot 52000 → unrealised = (52000 - 50000) * 0.1 = 200 (NOT (52000-48000)*0.1 = 400).
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 50000, size: 0.1, premium: 200, outcome: 'ASSIGNED', closeCost: 0 },
+  ];
+  const { unrealised } = computePnl(trades, 'ALL', { BTC: 52000 });
+  assert.strictEqual(unrealised, 200);
+});
+
+test('called-away lot contributes zero to unrealised (closed)', () => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'CALL', date: '2026-01-15', expiry: '2026-01-29',
+      strike: 3500, size: 1, premium: 50, outcome: 'CALLED', closeCost: 0 },
+  ];
+  const { unrealised } = computePnl(trades, 'ALL', { ETH: 4000 });
+  assert.strictEqual(unrealised, 0);
+});
+
+test('missing spot for one asset → excluded from unrealised, others sum, asset listed', () => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 2, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const { unrealised, missingSpotAssets } = computePnl(trades, 'ALL', { ETH: 3500 });
+  assert.strictEqual(unrealised, 500); // ETH only: (3500-3000)*1
+  assert.deepStrictEqual(missingSpotAssets, ['BTC']);
+});
+
+test('missing spot for all assets → unrealised = 0, all listed', () => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 2, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const { unrealised, missingSpotAssets } = computePnl(trades, 'ALL', {});
+  assert.strictEqual(unrealised, 0);
+  assert.deepStrictEqual(missingSpotAssets.sort(), ['BTC', 'ETH']);
+});
+
+test('total = realised + unrealised', () => {
+  // PUT EXPIRED → realised 100. HOLDING ETH at 3000 size 1, spot 3500 → unrealised 500. Total 600.
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 2800, size: 1, premium: 100, outcome: 'EXPIRED', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const { realised, unrealised, total } = computePnl(trades, 'ALL', { ETH: 3500 });
+  assert.strictEqual(realised, 100);
+  assert.strictEqual(unrealised, 500);
+  assert.strictEqual(total, 600);
+});
+
+test('asset filter scopes unrealised + total', () => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const lp = { BTC: 52000, ETH: 3500 };
+  assert.strictEqual(computePnl(trades, 'BTC', lp).unrealised, 200);
+  assert.strictEqual(computePnl(trades, 'ETH', lp).unrealised, 500);
+  assert.strictEqual(computePnl(trades, 'ALL', lp).unrealised, 700);
+});
+
 test('realisedSeries: CALLED event contributes premium AND capital gain at expiry date', () => {
   // HOLDING at 3000 size 1, then CALL at 3500 premium 50 called on 2026-02-15.
   // Series should have a point on 2026-02-15 with cumulative realised = 50 + 500 = 550.

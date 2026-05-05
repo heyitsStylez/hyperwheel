@@ -482,7 +482,8 @@ function rCpnlChart() {
   }
 }
 
-function rCharts(displayRows) {
+function rCharts(displayRows, lots) {
+  lots = lots || [];
   rCpnlChart();
   const el = document.getElementById('ppnl-body');
   if (!el) return;
@@ -527,7 +528,7 @@ function rCharts(displayRows) {
 
   if (sPpnlTab === 'total') {
     const s = calcStats(displayRows);
-    const { realised } = computePnl(trades, sFilter);
+    const { realised, unrealised, total, missingSpotAssets } = computePnl(trades, sFilter, livePrices);
     function card(label, main, sub, tip) {
       const tipAttr = tip ? ' title="' + tip.replace(/"/g, '&quot;') + '"' : '';
       return '<div class="ppnl-card"' + tipAttr + '>' +
@@ -536,11 +537,52 @@ function rCharts(displayRows) {
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
     }
-    const realisedColor = realised >= 0 ? 'var(--green)' : 'var(--red)';
-    const realisedStr = s.totalCount > 0
-      ? '<span style="color:' + realisedColor + '">' + (realised >= 0 ? '+$' : '-$') + fmt(Math.abs(realised)) + '</span>'
-      : dash;
+    function signed(v) {
+      const color = v >= 0 ? 'var(--green)' : 'var(--red)';
+      return '<span style="color:' + color + '">' + (v >= 0 ? '+$' : '-$') + fmt(Math.abs(v)) + '</span>';
+    }
+
+    // Open-lot inventory under the current asset filter — drives whether
+    // the Unrealised tile shows a value, a partial, or sits dormant.
+    const openAssets = new Set();
+    Object.keys(lots).forEach(a => {
+      if (sFilter !== 'ALL' && a !== sFilter) return;
+      lots[a].forEach(l => { if (!l.endDate && l.size > 0) openAssets.add(a); });
+    });
+    const openLotsCount = openAssets.size;
+    const allMissing = openLotsCount > 0 && missingSpotAssets.length === openLotsCount;
+
+    const realisedStr = s.totalCount > 0 ? signed(realised) : dash;
     const realisedTip = 'Realised P&L = net premiums of settled options + capital gains on called-away lots ((strike − costBasis) × size). Open positions contribute zero.';
+
+    let unrealisedStr, unrealisedSub;
+    if (openLotsCount === 0) {
+      unrealisedStr = dash;
+      unrealisedSub = '';
+    } else if (allMissing) {
+      unrealisedStr = dash;
+      unrealisedSub = 'spot unavailable for ' + missingSpotAssets.join(', ');
+    } else {
+      unrealisedStr = signed(unrealised);
+      unrealisedSub = missingSpotAssets.length
+        ? 'spot unavailable for ' + missingSpotAssets.join(', ')
+        : 'mark-to-market on open lots';
+    }
+    const unrealisedTip = 'Unrealised P&L = Σ over open lots of (spot − costBasis) × size. Marks to market against raw cost basis (not net cost). Updates whenever spot refreshes.';
+
+    let totalStr, totalSub;
+    if (s.totalCount === 0 && openLotsCount === 0) {
+      totalStr = dash; totalSub = '';
+    } else if (allMissing) {
+      totalStr = dash;
+      totalSub = 'spot unavailable for ' + missingSpotAssets.join(', ');
+    } else {
+      totalStr = signed(total);
+      totalSub = missingSpotAssets.length
+        ? 'partial — spot missing: ' + missingSpotAssets.join(', ')
+        : 'realised + unrealised';
+    }
+    const totalTip = 'Total P&L = Realised + Unrealised. The full picture if every open lot were sold at current spot right now.';
     el.className = 'ppnl-cards';
     el.innerHTML = [
       card('Total Premium Collected',
@@ -550,6 +592,14 @@ function rCharts(displayRows) {
         realisedStr,
         s.totalCount > 0 ? 'settled events only' : '',
         realisedTip),
+      card('Unrealised P&amp;L',
+        unrealisedStr,
+        unrealisedSub,
+        unrealisedTip),
+      card('Total P&amp;L',
+        totalStr,
+        totalSub,
+        totalTip),
       card('Total Notional',
         s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
         s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),

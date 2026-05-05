@@ -2,15 +2,18 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { setupJsdom } = require('../helpers/setupJsdom');
 
-// Find the Realised P&L card by its label text.
-function findRealisedCard(window) {
+// Find a P&L card by its label text.
+function findCard(window, labelRegex) {
   const cards = window.document.querySelectorAll('.ppnl-card');
   for (const c of cards) {
     const lbl = c.querySelector('.ppnl-lbl');
-    if (lbl && /Realised P&L/i.test(lbl.textContent)) return c;
+    if (lbl && labelRegex.test(lbl.textContent)) return c;
   }
   return null;
 }
+function findRealisedCard(window) { return findCard(window, /Realised P&L/i); }
+function findUnrealisedCard(window) { return findCard(window, /Unrealised P&L/i); }
+function findTotalCard(window) { return findCard(window, /^Total P&L/i); }
 
 test('Realised P&L tile renders settled premium total', (t) => {
   const trades = [
@@ -93,4 +96,107 @@ test('CALL CALLED on HOLDING lot contributes capital gain to Realised tile', (t)
   const card = findRealisedCard(window);
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$550/, `expected +$550, got "${main}"`);
+});
+
+test('Unrealised P&L tile marks open lots to market against costBasis', (t) => {
+  // HOLDING ETH at 3000 size 1, spot 3500 → unrealised = 500.
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.livePrices = { ETH: 3500 };
+  window.render();
+
+  const card = findUnrealisedCard(window);
+  assert.ok(card, 'Unrealised P&L card should exist');
+  const main = card.querySelector('.ppnl-main').textContent;
+  assert.match(main, /\+\$500/, `expected +$500, got "${main}"`);
+  assert.match(card.getAttribute('title') || '', /Unrealised P&L/);
+});
+
+test('Total P&L tile = Realised + Unrealised', (t) => {
+  // PUT EXPIRED netPrem 100 + HOLDING ETH 3000 size 1 spot 3500 → total = 100 + 500 = 600.
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 2800, size: 1, premium: 100, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.livePrices = { ETH: 3500 };
+  window.render();
+
+  const card = findTotalCard(window);
+  assert.ok(card, 'Total P&L card should exist');
+  const main = card.querySelector('.ppnl-main').textContent;
+  assert.match(main, /\+\$600/, `expected +$600, got "${main}"`);
+  assert.match(card.getAttribute('title') || '', /Total P&L/);
+});
+
+test('Unrealised tile shows dash + spot-unavailable sub-line when spot missing', (t) => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  // livePrices stays {} (fetchExpiryPrices stubbed, never resolves).
+  const card = findUnrealisedCard(window);
+  const main = card.querySelector('.ppnl-main').textContent;
+  const sub = card.querySelector('.ppnl-sub').textContent;
+  assert.match(main, /—|&mdash;|-/, `expected dash main, got "${main}"`);
+  assert.match(sub, /spot unavailable.*ETH/i, `expected spot-unavailable sub, got "${sub}"`);
+});
+
+test('Unrealised tile partial: sums available, sub-line lists missing', (t) => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+    { id: 2, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.livePrices = { ETH: 3500 }; // BTC missing
+  window.render();
+
+  const card = findUnrealisedCard(window);
+  const main = card.querySelector('.ppnl-main').textContent;
+  const sub = card.querySelector('.ppnl-sub').textContent;
+  assert.match(main, /\+\$500/, `expected +$500 (ETH only), got "${main}"`);
+  assert.match(sub, /BTC/, `expected BTC in sub-line, got "${sub}"`);
+});
+
+test('Unrealised + Total tiles respect asset filter', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.livePrices = { BTC: 52000, ETH: 3500 };
+  window.setFilter('BTC');
+
+  const card = findUnrealisedCard(window);
+  const main = card.querySelector('.ppnl-main').textContent;
+  // BTC: (52000-50000)*0.1 = 200
+  assert.match(main, /\+\$200/, `under BTC filter expected +$200, got "${main}"`);
 });

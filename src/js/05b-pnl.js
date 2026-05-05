@@ -7,7 +7,8 @@
 //
 // Slice 1: Realised path only. Unrealised + Total land in Slice 2.
 
-function computePnl(trades, assetFilter) {
+function computePnl(trades, assetFilter, livePrices) {
+  livePrices = livePrices || {};
   const engine = (typeof lotEngine !== 'undefined')
     ? lotEngine
     : require('./04b-lot-engine.js').lotEngine;
@@ -22,11 +23,25 @@ function computePnl(trades, assetFilter) {
   });
 
   let realised = 0;
+  let unrealised = 0;
+  const missingSpotAssets = [];
   const events = [];
 
   Object.keys(byAsset).forEach(asset => {
     const assetTrades = byAsset[asset];
     const { lots } = engine(assetTrades);
+
+    const openLots = lots.filter(l => !l.endDate && l.size > 0);
+    if (openLots.length) {
+      const spot = livePrices[asset];
+      if (spot == null) {
+        missingSpotAssets.push(asset);
+      } else {
+        openLots.forEach(l => {
+          unrealised += (spot - l.costBasis) * l.size;
+        });
+      }
+    }
 
     assetTrades.forEach(t => {
       if (t.type === 'HOLDING') return;
@@ -57,7 +72,8 @@ function computePnl(trades, assetFilter) {
     else realisedSeries.push({ date: e.date, val: run });
   });
 
-  return { realised, realisedSeries };
+  const total = realised + unrealised;
+  return { realised, unrealised, total, missingSpotAssets, realisedSeries };
 }
 
 if (typeof module !== 'undefined' && module.exports) {

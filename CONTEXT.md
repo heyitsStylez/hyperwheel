@@ -57,9 +57,33 @@ ASSIGNED-originated lots realise capital gain symmetrically on call-away — the
 old `assignedLotNums` workaround is gone.
 
 Lives in `src/js/05b-pnl.js` as the pure function `computePnl(trades,
-assetFilter) → { realised, ... }`. Dual-exported. The single source of truth
-for the headline number on the Premium P&L Total tab and the cumulative-P&L
-hero sparkline. ADR: `docs/adr/0003-pnl-cash-flow-lens.md`.
+assetFilter, livePrices) → { realised, unrealised, total, missingSpotAssets,
+realisedSeries }`. Dual-exported. The single source of truth for the headline
+number on the Premium P&L Total tab and the cumulative-P&L hero sparkline.
+ADR: `docs/adr/0003-pnl-cash-flow-lens.md`.
+
+### Unrealised P&L
+Mark-to-market on currently open lots:
+
+```
+unrealised = Σ over open lots of (spot − costBasis) × size
+```
+
+Marks against **raw `costBasis`, never `netCost`** — premiums collected against
+open lots are already counted in Realised. HOLDING-originated and
+ASSIGNED-originated lots are treated identically. Updates whenever spot
+refreshes. Spot comes from `livePrices` (the global the CoinGecko fetch
+populates); when an asset's spot is missing, that asset's open lots are
+**excluded** from the sum and the asset is reported in `missingSpotAssets` so
+the UI can show a "spot unavailable for {asset}" sub-line. Never falls back to
+$0 or stale cached spot.
+
+### Total P&L
+`Total = Realised + Unrealised`. The single defensible "where do I stand"
+figure — what the book is worth if every open lot were sold at current spot
+right now. Same `missingSpotAssets` semantics as Unrealised: when all
+open-lot assets are missing spot the tile shows a dash; partial coverage
+shows the partial total with the missing assets called out.
 
 ### Portfolio P&L (internal)
 Engine field `lotEngine.portfolioPnl`. Aggregates:
