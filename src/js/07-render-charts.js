@@ -530,9 +530,11 @@ function rCharts(displayRows, lots) {
     const s = calcStats(displayRows);
     const { realised, unrealised, total, missingSpotAssets } = computePnl(trades, sFilter, livePrices);
     function card(label, main, sub, tip) {
-      const tipAttr = tip ? ' title="' + tip.replace(/"/g, '&quot;') + '"' : '';
-      return '<div class="ppnl-card"' + tipAttr + '>' +
-        '<div class="ppnl-lbl">' + label + '</div>' +
+      const tipAttr = tip
+        ? ' data-tip="' + tip.replace(/"/g, '&quot;') + '" title="' + tip.replace(/"/g, '&quot;') + '"'
+        : '';
+      return '<div class="ppnl-card' + (tip ? ' has-tip' : '') + '"' + tipAttr + '>' +
+        '<div class="ppnl-lbl">' + label + (tip ? ' <span class="ppnl-tip-ico" aria-hidden="true">&#9432;</span>' : '') + '</div>' +
         '<div class="ppnl-main">' + main + '</div>' +
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
