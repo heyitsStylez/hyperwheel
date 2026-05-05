@@ -69,7 +69,9 @@ python3 build.py --check
 ```
 
 That assembles `hyperwheel.html` and `public/index.html` and runs a Node
-syntax check on the assembled script. **Never edit the built files directly.**
+syntax check on the assembled script. Both built files are gitignored —
+Vercel rebuilds them on deploy via `vercel.json`'s `buildCommand`. **Never
+edit the built files directly.**
 
 The runtime ships zero dependencies, but the test suite uses `jsdom` as a
 dev-only dependency. Unit tests cover the pure modules (lot engine, compute,

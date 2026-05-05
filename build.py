@@ -34,34 +34,20 @@ def read(path):
 def resolve_version(cwd=BASE):
     """Return git-tag version string for the repo at *cwd*.
 
-    Behaviour:
-      1. ``git describe --tags --always`` for the base string (tag or short SHA).
-      2. Append ``-dirty`` iff the working tree has uncommitted changes
-         **outside** the built artifacts themselves. Artifacts are excluded
-         because the act of building rewrites them and would otherwise
-         permanently stamp every committed artifact ``-dirty``.
-      3. ``unknown`` if git is unavailable or *cwd* is not a repo.
+    Order of preference:
+      1. ``git describe --tags --always --dirty`` (tag, or short SHA if no tag).
+      2. ``unknown`` if git is unavailable or *cwd* is not a repo.
     """
     try:
-        described = subprocess.run(
-            ['git', 'describe', '--tags', '--always'],
+        result = subprocess.run(
+            ['git', 'describe', '--tags', '--always', '--dirty'],
             cwd=cwd, capture_output=True, text=True,
         )
     except (FileNotFoundError, OSError):
         return 'unknown'
-    if described.returncode != 0:
+    if result.returncode != 0:
         return 'unknown'
-    base = described.stdout.strip()
-    if not base:
-        return 'unknown'
-
-    status = subprocess.run(
-        ['git', 'status', '--porcelain', '--',
-         '.', ':(exclude)hyperwheel.html', ':(exclude)public/index.html'],
-        cwd=cwd, capture_output=True, text=True,
-    )
-    dirty = status.returncode == 0 and bool(status.stdout.strip())
-    return f'{base}-dirty' if dirty else base
+    return result.stdout.strip() or 'unknown'
 
 
 def build():

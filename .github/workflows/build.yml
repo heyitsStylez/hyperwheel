@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # need full history + tags so resolve_version() matches local
+          fetch-depth: 0  # full history + tags so resolve_version() picks up the latest tag
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
@@ -20,9 +20,3 @@ jobs:
           node-version: '20'
       - name: Build and syntax-check
         run: python3 build.py --check
-      - name: Verify built files match committed artifacts
-        run: |
-          git diff --exit-code hyperwheel.html public/index.html || {
-            echo "Built output differs from committed files. Run 'python3 build.py --check' locally and commit the result."
-            exit 1
-          }
