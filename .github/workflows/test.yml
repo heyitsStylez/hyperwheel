@@ -13,5 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - run: npm ci
       - run: npm test
+      - run: python3 -m unittest discover -s test/build -v

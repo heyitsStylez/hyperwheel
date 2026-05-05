@@ -31,6 +31,25 @@ def read(path):
         return f.read()
 
 
+def resolve_version(cwd=BASE):
+    """Return git-tag version string for the repo at *cwd*.
+
+    Order of preference:
+      1. ``git describe --tags --always --dirty`` (tag, or short SHA if no tag).
+      2. ``unknown`` if git is unavailable or *cwd* is not a repo.
+    """
+    try:
+        result = subprocess.run(
+            ['git', 'describe', '--tags', '--always', '--dirty'],
+            cwd=cwd, capture_output=True, text=True,
+        )
+    except (FileNotFoundError, OSError):
+        return 'unknown'
+    if result.returncode != 0:
+        return 'unknown'
+    return result.stdout.strip() or 'unknown'
+
+
 def build():
     css      = read(os.path.join(BASE, 'src', 'css', 'styles.css'))
     head_tmpl = read(os.path.join(BASE, 'src', 'html', 'head.html'))
@@ -60,6 +79,13 @@ def build():
         + '</body>\n'
         + '</html>\n'
     )
+
+    # Inject git-tag version. {{VERSION}} keeps the -dirty suffix for display;
+    # {{VERSION_CLEAN}} strips it so release links resolve to a real tag.
+    version = resolve_version()
+    version_clean = version[:-len('-dirty')] if version.endswith('-dirty') else version
+    output = output.replace('{{VERSION_CLEAN}}', version_clean)
+    output = output.replace('{{VERSION}}', version)
 
     # Write local copy
     local_path = os.path.join(BASE, 'hyperwheel.html')

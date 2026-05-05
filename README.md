@@ -69,7 +69,9 @@ python3 build.py --check
 ```
 
 That assembles `hyperwheel.html` and `public/index.html` and runs a Node
-syntax check on the assembled script. **Never edit the built files directly.**
+syntax check on the assembled script. Both built files are gitignored —
+Vercel rebuilds them on deploy via `vercel.json`'s `buildCommand`. **Never
+edit the built files directly.**
 
 The runtime ships zero dependencies, but the test suite uses `jsdom` as a
 dev-only dependency. Unit tests cover the pure modules (lot engine, compute,
@@ -81,7 +83,8 @@ npm install     # one-time, installs jsdom
 npm test
 ```
 
-CI runs both `python3 build.py --check` and `npm test` on every push and PR.
+CI runs `python3 build.py --check`, `npm test`, and the Python build tests
+(`python3 -m unittest discover -s test/build`) on every push and PR.
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full source map, file-by-file function
 index, lot model, and architectural notes. See [`CONTEXT.md`](./CONTEXT.md)
