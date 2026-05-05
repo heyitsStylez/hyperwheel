@@ -12,19 +12,11 @@ function rCpnlChart() {
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
-  // Build time series from all non-HOLDING trades
-  const events = [];
-  trades.forEach(t => {
-    if (t.type === 'HOLDING') return;
-    const eventDate = t.outcome === 'OPEN' ? t.date : t.expiry;
-    if (!eventDate) return;
-    const prem = (t.premium || 0) - (t.closeCost || 0);
-    events.push({ date: eventDate, prem });
-  });
-  events.sort((a, b) => a.date.localeCompare(b.date));
+  // Realised P&L series: settled net premium + capital gains on call-aways.
+  const { realisedSeries } = computePnl(trades);
 
-  if (!events.length) {
-    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No trades yet</div>';
+  if (!realisedSeries.length) {
+    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No realised events yet</div>';
     const vEl = document.getElementById('cpnl-val');
     if (vEl) vEl.textContent = '—';
     const cEl = document.getElementById('cpnl-change');
@@ -41,16 +33,9 @@ function rCpnlChart() {
     cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
   }
 
-  // Build cumulative series for ALL time first (for total shown in header)
-  let runAll = 0;
-  const allSeries = [{ date: events[0].date, val: 0 }];
-  events.forEach(e => {
-    runAll += e.prem;
-    const last = allSeries[allSeries.length - 1];
-    if (last.date === e.date) { last.val = runAll; }
-    else { allSeries.push({ date: e.date, val: runAll }); }
-  });
-  const totalPnl = runAll;
+  // Cumulative series: prepend a zero-baseline so the first point starts at 0.
+  const allSeries = [{ date: realisedSeries[0].date, val: 0 }, ...realisedSeries];
+  const totalPnl = realisedSeries[realisedSeries.length - 1].val;
 
   // Filter series for display period
   let dispSeries;
@@ -372,19 +357,26 @@ function rCpnlChart() {
     if (ttEl) ttEl.style.display = 'none';
   });
 
-  // ── NET P&L SPARKLINE ─────────────────────────────────────────
-  const { allRows: cpnlAllRows } = compute('ALL');
-  const cpnlAssignedLots = new Set();
-  cpnlAllRows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) cpnlAssignedLots.add(r.lotNum); });
+  // ── REALISED P&L SPARKLINE ────────────────────────────────────
+  const { lots: cpnlLotsByAsset } = compute('ALL');
+  const lotByTradeId = {};
+  Object.keys(cpnlLotsByAsset).forEach(a => {
+    cpnlLotsByAsset[a].forEach(lot => {
+      lot.tradeIds.forEach(tid => { lotByTradeId[tid] = lot; });
+    });
+  });
 
   const netEvts = [];
-  cpnlAllRows.forEach(r => {
-    if (r.type === 'HOLDING') return;
-    const ed = r.outcome === 'OPEN' ? r.date : r.expiry;
+  trades.forEach(t => {
+    if (t.type === 'HOLDING') return;
+    if (t.outcome === 'OPEN') return;
+    const ed = t.expiry || t.date;
     if (!ed) return;
-    let delta = (r.premium || 0) - (r.closeCost || 0);
-    if (r.outcome === 'ASSIGNED') delta -= (r.strike || 0) * (r.size || 0);
-    if (r.outcome === 'CALLED' && cpnlAssignedLots.has(r.lotNum)) delta += (r.strike || 0) * (r.size || 0);
+    let delta = (t.premium || 0) - (t.closeCost || 0);
+    if (t.type === 'CALL' && t.outcome === 'CALLED') {
+      const lot = lotByTradeId[t.id];
+      if (lot) delta += (t.strike - lot.costBasis) * t.size;
+    }
     netEvts.push({ date: ed, delta });
   });
   netEvts.sort((a, b) => a.date.localeCompare(b.date));
@@ -421,9 +413,8 @@ function rCpnlChart() {
   }
 
   const nArea = document.getElementById('npnl-chart-area');
-  const hasAssignments = cpnlAllRows.some(r => r.outcome === 'ASSIGNED');
-  if (nArea && !hasAssignments) {
-    nArea.innerHTML = '<div class="npnl-no-asgn">No assignment losses &mdash; Net P&amp;L equals Premium Income</div>';
+  if (nArea && !netEvts.length) {
+    nArea.innerHTML = '<div class="npnl-no-asgn">No settled trades yet &mdash; Realised P&amp;L starts at $0</div>';
   } else if (nArea && netDisp.length >= 2) {
     const nW = nArea.clientWidth || W;
     const nH = 88;
@@ -502,9 +493,6 @@ function rCharts(displayRows) {
     let openCount = 0;
     let aprWeightedSum = 0, aprWeightTotal = 0;
     let assignmentLoss = 0, callAwayCredit = 0, totalNotional = 0;
-    // Only credit call-aways for lots opened via assignment, not spot HOLDINGs
-    const assignedLotNums = new Set();
-    rows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) assignedLotNums.add(r.lotNum); });
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
@@ -515,10 +503,7 @@ function rCharts(displayRows) {
       if (r.outcome === 'OPEN') { openCount++; }
       else if (r.outcome === 'EXPIRED') otmCount++;
       else if (r.outcome === 'ASSIGNED') { itmCount++; assignmentLoss += notional; }
-      else if (r.outcome === 'CALLED') {
-        itmCount++;
-        if (assignedLotNums.has(r.lotNum)) callAwayCredit += notional;
-      }
+      else if (r.outcome === 'CALLED') { itmCount++; callAwayCredit += notional; }
       if (r.annual != null) {
         aprWeightedSum += r.annual * notional;
         aprWeightTotal += notional;
@@ -542,25 +527,29 @@ function rCharts(displayRows) {
 
   if (sPpnlTab === 'total') {
     const s = calcStats(displayRows);
-    function card(label, main, sub) {
-      return '<div class="ppnl-card">' +
+    const { realised } = computePnl(trades, sFilter);
+    function card(label, main, sub, tip) {
+      const tipAttr = tip ? ' title="' + tip.replace(/"/g, '&quot;') + '"' : '';
+      return '<div class="ppnl-card"' + tipAttr + '>' +
         '<div class="ppnl-lbl">' + label + '</div>' +
         '<div class="ppnl-main">' + main + '</div>' +
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
     }
-    const netPnlColor = s.netPnl >= 0 ? 'var(--green)' : 'var(--red)';
-    const netPnlStr = s.totalCount > 0
-      ? '<span style="color:' + netPnlColor + '">' + (s.netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(s.netPnl)) + '</span>'
+    const realisedColor = realised >= 0 ? 'var(--green)' : 'var(--red)';
+    const realisedStr = s.totalCount > 0
+      ? '<span style="color:' + realisedColor + '">' + (realised >= 0 ? '+$' : '-$') + fmt(Math.abs(realised)) + '</span>'
       : dash;
+    const realisedTip = 'Realised P&L = net premiums of settled options + capital gains on called-away lots ((strike − costBasis) × size). Open positions contribute zero.';
     el.className = 'ppnl-cards';
     el.innerHTML = [
       card('Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
-      card('Net P&amp;L',
-        netPnlStr,
-        s.assignmentLoss > 0 ? '$' + fmt(s.assignmentLoss) + ' assignment loss' : (s.totalCount > 0 ? 'no assignments' : '')),
+      card('Realised P&amp;L',
+        realisedStr,
+        s.totalCount > 0 ? 'settled events only' : '',
+        realisedTip),
       card('Total Notional',
         s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
         s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : ''),
