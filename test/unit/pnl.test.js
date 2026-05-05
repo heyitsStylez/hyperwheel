@@ -107,3 +107,19 @@ test('asset filter scopes realised to one asset', () => {
 test('empty trades → realised = 0', () => {
   assert.strictEqual(computePnl([]).realised, 0);
 });
+
+test('realisedSeries: CALLED event contributes premium AND capital gain at expiry date', () => {
+  // HOLDING at 3000 size 1, then CALL at 3500 premium 50 called on 2026-02-15.
+  // Series should have a point on 2026-02-15 with cumulative realised = 50 + 500 = 550.
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'CALL', date: '2026-02-01', expiry: '2026-02-15',
+      strike: 3500, size: 1, premium: 50, outcome: 'CALLED', closeCost: 0 },
+  ];
+  const { realisedSeries } = computePnl(trades);
+  assert.ok(Array.isArray(realisedSeries), 'realisedSeries should be an array');
+  const last = realisedSeries[realisedSeries.length - 1];
+  assert.strictEqual(last.date, '2026-02-15');
+  assert.strictEqual(last.val, 550);
+});

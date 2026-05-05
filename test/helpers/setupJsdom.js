@@ -42,6 +42,7 @@ function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
     return {
       scale() {}, fillRect() {}, clearRect() {}, fillText() {},
       beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fill() {},
+      bezierCurveTo() {}, quadraticCurveTo() {},
       save() {}, restore() {}, translate() {}, closePath() {}, arc() {},
       setLineDash() {}, rect() {}, strokeRect() {},
       measureText: () => ({ width: 0 }),

@@ -12,19 +12,11 @@ function rCpnlChart() {
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
-  // Build time series from all non-HOLDING trades
-  const events = [];
-  trades.forEach(t => {
-    if (t.type === 'HOLDING') return;
-    const eventDate = t.outcome === 'OPEN' ? t.date : t.expiry;
-    if (!eventDate) return;
-    const prem = (t.premium || 0) - (t.closeCost || 0);
-    events.push({ date: eventDate, prem });
-  });
-  events.sort((a, b) => a.date.localeCompare(b.date));
+  // Realised P&L series: settled net premium + capital gains on call-aways.
+  const { realisedSeries } = computePnl(trades);
 
-  if (!events.length) {
-    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No trades yet</div>';
+  if (!realisedSeries.length) {
+    area.innerHTML = '<div class="cpnl-empty"><span style="font-size:1.6rem;opacity:.3">&#9196;</span>No realised events yet</div>';
     const vEl = document.getElementById('cpnl-val');
     if (vEl) vEl.textContent = '—';
     const cEl = document.getElementById('cpnl-change');
@@ -41,16 +33,9 @@ function rCpnlChart() {
     cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
   }
 
-  // Build cumulative series for ALL time first (for total shown in header)
-  let runAll = 0;
-  const allSeries = [{ date: events[0].date, val: 0 }];
-  events.forEach(e => {
-    runAll += e.prem;
-    const last = allSeries[allSeries.length - 1];
-    if (last.date === e.date) { last.val = runAll; }
-    else { allSeries.push({ date: e.date, val: runAll }); }
-  });
-  const totalPnl = runAll;
+  // Cumulative series: prepend a zero-baseline so the first point starts at 0.
+  const allSeries = [{ date: realisedSeries[0].date, val: 0 }, ...realisedSeries];
+  const totalPnl = realisedSeries[realisedSeries.length - 1].val;
 
   // Filter series for display period
   let dispSeries;
@@ -508,9 +493,6 @@ function rCharts(displayRows) {
     let openCount = 0;
     let aprWeightedSum = 0, aprWeightTotal = 0;
     let assignmentLoss = 0, callAwayCredit = 0, totalNotional = 0;
-    // Only credit call-aways for lots opened via assignment, not spot HOLDINGs
-    const assignedLotNums = new Set();
-    rows.forEach(r => { if (r.outcome === 'ASSIGNED' && r.lotNum != null) assignedLotNums.add(r.lotNum); });
     rows.forEach(r => {
       if (r.type === 'HOLDING') return;
       const net = (r.premium || 0) - (r.closeCost || 0);
@@ -521,10 +503,7 @@ function rCharts(displayRows) {
       if (r.outcome === 'OPEN') { openCount++; }
       else if (r.outcome === 'EXPIRED') otmCount++;
       else if (r.outcome === 'ASSIGNED') { itmCount++; assignmentLoss += notional; }
-      else if (r.outcome === 'CALLED') {
-        itmCount++;
-        if (assignedLotNums.has(r.lotNum)) callAwayCredit += notional;
-      }
+      else if (r.outcome === 'CALLED') { itmCount++; callAwayCredit += notional; }
       if (r.annual != null) {
         aprWeightedSum += r.annual * notional;
         aprWeightTotal += notional;
@@ -561,7 +540,7 @@ function rCharts(displayRows) {
     const realisedStr = s.totalCount > 0
       ? '<span style="color:' + realisedColor + '">' + (realised >= 0 ? '+$' : '-$') + fmt(Math.abs(realised)) + '</span>'
       : dash;
-    const realisedTip = 'Realised P&L = settled premiums + capital gains on call-aways. Open options and open lots contribute zero.';
+    const realisedTip = 'Realised P&L = net premiums of settled options + capital gains on called-away lots ((strike − costBasis) × size). Open positions contribute zero.';
     el.className = 'ppnl-cards';
     el.innerHTML = [
       card('Total Premium Collected',

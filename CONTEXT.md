@@ -59,7 +59,7 @@ old `assignedLotNums` workaround is gone.
 Lives in `src/js/05b-pnl.js` as the pure function `computePnl(trades,
 assetFilter) → { realised, ... }`. Dual-exported. The single source of truth
 for the headline number on the Premium P&L Total tab and the cumulative-P&L
-hero sparkline. ADR: `docs/adr/0001-pnl-cash-flow-lens.md`.
+hero sparkline. ADR: `docs/adr/0003-pnl-cash-flow-lens.md`.
 
 ### Portfolio P&L (internal)
 Engine field `lotEngine.portfolioPnl`. Aggregates:

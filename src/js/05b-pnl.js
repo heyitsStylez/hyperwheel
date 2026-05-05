@@ -22,6 +22,7 @@ function computePnl(trades, assetFilter) {
   });
 
   let realised = 0;
+  const events = [];
 
   Object.keys(byAsset).forEach(asset => {
     const assetTrades = byAsset[asset];
@@ -33,14 +34,30 @@ function computePnl(trades, assetFilter) {
       const netPrem = (t.premium || 0) - (t.closeCost || 0);
       realised += netPrem;
 
+      let delta = netPrem;
       if (t.type === 'CALL' && t.outcome === 'CALLED') {
         const lot = lots.find(l => l.tradeIds.includes(t.id));
-        if (lot) realised += (t.strike - lot.costBasis) * t.size;
+        if (lot) {
+          const gain = (t.strike - lot.costBasis) * t.size;
+          realised += gain;
+          delta += gain;
+        }
       }
+      events.push({ date: t.expiry || t.date, delta });
     });
   });
 
-  return { realised };
+  events.sort((a, b) => a.date.localeCompare(b.date));
+  let run = 0;
+  const realisedSeries = [];
+  events.forEach(e => {
+    run += e.delta;
+    const last = realisedSeries[realisedSeries.length - 1];
+    if (last && last.date === e.date) last.val = run;
+    else realisedSeries.push({ date: e.date, val: run });
+  });
+
+  return { realised, realisedSeries };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
