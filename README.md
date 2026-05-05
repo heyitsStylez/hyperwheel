@@ -81,7 +81,8 @@ npm install     # one-time, installs jsdom
 npm test
 ```
 
-CI runs both `python3 build.py --check` and `npm test` on every push and PR.
+CI runs `python3 build.py --check`, `npm test`, and the Python build tests
+(`python3 -m unittest discover -s test/build`) on every push and PR.
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full source map, file-by-file function
 index, lot model, and architectural notes. See [`CONTEXT.md`](./CONTEXT.md)

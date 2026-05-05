@@ -18,7 +18,9 @@ A single-file HTML/JS/CSS wheel-strategy options tracker for **Rysk Finance**
 ```
 hyperwheel.html           # built artifact — DO NOT EDIT
 public/index.html         # built artifact for Vercel — DO NOT EDIT
-build.py                  # assembler (concatenates src/ → hyperwheel.html)
+build.py                  # assembler (concatenates src/ → hyperwheel.html);
+                          # also injects {{VERSION}} / {{VERSION_CLEAN}} from
+                          # `git describe --tags --always --dirty`
 api/sync.js               # Vercel serverless: KV-backed cloud sync of HOLDINGs
 api/chain-sync.js         # Vercel serverless: CORS proxy to Rysk + Hypersurface
 src/
@@ -90,6 +92,10 @@ as starting anchors, not exact addresses. Re-grep if a function moved.
   - `test/integration/*.test.js` — jsdom; boots the full app via `setupJsdom()`,
     drives globals like `addTrade()` / `quickOutcome()`, asserts on
     `localStorage` and DOM.
+  - `test/build/test_*.py` — Python unit tests for `build.py` helpers
+    (e.g. `resolve_version()`). Run via
+    `python3 -m unittest discover -s test/build -v`. CI installs Python and
+    runs this after `npm test`.
   - `test/helpers/loadApp.js` — concatenates `src/js/*.js` and injects as a
     `<script>` element so classic-script semantics put `function` decls on `window`.
   - `test/helpers/setupJsdom.js` — preseeds wallet, stubs `fetch` (never resolves,
