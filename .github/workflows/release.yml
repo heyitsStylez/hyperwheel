@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get PR labels for merge commit
+        id: labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR=$(gh pr list --state merged --search "${{ github.sha }}" --json number,labels --jq '.[0]')
+          if [ -z "$PR" ] || [ "$PR" = "null" ]; then
+            echo "labels=" >> "$GITHUB_OUTPUT"
+          else
+            LABELS=$(echo "$PR" | jq -r '.labels | map(.name) | join(",")')
+            echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get current tag
+        id: current
+        run: |
+          TAG=$(git tag --list 'v*.*.*' --sort=-v:refname | head -n1)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version
+        id: next
+        run: |
+          NEXT=$(node scripts/bump-version.js "${{ steps.current.outputs.tag }}" "${{ steps.labels.outputs.labels }}")
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Computed: $NEXT (from tag=${{ steps.current.outputs.tag }}, labels=${{ steps.labels.outputs.labels }})"
+
+      - name: Tag and release
+        if: steps.next.outputs.version != 'skip'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.next.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" --generate-notes
