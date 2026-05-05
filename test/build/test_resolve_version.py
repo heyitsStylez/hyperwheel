@@ -68,6 +68,26 @@ class ResolveVersionTests(unittest.TestCase):
             # short SHA: 7+ hex chars, not starting with 'v'
             self.assertRegex(v, r'^[0-9a-f]{7,}$')
 
+    def test_dirty_only_in_artifacts_is_not_dirty(self):
+        # Building rewrites hyperwheel.html / public/index.html. Those changes
+        # alone must not flip the version to -dirty, otherwise every committed
+        # artifact bakes in -dirty forever.
+        with tempfile.TemporaryDirectory() as d:
+            init_repo(d)
+            os.makedirs(os.path.join(d, 'public'), exist_ok=True)
+            with open(os.path.join(d, 'hyperwheel.html'), 'w') as f:
+                f.write('<html></html>')
+            with open(os.path.join(d, 'public', 'index.html'), 'w') as f:
+                f.write('<html></html>')
+            git(d, 'add', '.')
+            git(d, 'commit', '-q', '-m', 'add artifacts')
+            git(d, 'tag', '-a', 'v1.2.3', '-m', 'v1.2.3')
+            with open(os.path.join(d, 'hyperwheel.html'), 'w') as f:
+                f.write('<html>changed</html>')
+            with open(os.path.join(d, 'public', 'index.html'), 'w') as f:
+                f.write('<html>changed</html>')
+            self.assertEqual(build.resolve_version(d), 'v1.2.3')
+
     def test_not_a_repo(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(build.resolve_version(d), 'unknown')
