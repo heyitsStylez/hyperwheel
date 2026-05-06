@@ -1,5 +1,5 @@
 {
-  "buildCommand": "python3 build.py --check",
+  "buildCommand": "git fetch --tags --depth=1 origin || true; python3 build.py --check",
   "outputDirectory": "public",
   "framework": null,
   "headers": [
