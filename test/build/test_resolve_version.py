@@ -75,6 +75,30 @@ class ResolveVersionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(build.resolve_version(d), 'unknown')
 
+    def test_ls_remote_fallback_when_local_tag_refs_missing(self):
+        # Vercel-like failure mode: HEAD is at a tagged commit on origin,
+        # but local tag refs aren't populated (shallow clone quirks). The
+        # ls-remote fallback should still surface the tag.
+        with tempfile.TemporaryDirectory() as remote, \
+             tempfile.TemporaryDirectory() as clone:
+            init_repo(remote)
+            git(remote, 'tag', 'v9.9.9')
+            git(remote, 'config', 'receive.denyCurrentBranch', 'ignore')
+            git(clone, 'clone', '--depth=1', remote, '.')
+            # Strip local tag refs to simulate missing-tag-locally state
+            for entry in os.listdir(os.path.join(clone, '.git', 'refs', 'tags')):
+                os.remove(os.path.join(clone, '.git', 'refs', 'tags', entry))
+            packed = os.path.join(clone, '.git', 'packed-refs')
+            if os.path.exists(packed):
+                with open(packed) as f:
+                    lines = [l for l in f if 'refs/tags/' not in l]
+                with open(packed, 'w') as f:
+                    f.writelines(lines)
+            self.assertIsNone(
+                build._git(['describe', '--exact-match', '--tags', 'HEAD'], clone)
+            )
+            self.assertEqual(build.resolve_version(clone), 'v9.9.9')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -31,23 +31,50 @@ def read(path):
         return f.read()
 
 
+def _git(args, cwd):
+    try:
+        result = subprocess.run(
+            ['git', *args], cwd=cwd, capture_output=True, text=True,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
+def _tag_at_head_via_ls_remote(cwd):
+    head = _git(['rev-parse', 'HEAD'], cwd)
+    refs = _git(['ls-remote', '--tags', 'origin'], cwd)
+    if not head or not refs:
+        return None
+    for line in refs.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] == head:
+            name = parts[1].replace('refs/tags/', '').replace('^{}', '')
+            if name:
+                return name
+    return None
+
+
 def resolve_version(cwd=BASE):
     """Return git-tag version string for the repo at *cwd*.
 
     Order of preference:
-      1. ``git describe --tags --always`` (tag, or short SHA if no tag).
-      2. ``unknown`` if git is unavailable or *cwd* is not a repo.
+      1. Local exact-match tag at HEAD (``git describe --exact-match --tags``).
+      2. Remote tag at HEAD via ``git ls-remote`` — fallback for shallow CI
+         clones where local tag refs aren't connected to HEAD.
+      3. ``git describe --tags --always`` (describe-with-distance or short SHA).
+      4. ``unknown`` if git is unavailable or *cwd* is not a repo.
     """
-    try:
-        result = subprocess.run(
-            ['git', 'describe', '--tags', '--always'],
-            cwd=cwd, capture_output=True, text=True,
-        )
-    except (FileNotFoundError, OSError):
-        return 'unknown'
-    if result.returncode != 0:
-        return 'unknown'
-    return result.stdout.strip() or 'unknown'
+    tag = _git(['describe', '--exact-match', '--tags', 'HEAD'], cwd)
+    if tag:
+        return tag
+    tag = _tag_at_head_via_ls_remote(cwd)
+    if tag:
+        return tag
+    described = _git(['describe', '--tags', '--always'], cwd)
+    return described or 'unknown'
 
 
 def build():
