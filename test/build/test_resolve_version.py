@@ -100,5 +100,33 @@ class ResolveVersionTests(unittest.TestCase):
             self.assertEqual(build.resolve_version(clone), 'v9.9.9')
 
 
+    def test_ls_remote_targets_prefer_github_when_vercel_env_set(self):
+        prev_owner = os.environ.get('VERCEL_GIT_REPO_OWNER')
+        prev_repo = os.environ.get('VERCEL_GIT_REPO_SLUG')
+        try:
+            os.environ['VERCEL_GIT_REPO_OWNER'] = 'someone'
+            os.environ['VERCEL_GIT_REPO_SLUG'] = 'thing'
+            targets = build._ls_remote_targets()
+            self.assertEqual(
+                targets,
+                ['https://github.com/someone/thing.git', 'origin'],
+            )
+        finally:
+            for k, v in (
+                ('VERCEL_GIT_REPO_OWNER', prev_owner),
+                ('VERCEL_GIT_REPO_SLUG', prev_repo),
+            ):
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def test_ls_remote_targets_origin_only_without_env(self):
+        for k in ('VERCEL_GIT_REPO_OWNER', 'VERCEL_GIT_REPO_SLUG'):
+            if k in os.environ:
+                self.skipTest(f'{k} is set in this environment')
+        self.assertEqual(build._ls_remote_targets(), ['origin'])
+
+
 if __name__ == '__main__':
     unittest.main()
