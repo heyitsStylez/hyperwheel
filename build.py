@@ -35,12 +35,12 @@ def resolve_version(cwd=BASE):
     """Return git-tag version string for the repo at *cwd*.
 
     Order of preference:
-      1. ``git describe --tags --always --dirty`` (tag, or short SHA if no tag).
+      1. ``git describe --tags --always`` (tag, or short SHA if no tag).
       2. ``unknown`` if git is unavailable or *cwd* is not a repo.
     """
     try:
         result = subprocess.run(
-            ['git', 'describe', '--tags', '--always', '--dirty'],
+            ['git', 'describe', '--tags', '--always'],
             cwd=cwd, capture_output=True, text=True,
         )
     except (FileNotFoundError, OSError):
@@ -80,11 +80,11 @@ def build():
         + '</html>\n'
     )
 
-    # Inject git-tag version. {{VERSION}} keeps the -dirty suffix for display;
-    # {{VERSION_CLEAN}} strips it so release links resolve to a real tag.
+    # Inject git-tag version. {{VERSION}} and {{VERSION_CLEAN}} are now
+    # identical (we no longer surface the -dirty suffix); kept as separate
+    # placeholders so existing template references still resolve.
     version = resolve_version()
-    version_clean = version[:-len('-dirty')] if version.endswith('-dirty') else version
-    output = output.replace('{{VERSION_CLEAN}}', version_clean)
+    output = output.replace('{{VERSION_CLEAN}}', version)
     output = output.replace('{{VERSION}}', version)
 
     # Write local copy

@@ -54,12 +54,15 @@ class ResolveVersionTests(unittest.TestCase):
             v = build.resolve_version(d)
             self.assertTrue(v.startswith('v1.2.3-1-g'), f'got {v!r}')
 
-    def test_dirty_tree(self):
+    def test_dirty_tree_does_not_append_suffix(self):
+        # We deliberately don't surface -dirty: Vercel checkouts can dirty
+        # tracked files mid-build (e.g. npm install rewriting package-lock),
+        # which has nothing to do with the source the user is looking at.
         with tempfile.TemporaryDirectory() as d:
             init_repo(d)
             git(d, 'tag', 'v1.2.3')
             open(os.path.join(d, 'a.txt'), 'w').write('changed')
-            self.assertEqual(build.resolve_version(d), 'v1.2.3-dirty')
+            self.assertEqual(build.resolve_version(d), 'v1.2.3')
 
     def test_no_tags_returns_short_sha(self):
         with tempfile.TemporaryDirectory() as d:
