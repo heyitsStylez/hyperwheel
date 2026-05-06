@@ -72,50 +72,35 @@ test('Return Rate tile has tooltip + ⓘ glyph', (t) => {
   assertHasTooltip(findCard(window, /Return Rate/i), /OTM|expired/i);
 });
 
-test('Realised P&L tile renders settled premium total', (t) => {
+test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40)', (t) => {
+  // Per #40, the hero band is the canonical Realised/Unrealised/Total surface.
+  // The Total tab must not duplicate them.
   const trades = [
-    // BTC PUT expired → +120
-    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
-      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+    { id: 1, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 2800, size: 1, premium: 100, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
-    // ETH PUT expired → +80
-    { id: 2, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
-      dte: 14, strike: 3000, size: 1, premium: 80, outcome: 'EXPIRED',
-      closeCost: 0, platform: 'RYSK' },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
   ];
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  // Default sFilter is 'ALL' — both assets contribute.
-  const card = findRealisedCard(window);
-  assert.ok(card, 'Realised P&L card should exist on Total tab');
+  window.livePrices = { ETH: 3500 };
+  window.render();
 
-  const main = card.querySelector('.ppnl-main').textContent;
-  assert.match(main, /\+\$200/, `expected +$200, got "${main}"`);
+  assert.strictEqual(findRealisedCard(window), null,
+    'Realised P&L card should be removed from Total tab');
+  assert.strictEqual(findUnrealisedCard(window), null,
+    'Unrealised P&L card should be removed from Total tab');
+  assert.strictEqual(findTotalCard(window), null,
+    'Total P&L card should be removed from Total tab');
 
-  // Styled popover present; native title= dropped (it produced a duplicate
-  // slow browser tooltip on top of the styled one).
-  assert.match(card.getAttribute('data-tip') || '', /Realised P&L/);
-  assert.strictEqual(card.getAttribute('title'), null);
-});
-
-test('Realised P&L tile respects asset filter (sFilter)', (t) => {
-  const trades = [
-    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
-      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
-      closeCost: 0, platform: 'RYSK' },
-    { id: 2, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
-      dte: 14, strike: 3000, size: 1, premium: 80, outcome: 'EXPIRED',
-      closeCost: 0, platform: 'RYSK' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  window.setFilter('BTC');
-
-  const card = findRealisedCard(window);
-  const main = card.querySelector('.ppnl-main').textContent;
-  assert.match(main, /\+\$120/, `under BTC filter expected +$120, got "${main}"`);
+  // The four kept cards remain.
+  assert.ok(findCard(window, /Total Premium Collected/i));
+  assert.ok(findCard(window, /Total Notional/i));
+  assert.ok(findCard(window, /Portfolio APR/i));
+  assert.ok(findCard(window, /Return Rate/i));
 });
 
 test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', (t) => {
@@ -159,129 +144,21 @@ test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gai
   assert.match(heroVal.textContent, /\+\$550/, `expected +$550 in cumulative hero, got "${heroVal.textContent}"`);
 });
 
-test('CALL CALLED on HOLDING lot contributes capital gain to Realised tile', (t) => {
-  // HOLDING ETH at 3000 size 1, then CALL at 3500 size 1 premium 50, called.
-  // Realised = 50 + (3500-3000)*1 = 550
+test('Premium P&L section is renamed to "Premium Economics" (issue #40)', (t) => {
   const trades = [
-    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-    { id: 2, asset: 'ETH', type: 'CALL', date: '2026-01-15', expiry: '2026-01-29',
-      dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  // Default sFilter='ALL' — single-asset trade set sums to expected total.
-  const card = findRealisedCard(window);
-  const main = card.querySelector('.ppnl-main').textContent;
-  assert.match(main, /\+\$550/, `expected +$550, got "${main}"`);
-});
-
-test('Unrealised P&L tile marks open lots to market against costBasis', (t) => {
-  // HOLDING ETH at 3000 size 1, spot 3500 → unrealised = 500.
-  const trades = [
-    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  window.livePrices = { ETH: 3500 };
-  window.render();
-
-  const card = findUnrealisedCard(window);
-  assert.ok(card, 'Unrealised P&L card should exist');
-  const main = card.querySelector('.ppnl-main').textContent;
-  assert.match(main, /\+\$500/, `expected +$500, got "${main}"`);
-  assert.match(card.getAttribute('data-tip') || '', /Unrealised P&L/);
-  assert.strictEqual(card.getAttribute('title'), null);
-});
-
-test('Total P&L tile = Realised + Unrealised', (t) => {
-  // PUT EXPIRED netPrem 100 + HOLDING ETH 3000 size 1 spot 3500 → total = 100 + 500 = 600.
-  const trades = [
-    { id: 1, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
-      dte: 14, strike: 2800, size: 1, premium: 100, outcome: 'EXPIRED',
-      closeCost: 0, platform: 'RYSK' },
-    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  window.livePrices = { ETH: 3500 };
-  window.render();
-
-  const card = findTotalCard(window);
-  assert.ok(card, 'Total P&L card should exist');
-  const main = card.querySelector('.ppnl-main').textContent;
-  assert.match(main, /\+\$600/, `expected +$600, got "${main}"`);
-  assert.match(card.getAttribute('data-tip') || '', /Total P&L/);
-  assert.strictEqual(card.getAttribute('title'), null);
-});
-
-test('Unrealised tile shows dash + spot-unavailable sub-line when spot missing', (t) => {
-  const trades = [
-    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  // livePrices stays {} (fetchExpiryPrices stubbed, never resolves).
-  const card = findUnrealisedCard(window);
-  const main = card.querySelector('.ppnl-main').textContent;
-  const sub = card.querySelector('.ppnl-sub').textContent;
-  assert.match(main, /—|&mdash;|-/, `expected dash main, got "${main}"`);
-  assert.match(sub, /spot unavailable.*ETH/i, `expected spot-unavailable sub, got "${sub}"`);
-});
-
-test('Unrealised tile partial: sums available, sub-line lists missing', (t) => {
-  const trades = [
-    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-    { id: 2, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  window.livePrices = { ETH: 3500 }; // BTC missing
-  window.render();
-
-  const card = findUnrealisedCard(window);
-  const main = card.querySelector('.ppnl-main').textContent;
-  const sub = card.querySelector('.ppnl-sub').textContent;
-  assert.match(main, /\+\$500/, `expected +$500 (ETH only), got "${main}"`);
-  assert.match(sub, /BTC/, `expected BTC in sub-line, got "${sub}"`);
-});
-
-test('Unrealised + Total tiles respect asset filter', (t) => {
-  const trades = [
-    { id: 1, asset: 'BTC', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 50000, size: 0.1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
-      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
-      closeCost: 0, platform: 'SPOT' },
-  ];
-  const { window, teardown } = setupJsdom({ trades });
-  t.after(teardown);
-
-  window.livePrices = { BTC: 52000, ETH: 3500 };
-  window.setFilter('BTC');
-
-  const card = findUnrealisedCard(window);
-  const main = card.querySelector('.ppnl-main').textContent;
-  // BTC: (52000-50000)*0.1 = 200
-  assert.match(main, /\+\$200/, `under BTC filter expected +$200, got "${main}"`);
+  const titles = Array.from(window.document.querySelectorAll('.sec-ttl'))
+    .map(el => el.textContent.trim());
+  assert.ok(titles.some(t => /Premium Economics/i.test(t)),
+    `expected a section titled "Premium Economics", got ${JSON.stringify(titles)}`);
+  assert.ok(!titles.some(t => /^Premium P&L$/i.test(t)),
+    `"Premium P&L" section title should be gone, got ${JSON.stringify(titles)}`);
 });
 
 test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)', (t) => {
