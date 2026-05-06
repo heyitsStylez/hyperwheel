@@ -627,6 +627,7 @@ function rCharts(displayRows, lots) {
       monthMap[ym].push(r);
     });
     const months = Object.keys(monthMap).sort().reverse();
+    const { realisedByMonth } = computePnl(trades, sFilter, livePrices);
 
     el.className = 'ppnl-mtbl-wrap';
     if (!months.length) {
@@ -637,9 +638,11 @@ function rCharts(displayRows, lots) {
     const rows = months.map(ym => {
       const s = calcStats(monthMap[ym]);
       const rateClass = s.returnRate === null ? '' : s.returnRate >= 70 ? ' class="rate-hi"' : s.returnRate < 50 ? ' class="rate-lo"' : '';
-      const mnColor = s.netPnl >= 0 ? 'var(--green)' : 'var(--red)';
-      const mnStr = s.totalCount > 0
-        ? '<span style="color:' + mnColor + '">' + (s.netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(s.netPnl)) + '</span>'
+      const realisedM = realisedByMonth[ym];
+      const hasRealised = realisedM !== undefined;
+      const mnColor = hasRealised && realisedM < 0 ? 'var(--red)' : 'var(--green)';
+      const mnStr = hasRealised
+        ? '<span style="color:' + mnColor + '">' + (realisedM >= 0 ? '+$' : '-$') + fmt(Math.abs(realisedM)) + '</span>'
         : dash;
       return '<tr>' +
         '<td>' + fmtMonth(ym) + '</td>' +
@@ -654,7 +657,7 @@ function rCharts(displayRows, lots) {
       '<thead><tr>' +
         '<th>Month</th>' +
         '<th>Premium</th>' +
-        '<th>Net P&amp;L</th>' +
+        '<th>Realised P&amp;L</th>' +
         '<th>Portfolio APR</th>' +
         '<th>Return Rate</th>' +
       '</tr></thead>' +

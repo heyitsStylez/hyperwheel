@@ -26,6 +26,7 @@ function computePnl(trades, assetFilter, livePrices) {
   let unrealised = 0;
   const missingSpotAssets = [];
   const events = [];
+  const realisedByMonth = {};
 
   Object.keys(byAsset).forEach(asset => {
     const assetTrades = byAsset[asset];
@@ -58,7 +59,10 @@ function computePnl(trades, assetFilter, livePrices) {
           delta += gain;
         }
       }
-      events.push({ date: t.expiry || t.date, delta });
+      const evDate = t.expiry || t.date;
+      events.push({ date: evDate, delta });
+      const ym = (evDate || '').slice(0, 7);
+      if (ym) realisedByMonth[ym] = (realisedByMonth[ym] || 0) + delta;
     });
   });
 
@@ -73,7 +77,7 @@ function computePnl(trades, assetFilter, livePrices) {
   });
 
   const total = realised + unrealised;
-  return { realised, unrealised, total, missingSpotAssets, realisedSeries };
+  return { realised, unrealised, total, missingSpotAssets, realisedSeries, realisedByMonth };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
