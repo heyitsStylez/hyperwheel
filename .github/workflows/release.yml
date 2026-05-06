@@ -57,3 +57,15 @@ jobs:
           git tag "$VERSION"
           git push origin "$VERSION"
           gh release create "$VERSION" --generate-notes
+
+      - name: Trigger Vercel deploy at tagged commit
+        if: steps.next.outputs.version != 'skip'
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "VERCEL_DEPLOY_HOOK secret not set; skipping deploy trigger" >&2
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" >/dev/null
+          echo "Vercel deploy hook triggered for ${{ steps.next.outputs.version }}"

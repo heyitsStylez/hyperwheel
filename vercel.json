@@ -1,5 +1,6 @@
 {
   "buildCommand": "git fetch --tags --depth=1 origin || true; python3 build.py --check",
+  "ignoreCommand": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"main\" ]; then git fetch --tags --depth=1 origin >/dev/null 2>&1 || true; ! git describe --exact-match --tags HEAD >/dev/null 2>&1; else exit 1; fi",
   "outputDirectory": "public",
   "framework": null,
   "headers": [
