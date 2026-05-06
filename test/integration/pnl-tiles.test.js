@@ -72,6 +72,35 @@ test('Return Rate tile has tooltip + ⓘ glyph', (t) => {
   assertHasTooltip(findCard(window, /Return Rate/i), /OTM|expired/i);
 });
 
+test('Total tab uses hero + supporting trio layout (issue #42)', (t) => {
+  // Total Premium Collected is the hero (focal point); the other three live in a trio container.
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  const hero = window.document.querySelector('.ppnl-hero');
+  assert.ok(hero, 'expected a .ppnl-hero element on the Total tab');
+  const heroLbl = hero.querySelector('.ppnl-lbl');
+  assert.match(heroLbl.textContent, /Total Premium Collected/i,
+    `hero should be Total Premium Collected, got "${heroLbl.textContent}"`);
+
+  const trio = window.document.querySelector('.ppnl-trio');
+  assert.ok(trio, 'expected a .ppnl-trio container');
+  const trioLabels = Array.from(trio.querySelectorAll('.ppnl-lbl')).map(l => l.textContent.trim());
+  assert.strictEqual(trioLabels.length, 3, `trio should hold 3 tiles, got ${trioLabels.length}`);
+  assert.ok(trioLabels.some(l => /Total Notional/i.test(l)));
+  assert.ok(trioLabels.some(l => /Portfolio APR/i.test(l)));
+  assert.ok(trioLabels.some(l => /Return Rate/i.test(l)));
+
+  // Hero retains its tooltip + ⓘ glyph affordance.
+  assert.ok(hero.classList.contains('has-tip'), 'hero should keep has-tip styling');
+  assert.ok(hero.querySelector('.ppnl-tip-ico'), 'hero should keep the ⓘ glyph');
+});
+
 test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40)', (t) => {
   // Per #40, the hero band is the canonical Realised/Unrealised/Total surface.
   // The Total tab must not duplicate them.

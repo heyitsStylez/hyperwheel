@@ -445,33 +445,36 @@ function rCharts(displayRows, lots) {
 
   if (sPpnlTab === 'total') {
     const s = calcStats(displayRows);
-    function card(label, main, sub, tip) {
+    function tile(extraClass, label, main, sub, tip) {
       const tipAttr = tip ? ' data-tip="' + tip.replace(/"/g, '&quot;') + '"' : '';
-      return '<div class="ppnl-card' + (tip ? ' has-tip' : '') + '"' + tipAttr + '>' +
+      const cls = 'ppnl-card' + (extraClass ? ' ' + extraClass : '') + (tip ? ' has-tip' : '');
+      return '<div class="' + cls + '"' + tipAttr + '>' +
         '<div class="ppnl-lbl">' + label + (tip ? ' <span class="ppnl-tip-ico" aria-hidden="true">&#9432;</span>' : '') + '</div>' +
         '<div class="ppnl-main">' + main + '</div>' +
         (sub ? '<div class="ppnl-sub">' + sub + '</div>' : '') +
       '</div>';
     }
-    el.className = 'ppnl-cards';
-    el.innerHTML = [
-      card('Total Premium Collected',
+    el.className = 'ppnl-layout';
+    el.innerHTML =
+      tile('ppnl-hero',
+        'Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
-        'Sum of every option premium collected (gross of buy-to-close costs). Includes settled and open positions.'),
-      card('Total Notional',
-        s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
-        s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
-        'Total Notional = Σ strike × size across every option (settled and open). The capital you would tie up if every put were assigned at strike.'),
-      card('Portfolio APR',
-        s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash,
-        s.settled > 0 ? 'notional-weighted · ' + s.settled + ' settled' : '',
-        'Notional-weighted average APR of settled options. Per-option APR = (netPrem / collateral) / DTE × 365. Open options excluded.'),
-      card('Return Rate',
-        s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
-        s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : '',
-        'Share of settled options that expired OTM (premium kept, no assignment/call-away). Open options excluded.'),
-    ].join('');
+        'Sum of every option premium collected (gross of buy-to-close costs). Includes settled and open positions.') +
+      '<div class="ppnl-trio">' +
+        tile('', 'Total Notional',
+          s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
+          s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
+          'Total Notional = Σ strike × size across every option (settled and open). The capital you would tie up if every put were assigned at strike.') +
+        tile('', 'Portfolio APR',
+          s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash,
+          s.settled > 0 ? 'notional-weighted · ' + s.settled + ' settled' : '',
+          'Notional-weighted average APR of settled options. Per-option APR = (netPrem / collateral) / DTE × 365. Open options excluded.') +
+        tile('', 'Return Rate',
+          s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
+          s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : '',
+          'Share of settled options that expired OTM (premium kept, no assignment/call-away). Open options excluded.') +
+      '</div>';
 
   } else {
     // Group trades by month — OPEN trades by open date, settled by expiry date
