@@ -2,7 +2,6 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { setupJsdom } = require('../helpers/setupJsdom');
 
-// Build a settled trade with overridable fields.
 function settled(id, outcome, asset = 'BTC') {
   return {
     id,
@@ -26,19 +25,19 @@ function makeSettledSet(n, outcome = 'EXPIRED', asset = 'BTC') {
   return out;
 }
 
-test('donut hidden + pills shown when < 10 settled trades', (t) => {
+test('chart hidden + pills shown when < 10 settled trades', (t) => {
   const trades = makeSettledSet(5, 'EXPIRED');
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  const donut = window.document.getElementById('hist-donut');
+  const chart = window.document.getElementById('hist-outchart');
   const pills = window.document.getElementById('hist-pills');
-  assert.strictEqual(donut.style.display, 'none', 'donut should be hidden');
+  assert.strictEqual(chart.style.display, 'none', 'chart should be hidden');
   assert.notStrictEqual(pills.style.display, 'none', 'pills should be visible');
-  assert.strictEqual(donut.querySelectorAll('.hist-donut-slice').length, 0);
+  assert.strictEqual(chart.querySelectorAll('.outchart-cell').length, 0);
 });
 
-test('donut shown + pills hidden when >= 10 settled trades', (t) => {
+test('chart shown + pills hidden when >= 10 settled trades', (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
@@ -46,15 +45,15 @@ test('donut shown + pills hidden when >= 10 settled trades', (t) => {
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  const donut = window.document.getElementById('hist-donut');
+  const chart = window.document.getElementById('hist-outchart');
   const pills = window.document.getElementById('hist-pills');
-  assert.notStrictEqual(donut.style.display, 'none', 'donut should be visible');
+  assert.notStrictEqual(chart.style.display, 'none', 'chart should be visible');
   assert.strictEqual(pills.style.display, 'none', 'pills should be hidden');
-  const slices = donut.querySelectorAll('.hist-donut-slice');
-  assert.strictEqual(slices.length, 2, 'two outcomes → two slices');
+  const cells = chart.querySelectorAll('.outchart-cell');
+  assert.strictEqual(cells.length, 2, 'two outcomes → two cells');
 });
 
-test('clicking a slice filters the history table to that outcome', (t) => {
+test('clicking a cell filters the history table to that outcome', (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
@@ -62,18 +61,16 @@ test('clicking a slice filters the history table to that outcome', (t) => {
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  const slices = window.document.querySelectorAll('#hist-donut .hist-donut-slice');
-  const expiredSlice = [...slices].find(s => s.getAttribute('data-outcome') === 'EXPIRED');
-  expiredSlice.dispatchEvent(new window.Event('click', { bubbles: true }));
+  const cells = window.document.querySelectorAll('#hist-outchart .outchart-cell');
+  const expiredCell = [...cells].find(c => c.getAttribute('data-outcome') === 'EXPIRED');
+  expiredCell.dispatchEvent(new window.Event('click', { bubbles: true }));
 
-  // ho-EXPIRED button should be marked active
   assert.ok(window.document.getElementById('ho-EXPIRED').classList.contains('active'));
-  // After re-render: only EXPIRED rows in history body
   const histRows = window.document.querySelectorAll('#ttbody-hist tr');
   assert.strictEqual(histRows.length, 7);
 });
 
-test('clicking the active slice clears the filter (idempotent toggle)', (t) => {
+test('clicking the active cell clears the filter (idempotent toggle)', (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
@@ -81,20 +78,19 @@ test('clicking the active slice clears the filter (idempotent toggle)', (t) => {
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  const getExpired = () => [...window.document.querySelectorAll('#hist-donut .hist-donut-slice')]
-    .find(s => s.getAttribute('data-outcome') === 'EXPIRED');
+  const getExpired = () => [...window.document.querySelectorAll('#hist-outchart .outchart-cell')]
+    .find(c => c.getAttribute('data-outcome') === 'EXPIRED');
 
   getExpired().dispatchEvent(new window.Event('click', { bubbles: true }));
   assert.ok(window.document.getElementById('ho-EXPIRED').classList.contains('active'));
 
-  // Slice is re-rendered after first click, so re-query.
   getExpired().dispatchEvent(new window.Event('click', { bubbles: true }));
   assert.ok(window.document.getElementById('ho-ALL').classList.contains('active'));
   const histRows = window.document.querySelectorAll('#ttbody-hist tr');
   assert.strictEqual(histRows.length, 10, 'all 10 settled rows back in history');
 });
 
-test('asset filter chip changes the donut data', (t) => {
+test('asset filter chip changes the chart data', (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED', 'BTC'),
     ...makeSettledSet(5, 'ASSIGNED', 'ETH'),
@@ -102,17 +98,14 @@ test('asset filter chip changes the donut data', (t) => {
   const { window, teardown } = setupJsdom({ trades });
   t.after(teardown);
 
-  // ALL: 12 settled → donut renders, 2 outcomes.
-  let slices = window.document.querySelectorAll('#hist-donut .hist-donut-slice');
-  assert.strictEqual(slices.length, 2);
+  let cells = window.document.querySelectorAll('#hist-outchart .outchart-cell');
+  assert.strictEqual(cells.length, 2);
 
-  // Filter to BTC → only 7 settled → below threshold → pills shown.
   window.setFilter('BTC');
-  let donut = window.document.getElementById('hist-donut');
-  assert.strictEqual(donut.style.display, 'none', 'BTC alone is < 10 settled');
+  let chart = window.document.getElementById('hist-outchart');
+  assert.strictEqual(chart.style.display, 'none', 'BTC alone is < 10 settled');
 
-  // Filter to ETH → only 5 settled → below threshold.
   window.setFilter('ETH');
-  donut = window.document.getElementById('hist-donut');
-  assert.strictEqual(donut.style.display, 'none', 'ETH alone is < 10 settled');
+  chart = window.document.getElementById('hist-outchart');
+  assert.strictEqual(chart.style.display, 'none', 'ETH alone is < 10 settled');
 });
