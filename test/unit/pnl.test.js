@@ -192,6 +192,41 @@ test('asset filter scopes unrealised + total', () => {
   assert.strictEqual(computePnl(trades, 'ALL', lp).unrealised, 700);
 });
 
+test('realisedByMonth: buckets settled events by expiry YYYY-MM', () => {
+  // Jan: PUT EXPIRED +120. Feb: HOLDING + CALL CALLED → premium 50 + cap gain 500 = 550.
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      strike: 3000, size: 1, premium: 0, outcome: 'OPEN', closeCost: 0 },
+    { id: 3, asset: 'ETH', type: 'CALL', date: '2026-02-01', expiry: '2026-02-15',
+      strike: 3500, size: 1, premium: 50, outcome: 'CALLED', closeCost: 0 },
+  ];
+  const { realisedByMonth } = computePnl(trades);
+  assert.strictEqual(realisedByMonth['2026-01'], 120);
+  assert.strictEqual(realisedByMonth['2026-02'], 550);
+});
+
+test('realisedByMonth: empty when no settled events', () => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 50000, size: 0.1, premium: 120, outcome: 'OPEN', closeCost: 0 },
+  ];
+  const { realisedByMonth } = computePnl(trades);
+  assert.deepStrictEqual(realisedByMonth, {});
+});
+
+test('realisedByMonth: respects asset filter', () => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 50000, size: 0.1, premium: 100, outcome: 'EXPIRED', closeCost: 0 },
+    { id: 2, asset: 'ETH', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      strike: 3000, size: 1, premium: 50, outcome: 'EXPIRED', closeCost: 0 },
+  ];
+  assert.deepStrictEqual(computePnl(trades, 'BTC').realisedByMonth, { '2026-01': 100 });
+  assert.deepStrictEqual(computePnl(trades, 'ETH').realisedByMonth, { '2026-01': 50 });
+});
+
 test('realisedSeries: CALLED event contributes premium AND capital gain at expiry date', () => {
   // HOLDING at 3000 size 1, then CALL at 3500 premium 50 called on 2026-02-15.
   // Series should have a point on 2026-02-15 with cumulative realised = 50 + 500 = 550.
