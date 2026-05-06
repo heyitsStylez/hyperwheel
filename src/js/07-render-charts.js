@@ -8,7 +8,48 @@ function setCpnlPeriod(p) {
   rCpnlChart();
 }
 
+function rHeroTile() {
+  const tEl = document.getElementById('cpnl-tile-total');
+  const uEl = document.getElementById('cpnl-tile-unrealised');
+  const sEl = document.getElementById('cpnl-tile-sub');
+  if (!tEl || !uEl || !sEl) return;
+
+  const { realised, unrealised, total, missingSpotAssets } = computePnl(trades, sFilter, livePrices);
+  const { lots } = compute(sFilter);
+
+  const openAssets = new Set();
+  Object.keys(lots).forEach(a => {
+    if (sFilter !== 'ALL' && a !== sFilter) return;
+    lots[a].forEach(l => { if (!l.endDate && l.size > 0) openAssets.add(a); });
+  });
+  const openLotsCount = openAssets.size;
+  const allMissing = openLotsCount > 0 && missingSpotAssets.length === openLotsCount;
+
+  function signed(v) {
+    const cls = v >= 0 ? 'pos' : 'neg';
+    return '<span class="' + cls + '">' + (v >= 0 ? '+$' : '-$') + fmt(Math.abs(v)) + '</span>';
+  }
+
+  if (openLotsCount === 0) {
+    uEl.innerHTML = '—';
+    tEl.innerHTML = signed(realised);
+    sEl.textContent = '';
+  } else if (allMissing) {
+    uEl.innerHTML = '—';
+    tEl.innerHTML = '—';
+    sEl.textContent = 'spot unavailable: ' + missingSpotAssets.join(', ');
+  } else {
+    uEl.innerHTML = signed(unrealised);
+    tEl.innerHTML = signed(total);
+    sEl.textContent = missingSpotAssets.length
+      ? 'spot unavailable: ' + missingSpotAssets.join(', ')
+      : '';
+  }
+}
+
 function rCpnlChart() {
+  rHeroTile();
+
   const area = document.getElementById('cpnl-chart-area');
   if (!area) return;
 
