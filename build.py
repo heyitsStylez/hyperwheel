@@ -43,17 +43,39 @@ def _git(args, cwd):
     return result.stdout.strip()
 
 
+def _ls_remote_targets():
+    """Remotes to query for tags, in priority order.
+
+    Vercel's ``origin`` points at an internal mirror that lags GitHub by a
+    few seconds when a deploy hook fires immediately after a tag push, so
+    prefer GitHub directly when env vars expose the repo slug.
+    """
+    targets = []
+    owner = os.environ.get('VERCEL_GIT_REPO_OWNER')
+    repo = os.environ.get('VERCEL_GIT_REPO_SLUG')
+    if owner and repo:
+        targets.append(f'https://github.com/{owner}/{repo}.git')
+    targets.append('origin')
+    return targets
+
+
 def _tag_at_head_via_ls_remote(cwd):
-    head = _git(['rev-parse', 'HEAD'], cwd)
-    refs = _git(['ls-remote', '--tags', 'origin'], cwd)
-    if not head or not refs:
+    head = (
+        os.environ.get('VERCEL_GIT_COMMIT_SHA')
+        or _git(['rev-parse', 'HEAD'], cwd)
+    )
+    if not head:
         return None
-    for line in refs.splitlines():
-        parts = line.split()
-        if len(parts) >= 2 and parts[0] == head:
-            name = parts[1].replace('refs/tags/', '').replace('^{}', '')
-            if name:
-                return name
+    for target in _ls_remote_targets():
+        refs = _git(['ls-remote', '--tags', target], cwd)
+        if not refs:
+            continue
+        for line in refs.splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and parts[0] == head:
+                name = parts[1].replace('refs/tags/', '').replace('^{}', '')
+                if name:
+                    return name
     return None
 
 
@@ -62,8 +84,9 @@ def resolve_version(cwd=BASE):
 
     Order of preference:
       1. Local exact-match tag at HEAD (``git describe --exact-match --tags``).
-      2. Remote tag at HEAD via ``git ls-remote`` — fallback for shallow CI
-         clones where local tag refs aren't connected to HEAD.
+      2. Remote tag at HEAD via ``git ls-remote`` — preferring GitHub directly
+         (via ``VERCEL_GIT_REPO_*`` env vars) over ``origin``, since Vercel's
+         mirrored origin can lag immediately after a tag push.
       3. ``git describe --tags --always`` (describe-with-distance or short SHA).
       4. ``unknown`` if git is unavailable or *cwd* is not a repo.
     """
