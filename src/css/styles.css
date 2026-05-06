@@ -230,7 +230,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .holdings-sec{margin-bottom:0}
 .holdings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px}
 .holdings-merges{margin-top:12px;display:flex;gap:8px;justify-content:flex-end}
-.hcard{background:var(--s2);border:1px solid var(--bd2);position:relative;overflow:hidden}
+.hcard{background:var(--s2);border:1px solid var(--bd2);position:relative}
 .hcard-btc{border-left:3px solid var(--btc)}
 .hcard-eth{border-left:3px solid var(--eth)}
 .hcard-hype{border-left:3px solid var(--hype)}

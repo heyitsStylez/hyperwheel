@@ -93,8 +93,10 @@ test('Realised P&L tile renders settled premium total', (t) => {
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$200/, `expected +$200, got "${main}"`);
 
-  // Tooltip present.
-  assert.match(card.getAttribute('title') || '', /Realised P&L/);
+  // Styled popover present; native title= dropped (it produced a duplicate
+  // slow browser tooltip on top of the styled one).
+  assert.match(card.getAttribute('data-tip') || '', /Realised P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Realised P&L tile respects asset filter (sFilter)', (t) => {
@@ -172,7 +174,8 @@ test('Unrealised P&L tile marks open lots to market against costBasis', (t) => {
   assert.ok(card, 'Unrealised P&L card should exist');
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$500/, `expected +$500, got "${main}"`);
-  assert.match(card.getAttribute('title') || '', /Unrealised P&L/);
+  assert.match(card.getAttribute('data-tip') || '', /Unrealised P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Total P&L tile = Realised + Unrealised', (t) => {
@@ -195,7 +198,8 @@ test('Total P&L tile = Realised + Unrealised', (t) => {
   assert.ok(card, 'Total P&L card should exist');
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$600/, `expected +$600, got "${main}"`);
-  assert.match(card.getAttribute('title') || '', /Total P&L/);
+  assert.match(card.getAttribute('data-tip') || '', /Total P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Unrealised tile shows dash + spot-unavailable sub-line when spot missing', (t) => {
@@ -285,4 +289,16 @@ test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)'
   // ⓘ glyph rendered inside the label, matching the PnL-tile affordance.
   const ico = hero.querySelector('.tip-ico, .ppnl-tip-ico');
   assert.ok(ico, 'expected ⓘ glyph next to the Net Cost label');
+});
+
+test('Holdings card does not clip its tooltip popover (no overflow:hidden on .hcard)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const css = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'css', 'styles.css'), 'utf8');
+  // Match the .hcard rule (not .hcard-foo) and check it doesn't set overflow:hidden,
+  // which would clip the .has-tip popover anchored to the .hcard-hero inside.
+  const m = css.match(/\.hcard\s*\{([^}]*)\}/);
+  assert.ok(m, '.hcard rule should exist');
+  assert.doesNotMatch(m[1], /overflow\s*:\s*hidden/i,
+    '.hcard must not set overflow:hidden — would clip Net Cost tooltip');
 });
