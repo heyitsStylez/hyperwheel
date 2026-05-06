@@ -159,6 +159,21 @@ requires historical spot to plot honestly; we don't store it. Realised is the
 only series we can draw without backfilling. Total lives as a "right now"
 snapshot beside the chart, not behind it. ADR: `docs/adr/0004-hero-realised-line-total-tile.md`.
 
+### DTE vs Term
+Two distinct concepts that share a number but not a meaning:
+
+- **DTE** — *days to expiry*, a **live countdown** computed as
+  `round((expiry − today) / day)`. Used on views of active contracts:
+  Expiring This Week and the Open Positions table.
+- **Term** — the **original DTE at the moment the trade was opened**, frozen
+  on the Trade as `t.dte`. Used on Position History (settled trades), where a
+  countdown is meaningless.
+
+Column headers must reflect this: live tables read **DTE**, settled tables
+read **Term**. Never label a frozen original-DTE column "DTE" — the
+ambiguity historically led to three identically-labelled columns showing two
+different numbers.
+
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
 by the engine: `{ lotNum, lotSize, lotPremiums, lotCostBasis }`. Captured
