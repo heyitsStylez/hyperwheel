@@ -291,6 +291,53 @@ test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)'
   assert.ok(ico, 'expected ⓘ glyph next to the Net Cost label');
 });
 
+test('Monthly tab header reads "Realised P&L" (renamed from Net P&L)', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.setPpnlTab('monthly');
+
+  const headers = Array.from(window.document.querySelectorAll('.ppnl-mtbl thead th'))
+    .map(th => th.textContent.trim());
+  assert.ok(headers.some(h => /Realised P&L/i.test(h)),
+    `expected "Realised P&L" header, got ${JSON.stringify(headers)}`);
+  assert.ok(!headers.some(h => /^Net P&L$/i.test(h)),
+    `"Net P&L" header should be gone, got ${JSON.stringify(headers)}`);
+});
+
+test('Monthly tab Realised value comes from computePnl (HOLDING + CALLED → premium + cap gain)', (t) => {
+  // HOLDING ETH at 3000 size 1 (Jan), then CALL at 3500 size 1 premium 50, called Feb.
+  // Cash-flow Realised for Feb = 50 + (3500-3000)*1 = 550. Old netPnl formula would
+  // include +call-away notional ($3500), giving a very different number.
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+    { id: 2, asset: 'ETH', type: 'CALL', date: '2026-02-01', expiry: '2026-02-15',
+      dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  window.setPpnlTab('monthly');
+
+  // Find the Feb row by month label.
+  const rows = Array.from(window.document.querySelectorAll('.ppnl-mtbl tbody tr'));
+  const febRow = rows.find(r => /Feb/i.test(r.children[0].textContent));
+  assert.ok(febRow, 'expected a Feb row in the monthly table');
+
+  // Realised P&L is the 3rd column (Month | Premium | Realised P&L | APR | Rate).
+  const realisedCell = febRow.children[2].textContent;
+  assert.match(realisedCell, /\+\$550/,
+    `expected +$550 (cash-flow Realised) in Feb row, got "${realisedCell}"`);
+});
+
 test('Holdings card does not clip its tooltip popover (no overflow:hidden on .hcard)', () => {
   const fs = require('fs');
   const path = require('path');
