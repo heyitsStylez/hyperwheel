@@ -49,9 +49,11 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `05-compute.js` | 89 | `compute(assetFilter)` → `{streams, lots, allRows, displayRows}`. Cross-asset orchestrator: per-asset grouping, calls `lotEngine`, applies asset filter, sorts, assigns idx, derives display fields (`returnPct`, `monthly`, `annual`, `lotPnl`). Dual-exports `compute` for Node tests (reads `trades`/`lotEngine` from globals — set them before `require`) |
 | `05a-merge-open-lots.js` | 113 | `mergeOpenLots(trades, asset)` → `trades'`. Pure helper that merges all open lots for one asset (size-weighted `costBasis`, summed `lotPremiums`, earliest opener kept, CALL `lotNum` cleared). Prefers `lotEngine`, falls back to `compute` or a HOLDING/ASSIGNED heuristic for Node tests |
 | `05b-pnl.js` | 90 | `computePnl(trades, assetFilter, livePrices)` → `{ realised, unrealised, total, missingSpotAssets, realisedSeries, realisedByMonth }`. Cash-flow-lens P&L calculator. Realised: `Σ settled netPrem + Σ (strike − costBasis) × calledSize` (open contributions are zero). Unrealised: `Σ over open lots of (spot − costBasis) × size`, marked against raw `costBasis` (never `netCost`); assets missing spot are excluded from the sum and reported in `missingSpotAssets`. Total = Realised + Unrealised. HOLDING- and ASSIGNED-originated lots are treated symmetrically in both paths. Pure; dual-exported. ADR: `docs/adr/0003-pnl-cash-flow-lens.md` |
+| `05c-outcome-distribution.js` | 32 | `outcomeDistribution(trades, assetFilter)` → `[{outcome, count, premium}]`. Pure helper for the Position History outcome treemap. Excludes OPEN, orders EXPIRED/ASSIGNED/CALLED/CLOSED, nets `closeCost` from CLOSED premium (cash-flow lens). Dual-exported |
 | `06-render-table.js` | 452 | `sortOpen/sortHist`, `renderExpiryTable` (today badge + mobile cards), `fetchExpiryPrices` (CoinGecko, calls full `render()` on success), `rTable` (holdings cards, open & history tables, history filter application), `rStats` (just delegates to `renderExpiryTable`), `exportHistoryCSV` (downloads filtered history as CSV) |
+| `06a-render-outcome-chart.js` | 75 | `rOutcomeChart()` — renders a horizontal treemap of `outcomeDistribution` into `#hist-outchart` when ≥10 settled trades; otherwise hides itself and shows `#hist-pills`. Each cell click toggles `setHistOutcome`. Cells coloured via CSS vars (EXPIRED/ASSIGNED/CALLED/CLOSED → green/red/orange/blue) |
 | `07-render-charts.js` | 640 | `setCpnlPeriod` (1M/3M/ALL), `rCpnlChart` (cumulative Realised P&L hero — sources `realisedSeries` from `computePnl` — plus secondary Realised sparkline), `rCharts` (Premium P&L total/monthly tabs — Total tab consumes `computePnl` for the Realised tile), `cOpts` (Chart.js options factory) |
-| `08-render.js` | 7 | `render()` — orchestrator: `compute → rStats → rTable → rCharts` |
+| `08-render.js` | 8 | `render()` — orchestrator: `compute → rStats → rTable → rOutcomeChart → rCharts` |
 | `09-drawer-modal.js` | 15 | `openTradeDrawer`, `closeTradeDrawer`, `focusForm` |
 | `10-reset-modal.js` | 4 | `showReset`, `closeReset`, `doReset` (wipes `trades`) |
 | `11-wallet-popup.js` | 34 | `showWalletPopup`, `hideWalletPopup`, `submitWalletPopup` (first-visit wallet entry) |
@@ -235,6 +237,10 @@ CSS vars so adding themes later remains cheap.
 
 ## Recently added (May 2026)
 
+- **Position History outcome treemap** (`06a-render-outcome-chart.js` +
+  `05c-outcome-distribution.js`): full-width treemap replaces outcome pills at
+  ≥10 settled trades. Cells sized by count, colored per outcome, click to
+  filter via existing `setHistOutcome`. Pills remain below threshold.
 - **Holdings cards** (`06-render-table.js`): live spot, unrealized P&L vs net
   cost, "next call ≥ $X to stay above net cost" hint
 - **Expiring This Week**: today badge in section header, quick-action buttons

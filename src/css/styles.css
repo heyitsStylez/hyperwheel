@@ -754,3 +754,17 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .hist-clear-btn:hover{color:var(--red);border-color:var(--rb)}
 .hist-export-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:transparent;color:var(--mu);border:1px solid var(--bd);cursor:pointer}
 .hist-export-btn:hover{color:var(--green);border-color:var(--gb)}
+
+/* ── HISTORY OUTCOME CHART (TREEMAP) ── */
+.hist-outchart{padding:12px 0 14px;border-bottom:1px solid var(--bd)}
+.outchart-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.55rem;letter-spacing:1.2px;color:var(--mu);text-transform:uppercase;margin-bottom:8px}
+.outchart-meta b{color:var(--text);font-size:.85rem;font-weight:700;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.outchart-treemap{display:flex;width:100%;height:140px;border:1px solid var(--bd2);background:var(--s2);overflow:hidden;gap:2px}
+.outchart-cell{display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;color:var(--bg);font-weight:700;transition:filter .15s,opacity .15s;padding:8px;overflow:hidden;text-align:center;min-width:0}
+.outchart-cell:hover{filter:brightness(1.15)}
+.outchart-cell.active{outline:2px solid var(--text);outline-offset:-2px}
+.outchart-cell.dim{opacity:.45}
+.outchart-out{font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;opacity:.85;line-height:1;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.outchart-cnt{font-size:1.6rem;font-weight:800;letter-spacing:-1px;line-height:1.1;margin:4px 0;font-variant-numeric:tabular-nums}
+.outchart-prem{font-size:.62rem;letter-spacing:.5px;opacity:.9;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.outchart-tip{position:fixed;pointer-events:none;background:var(--s3);border:1px solid var(--bd2);padding:6px 10px;font-size:.62rem;color:var(--text);letter-spacing:.5px;z-index:1000;white-space:nowrap;font-family:var(--mono);display:none}
