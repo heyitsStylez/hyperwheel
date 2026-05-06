@@ -15,6 +15,63 @@ function findRealisedCard(window) { return findCard(window, /Realised P&L/i); }
 function findUnrealisedCard(window) { return findCard(window, /Unrealised P&L/i); }
 function findTotalCard(window) { return findCard(window, /^Total P&L/i); }
 
+function assertHasTooltip(card, tipPattern) {
+  const tip = card.getAttribute('data-tip') || '';
+  if (!tipPattern.test(tip)) {
+    throw new Error('expected data-tip to match ' + tipPattern + ', got "' + tip + '"');
+  }
+  const lbl = card.querySelector('.ppnl-lbl');
+  const ico = lbl && lbl.querySelector('.ppnl-tip-ico');
+  if (!ico) throw new Error('expected ⓘ glyph (.ppnl-tip-ico) inside .ppnl-lbl');
+}
+
+test('Total Premium Collected tile has tooltip + ⓘ glyph', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  const card = findCard(window, /Total Premium Collected/i);
+  assert.ok(card, 'Total Premium Collected card should exist');
+  assertHasTooltip(card, /premium/i);
+});
+
+test('Total Notional tile has tooltip + ⓘ glyph', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+  assertHasTooltip(findCard(window, /Total Notional/i), /notional|strike.*size/i);
+});
+
+test('Portfolio APR tile has tooltip + ⓘ glyph', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+  assertHasTooltip(findCard(window, /Portfolio APR/i), /APR|annualised|annualized/i);
+});
+
+test('Return Rate tile has tooltip + ⓘ glyph', (t) => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
+      dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+  assertHasTooltip(findCard(window, /Return Rate/i), /OTM|expired/i);
+});
+
 test('Realised P&L tile renders settled premium total', (t) => {
   const trades = [
     // BTC PUT expired → +120
@@ -36,8 +93,10 @@ test('Realised P&L tile renders settled premium total', (t) => {
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$200/, `expected +$200, got "${main}"`);
 
-  // Tooltip present.
-  assert.match(card.getAttribute('title') || '', /Realised P&L/);
+  // Styled popover present; native title= dropped (it produced a duplicate
+  // slow browser tooltip on top of the styled one).
+  assert.match(card.getAttribute('data-tip') || '', /Realised P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Realised P&L tile respects asset filter (sFilter)', (t) => {
@@ -115,7 +174,8 @@ test('Unrealised P&L tile marks open lots to market against costBasis', (t) => {
   assert.ok(card, 'Unrealised P&L card should exist');
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$500/, `expected +$500, got "${main}"`);
-  assert.match(card.getAttribute('title') || '', /Unrealised P&L/);
+  assert.match(card.getAttribute('data-tip') || '', /Unrealised P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Total P&L tile = Realised + Unrealised', (t) => {
@@ -138,7 +198,8 @@ test('Total P&L tile = Realised + Unrealised', (t) => {
   assert.ok(card, 'Total P&L card should exist');
   const main = card.querySelector('.ppnl-main').textContent;
   assert.match(main, /\+\$600/, `expected +$600, got "${main}"`);
-  assert.match(card.getAttribute('title') || '', /Total P&L/);
+  assert.match(card.getAttribute('data-tip') || '', /Total P&L/);
+  assert.strictEqual(card.getAttribute('title'), null);
 });
 
 test('Unrealised tile shows dash + spot-unavailable sub-line when spot missing', (t) => {
@@ -199,4 +260,45 @@ test('Unrealised + Total tiles respect asset filter', (t) => {
   const main = card.querySelector('.ppnl-main').textContent;
   // BTC: (52000-50000)*0.1 = 200
   assert.match(main, /\+\$200/, `under BTC filter expected +$200, got "${main}"`);
+});
+
+test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)', (t) => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  // The Net Cost hero block — find by its label.
+  const heros = window.document.querySelectorAll('.hcard-hero');
+  let hero = null;
+  for (const h of heros) {
+    const lbl = h.querySelector('.hcard-hero-lbl');
+    if (lbl && /Net Cost/i.test(lbl.textContent)) { hero = h; break; }
+  }
+  assert.ok(hero, 'expected Net Cost hero block on the holdings card');
+
+  // Popover wired via the same data-tip + has-tip pattern as the PnL tiles,
+  // explaining the lens difference vs Unrealised P&L.
+  assert.ok(hero.classList.contains('has-tip'), 'hero should opt into has-tip styling');
+  const tip = hero.getAttribute('data-tip') || '';
+  assert.match(tip, /Unrealised|mark-to-market/i,
+    'tooltip should disambiguate Net Cost lens from Unrealised P&L lens');
+  // ⓘ glyph rendered inside the label, matching the PnL-tile affordance.
+  const ico = hero.querySelector('.tip-ico, .ppnl-tip-ico');
+  assert.ok(ico, 'expected ⓘ glyph next to the Net Cost label');
+});
+
+test('Holdings card does not clip its tooltip popover (no overflow:hidden on .hcard)', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const css = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'css', 'styles.css'), 'utf8');
+  // Match the .hcard rule (not .hcard-foo) and check it doesn't set overflow:hidden,
+  // which would clip the .has-tip popover anchored to the .hcard-hero inside.
+  const m = css.match(/\.hcard\s*\{([^}]*)\}/);
+  assert.ok(m, '.hcard rule should exist');
+  assert.doesNotMatch(m[1], /overflow\s*:\s*hidden/i,
+    '.hcard must not set overflow:hidden — would clip Net Cost tooltip');
 });

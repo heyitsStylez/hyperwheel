@@ -350,8 +350,8 @@ function rTable(displayRows, streams, lots) {
         +     editBtn
         +   '</div>'
         + '</div>'
-        + '<div class="hcard-hero">'
-        +   '<div class="hcard-hero-lbl">Net Cost / ' + a + '</div>'
+        + '<div class="hcard-hero has-tip" data-tip="Net Cost = costBasis − (lotPremiums / size). A premium-reduced entry-price lens — what you effectively paid per token after the wheel premiums worked for you. Different from Unrealised P&amp;L, which marks the lot to spot against raw costBasis (not netCost).">'
+        +   '<div class="hcard-hero-lbl">Net Cost / ' + a + ' <span class="tip-ico" aria-hidden="true">&#9432;</span></div>'
         +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
         +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
         + '</div>'
