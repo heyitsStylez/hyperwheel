@@ -143,6 +143,22 @@ Tags are created automatically by a GitHub Action on every merge to `main`
 the deploy can resolve them. The footer always reflects current shipped code
 without manual bookkeeping.
 
+### Hero
+The top-of-page chart band. Composition is fixed:
+
+- **One** Realised P&L cumulative line (the time series), with the big number =
+  current Realised total and a 1M / 3M / ALL period toggle.
+- A **Total P&L tile** sitting beside the line (not a second chart): two
+  stacked numbers — `Unrealised` and `Total` (= Realised + Unrealised). When
+  spot is missing for any open-lot asset, the affected number renders with a
+  muted sub-line `spot unavailable: <ASSET>` rather than an asterisk; full
+  miss renders as `—`. Realised is unaffected by missing spot.
+
+The hero deliberately does **not** plot a Total P&L time series. Total
+requires historical spot to plot honestly; we don't store it. Realised is the
+only series we can draw without backfilling. Total lives as a "right now"
+snapshot beside the chart, not behind it. ADR: `docs/adr/0004-hero-realised-line-total-tile.md`.
+
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
 by the engine: `{ lotNum, lotSize, lotPremiums, lotCostBasis }`. Captured
