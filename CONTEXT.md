@@ -133,12 +133,15 @@ where the wheel-strategy invariants are written prose-style.
 
 ### Version
 The git tag of the deployed build, displayed in the footer and the first-visit
-wallet popup. Source of truth is `git describe --tags --always --dirty`,
-substituted into a `{{VERSION}}` placeholder by `build.py`. A `-dirty` suffix
-means the build contains uncommitted changes — useful for spotting
-not-from-a-clean-tag deploys. Tags are created automatically by a GitHub Action
-on every merge to `main` (see ADR 0001), so the footer always reflects current
-shipped code without manual bookkeeping.
+wallet popup. Source of truth is `git describe --tags --always`, substituted
+into a `{{VERSION}}` placeholder by `build.py`. The `--dirty` flag was
+deliberately dropped: Vercel's build environment auto-runs `npm install` and
+rewrites tracked files mid-build, so every deploy looked `-dirty` regardless
+of source state — the signal was noise, not a "not-from-a-clean-tag" tell.
+Tags are created automatically by a GitHub Action on every merge to `main`
+(see ADR 0001), and `vercel.json` runs `git fetch --tags` before the build so
+the deploy can resolve them. The footer always reflects current shipped code
+without manual bookkeeping.
 
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
