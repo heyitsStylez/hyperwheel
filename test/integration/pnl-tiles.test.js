@@ -118,6 +118,28 @@ test('Realised P&L tile respects asset filter (sFilter)', (t) => {
   assert.match(main, /\+\$120/, `under BTC filter expected +$120, got "${main}"`);
 });
 
+test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', (t) => {
+  const trades = [
+    { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
+      dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
+      closeCost: 0, platform: 'SPOT' },
+    { id: 2, asset: 'ETH', type: 'CALL', date: '2026-01-15', expiry: '2026-01-29',
+      dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
+      closeCost: 0, platform: 'RYSK' },
+  ];
+  const { window, teardown } = setupJsdom({ trades });
+  t.after(teardown);
+
+  assert.strictEqual(window.document.getElementById('npnl-val'), null,
+    '#npnl-val (duplicate sparkline header) should be removed');
+  assert.strictEqual(window.document.getElementById('npnl-chart-area'), null,
+    '#npnl-chart-area (duplicate sparkline canvas host) should be removed');
+  assert.strictEqual(window.document.getElementById('npnl-canvas'), null,
+    '#npnl-canvas (duplicate sparkline canvas) should be removed');
+  assert.strictEqual(window.document.querySelector('.npnl-spark'), null,
+    '.npnl-spark wrapper should be removed');
+});
+
 test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gain)', (t) => {
   // HOLDING + CALLED → realised = 50 + 500 = 550. Hero header (#cpnl-val) should
   // show +$550, proving capital gain feeds the cumulative series (not premium-only).
