@@ -46,7 +46,7 @@ function _th(label, col, s, fn) {
 function _openHeaders() {
   const s = tSortOpen, fn = 'sortOpen';
   return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
-    + _th('Expiry','expiry',s,fn) + _th('DTE','dte',s,fn) + _th('Type','type',s,fn)
+    + _th('Expiry','expiry',s,fn) + _th('DTE','expiry',s,fn) + _th('Type','type',s,fn)
     + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
     + _th('APR','annual',s,fn) + '<th></th>';
 }
@@ -54,9 +54,18 @@ function _openHeaders() {
 function _histHeaders() {
   const s = tSortHist, fn = 'sortHist';
   return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
-    + _th('Expiry','expiry',s,fn) + _th('DTE','dte',s,fn) + _th('Type','type',s,fn)
+    + _th('Expiry','expiry',s,fn) + _th('Term','dte',s,fn) + _th('Type','type',s,fn)
     + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
     + _th('APR','annual',s,fn) + _th('Outcome','outcome',s,fn) + '<th></th>';
+}
+
+function _liveDte(expiry) {
+  if (!expiry) return '&mdash;';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const exp = new Date(expiry + 'T00:00:00');
+  const days = Math.round((exp - today) / 86400000);
+  if (days <= 0) return '<span style="color:var(--red);font-weight:700">today</span>';
+  return days + 'd';
 }
 
 function _openRow(r) {
@@ -81,7 +90,7 @@ function _openRow(r) {
     + '<td>' + platBadge + '</td>'
     + '<td class="mu" style="font-size:.72rem">' + r.date + '</td>'
     + '<td class="mu" style="font-size:.72rem">' + (isHolding ? '&mdash;' : (r.expiry || '&mdash;')) + '</td>'
-    + '<td class="mu">' + (isHolding ? '&mdash;' : (r.dte || '&mdash;')) + '</td>'
+    + '<td class="mu">' + (isHolding ? '&mdash;' : _liveDte(r.expiry)) + '</td>'
     + '<td>' + typeBadge + '</td>'
     + '<td>$' + fmt(r.strike) + (isHolding ? '<br><span style="font-size:.65rem;color:var(--mu)">cost basis</span>' : '') + '</td>'
     + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
