@@ -24,6 +24,14 @@ merged.
 
 ## Pull requests
 
+1. **Fork** this repo and clone your fork.
+2. **Branch** off `main` (`git checkout -b my-change`).
+3. Make your edits under `src/`, run the build and tests (see above).
+4. **Push** your branch to your fork and open a PR against
+   `heyitsStylez/hyperwheel:main`.
+
+Then:
+
 - Keep changes focused — one feature or fix per PR.
 - Match the existing style; this codebase deliberately avoids bundlers,
   frameworks, and dependencies beyond Chart.js (CDN).
@@ -49,6 +57,15 @@ Tests live under `test/`:
 - `test/helpers/{loadApp,setupJsdom}.js` — shared harness
 
 CI runs `npm test` on every push and PR via `.github/workflows/test.yml`.
+
+## Release labels (maintainers)
+
+PRs can carry one of these labels to control the auto-release version bump:
+
+- `release:major` — major bump (X.0.0)
+- `release:minor` — minor bump (x.Y.0)
+- `release:skip` — no tag, no release (use for doc-only or infra-only changes)
+- (no label) — patch bump (x.y.Z)
 
 Modules that need to be `require()`-able from Node (e.g. `04b-lot-engine.js`)
 use a guarded dual-export footer:
