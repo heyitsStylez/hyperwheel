@@ -312,8 +312,7 @@ function rTable(displayRows, streams, lots) {
     assetLots.forEach(lot => {
       openLotCount++;
       const nc = lot.netCost;
-      const reduction = lot.costBasis - nc;
-      const reductionPct = lot.costBasis > 0 ? (reduction / lot.costBasis * 100) : 0;
+      const reductionPct = lot.costBasis > 0 ? ((lot.costBasis - nc) / lot.costBasis * 100) : 0;
       const lotBadge = totalAssetLots > 1 ? '<span class="lot-badge">Lot ' + lot.lotNum + '</span>' : '';
       const holdingTrade = trades.find(t => t.id === lot.tradeIds[0]);
       const isManualHolding = holdingTrade && holdingTrade.type === 'HOLDING';
@@ -362,16 +361,12 @@ function rTable(displayRows, streams, lots) {
         + '<div class="hcard-hero has-tip" data-tip="Net Cost = costBasis − (lotPremiums / size). A premium-reduced entry-price lens — what you effectively paid per token after the wheel premiums worked for you. Different from Unrealised P&amp;L, which marks the lot to spot against raw costBasis (not netCost).">'
         +   '<div class="hcard-hero-lbl">Net Cost / ' + a + ' <span class="tip-ico" aria-hidden="true">&#9432;</span></div>'
         +   '<div class="hcard-hero-val">$' + fmt(nc) + '</div>'
-        +   '<div class="hcard-hero-sub">basis $' + fmt(lot.costBasis) + ' &mdash; saved <span>$' + fmt(reduction) + ' (' + reductionPct.toFixed(1) + '%)</span></div>'
         + '</div>'
         + spotBlock
-        + '<div class="hcard-bar-wrap">'
-        +   '<div class="hcard-bar-labels"><span>Premium reduction</span><span style="color:var(--green)">' + reductionPct.toFixed(1) + '%</span></div>'
-        +   '<div class="hcard-bar-track"><div class="hcard-bar-fill" style="width:' + Math.min(reductionPct, 100).toFixed(1) + '%"></div></div>'
-        + '</div>'
         + '<div class="hcard-stats">'
-        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">CC Premiums</div><div class="hcard-stat-val green">$' + fmt(lot.lotPremiums) + '</div></div>'
         +   '<div class="hcard-stat"><div class="hcard-stat-lbl">Cost Basis</div><div class="hcard-stat-val">$' + fmt(lot.costBasis) + '</div></div>'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">CC Premiums</div><div class="hcard-stat-val green">$' + fmt(lot.lotPremiums) + '</div></div>'
+        +   '<div class="hcard-stat"><div class="hcard-stat-lbl">Premium Reduction %</div><div class="hcard-stat-val green">' + reductionPct.toFixed(1) + '%</div></div>'
         + '</div>'
         + '</div>';
     });
