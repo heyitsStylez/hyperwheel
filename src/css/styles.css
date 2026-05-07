@@ -760,7 +760,7 @@ td.td-act { width:1px; white-space:nowrap; padding-right:12px; }
 .outchart-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.55rem;letter-spacing:1.2px;color:var(--mu);text-transform:uppercase;margin-bottom:8px}
 .outchart-meta b{color:var(--text);font-size:.85rem;font-weight:700;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
 .outchart-treemap{display:flex;width:100%;height:140px;border:1px solid var(--bd2);background:var(--s2);overflow:hidden;gap:2px}
-.outchart-cell{display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;color:var(--bg);font-weight:700;transition:filter .15s,opacity .15s;padding:8px;overflow:hidden;text-align:center;min-width:0}
+.outchart-cell{display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;color:var(--bg);font-weight:700;transition:filter .15s,opacity .15s;padding:8px;overflow:hidden;text-align:center;min-width:110px}
 .outchart-cell:hover{filter:brightness(1.15)}
 .outchart-cell.active{outline:2px solid var(--text);outline-offset:-2px}
 .outchart-cell.dim{opacity:.45}
