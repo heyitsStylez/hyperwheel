@@ -321,8 +321,16 @@ function rTable(displayRows, streams, lots) {
         : '';
       // Live spot, unrealized P&L vs net cost, breakeven hint
       const spot = livePrices[a];
-      let spotBlock = '';
-      if (spot) {
+      let spotBlock;
+      if (!spot) {
+        spotBlock = '<div class="hcard-spot hcard-spot-placeholder">'
+          +   '<div class="hcard-spot-row">'
+          +     '<span class="hcard-spot-lbl">Spot</span>'
+          +     '<span class="hcard-spot-val hcard-spot-muted">&mdash;</span>'
+          +   '</div>'
+          +   '<div class="hcard-hint">spot unavailable</div>'
+          + '</div>';
+      } else {
         const pnlPerToken = spot - nc;
         const pnlTotal = pnlPerToken * lot.size;
         const pnlPct = nc > 0 ? (pnlPerToken / nc * 100) : 0;
@@ -377,7 +385,7 @@ function rTable(displayRows, streams, lots) {
       +   '<div class="sec-ttl"><span class="dot dg"></span>Holdings</div>'
       +   '<span style="font-size:.6rem;color:var(--mu);font-family:var(--mono)">' + openLotCount + ' open lot' + (openLotCount !== 1 ? 's' : '') + '</span>'
       + '</div>'
-      + '<div class="holdings-grid">' + cardsHtml + '</div>'
+      + '<div class="holdings-grid' + (openLotCount <= 2 ? ' holdings-grid--wide' : '') + '">' + cardsHtml + '</div>'
       + (mergesHtml ? '<div class="holdings-merges">' + mergesHtml + '</div>' : '')
       + '</div>';
   } else {
