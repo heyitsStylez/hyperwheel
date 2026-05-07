@@ -58,6 +58,22 @@ Tests live under `test/`:
 
 CI runs `npm test` on every push and PR via `.github/workflows/test.yml`.
 
+## Pre-commit hook
+
+Husky is installed as a dev dependency. After `npm install`, the `prepare`
+script wires up `.husky/pre-commit`, which runs:
+
+```bash
+npm run build   # python3 build.py --check
+npm test        # unit + jsdom integration tests
+```
+
+This gates every commit on the same checks CI runs. There is no Prettier or
+typecheck step — the codebase is plain JS with no TypeScript, and formatting
+is enforced by convention rather than tooling. If a commit needs to bypass
+the hook (rare — e.g. a WIP stash), use `git commit --no-verify`, but don't
+push past CI that way.
+
 ## Release labels (maintainers)
 
 PRs can carry one of these labels to control the auto-release version bump:
