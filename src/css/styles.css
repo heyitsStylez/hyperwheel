@@ -246,15 +246,9 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .hcard-hero{padding:13px 13px 9px}
 .hcard-hero-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--mu);margin-bottom:4px;font-family:var(--mono)}
 .hcard-hero-val{font-size:1.3rem;font-weight:700;color:var(--orange);letter-spacing:-.5px;line-height:1;font-family:var(--mono)}
-.hcard-hero-sub{font-size:.6rem;color:var(--mu2);margin-top:5px;font-family:var(--mono)}
-.hcard-hero-sub span{color:var(--green);font-weight:600}
-.hcard-bar-wrap{padding:0 13px 12px}
-.hcard-bar-labels{display:flex;justify-content:space-between;font-size:.54rem;color:var(--mu);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px;font-family:var(--mono)}
-.hcard-bar-track{height:3px;background:var(--bd2);overflow:hidden}
-.hcard-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),rgba(0,214,143,.5))}
-.hcard-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--bd)}
+.hcard-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--bd)}
 .hcard-stat{padding:9px 13px}
-.hcard-stat:first-child{border-right:1px solid var(--bd)}
+.hcard-stat + .hcard-stat{border-left:1px solid var(--bd)}
 .hcard-stat-lbl{font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:3px;font-family:var(--mono)}
 .hcard-stat-val{font-size:.8rem;font-weight:600;color:var(--text2);font-family:var(--mono)}
 .hcard-stat-val.green{color:var(--green)}
