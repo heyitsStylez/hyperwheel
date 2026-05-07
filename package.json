@@ -5,9 +5,11 @@
   "description": "Single-file wheel-strategy options tracker. Tests only — runtime ships zero dependencies.",
   "scripts": {
     "build": "python3 build.py --check",
-    "test": "node --test test/unit/*.test.js test/integration/*.test.js"
+    "test": "node --test test/unit/*.test.js test/integration/*.test.js",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "jsdom": "^24.1.0"
   }
 }

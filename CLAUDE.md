@@ -82,6 +82,11 @@ as starting anchors, not exact addresses. Re-grep if a function moved.
 6. **Run `npm test` after touching anything covered by tests** (lot engine,
    compute, merge, fmt, addTrade/quickOutcome flows). CI gates on it.
 
+A Husky pre-commit hook (`.husky/pre-commit`) enforces rules 1 and 6 locally
+by running `npm run build` then `npm test` before every commit. Installed
+automatically by `npm install` via the `prepare` script. No Prettier or
+typecheck step — plain JS, no TS.
+
 ---
 
 ## Tests
@@ -111,6 +116,8 @@ as starting anchors, not exact addresses. Re-grep if a function moved.
   stripping — the footer ships into `hyperwheel.html` and is harmless.
 - **CI:** `.github/workflows/test.yml` runs `npm ci && npm test` separately from
   the build job.
+- **Pre-commit:** Husky runs `npm run build && npm test` before every commit.
+  Bypass with `--no-verify` only for WIP stashes — CI will still gate the push.
 
 ---
 
