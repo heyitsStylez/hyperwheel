@@ -13,6 +13,12 @@ A single-file HTML/JS/CSS wheel-strategy options tracker for **Rysk Finance**
 
 ---
 
+## Architecture
+
+Visual diagrams (system context + core data flow): [`docs/architecture.md`](docs/architecture.md). Update when module boundaries or external interfaces change.
+
+---
+
 ## Repo layout
 
 ```
