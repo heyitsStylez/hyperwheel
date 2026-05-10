@@ -174,6 +174,28 @@ read **Term**. Never label a frozen original-DTE column "DTE" — the
 ambiguity historically led to three identically-labelled columns showing two
 different numbers.
 
+### Premium Statistics
+A gross-premium-income view over a set of Trade rows. Distinct from Realised
+P&L (which is a cash-flow lens): Premium Statistics treats premium collected as
+the primary signal and derives:
+
+- **Total premium** — sum of net premiums across all trades in the set
+- **Total notional** — Σ strike × size (capital at risk)
+- **Portfolio APR** — notional-weighted average APR of settled options:
+  `(netPrem / collateral) / DTE × 365`, weighted by notional
+- **Return rate** — share of settled options that expired OTM (premium kept)
+- **OTM / ITM counts** — settled outcome breakdown
+
+Lives in `src/js/05d-calc-stats.js` as the pure function
+`calcPremiumStats(rows) → { totalPrem, totalNotional, portfolioAPR, returnRate,
+otmCount, itmCount, openCount, settled, totalCount }`. Dual-exported. Consumed
+by `rCharts` for the Premium P&L Total and Monthly tabs.
+
+Intentionally does **not** include Realised P&L or Unrealised P&L — those live
+in `computePnl`. The two functions answer different questions: `computePnl`
+answers *"what did this position earn under cash-flow accounting?"*;
+`calcPremiumStats` answers *"how is the premium-income engine performing?"*
+
 ### Trade accounting snapshot
 A per-trade record of the lot state **at the moment that trade was processed**
 by the engine: `{ lotNum, lotSize, lotPremiums, lotCostBasis }`. Captured

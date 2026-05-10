@@ -214,15 +214,15 @@ function renderExpiryTable() {
   const rows = enriched.map(e => {
     const t = e.t;
     return '<tr>'
-      + '<td style="color:var(--' + e.col + ');font-weight:700">' + t.asset + '</td>'
-      + '<td>' + t.type + '</td>'
+      + '<td><span class="badge b' + e.col + '">' + t.asset + '</span></td>'
+      + '<td>' + e.platBadge + '</td>'
+      + '<td><span class="badge b' + t.type.toLowerCase() + '">' + t.type + '</span></td>'
       + '<td>$' + fmt(t.strike) + '</td>'
       + '<td>' + fmt(t.size) + '</td>'
       + '<td>' + e.dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
       + '<td>' + e.aprHtml + '</td>'
       + '<td>' + e.statusHtml + '</td>'
-      + '<td>' + e.platBadge + '</td>'
       + '<td class="td-act">' + e.actionsHtml + '</td>'
       + '</tr>';
   }).join('');
@@ -248,7 +248,7 @@ function renderExpiryTable() {
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
-    + '<thead><tr><th>Asset</th><th>Strategy</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th>Platform</th><th></th></tr></thead>'
+    + '<thead><tr><th>Asset</th><th>Platform</th><th>Type</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table>'
     + '<div class="exp-cards">' + cards + '</div>';
