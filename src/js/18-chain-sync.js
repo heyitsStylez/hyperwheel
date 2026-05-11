@@ -112,9 +112,10 @@ async function syncRysk(address) {
     throw e;
   }
 
-  const synced    = loadSynced();
-  const newTrades = [];
-  let   corrected = 0;
+  const synced         = loadSynced();
+  const newTrades      = [];
+  const correctedTrades = [];
+  let   corrected      = 0;
 
   for (const r of (positions || [])) {
     if (r.txHash && synced.has(r.txHash)) {
@@ -126,6 +127,7 @@ async function syncRysk(address) {
         const existing = trades.find(t => t.txHash === r.txHash);
         if (existing && existing.outcome === 'OPEN') {
           existing.outcome = 'EXPIRED';
+          correctedTrades.push(existing);
           corrected++;
         }
       }
@@ -148,9 +150,12 @@ async function syncRysk(address) {
     save();
     render();
     saveSynced(synced);
-    const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
-    if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
+    const toDetect = [
+      ...openTrades.filter(t => t.outcome === 'EXPIRED'),
+      ...correctedTrades,
+    ];
+    if (toDetect.length) {
+      autoDetectOutcomes(toDetect).then(changed => { if (changed) { save(); render(); } });
     }
   }
 
@@ -390,13 +395,17 @@ async function autoDetectOutcomes(newTrades) {
   }
 
   let changed = false;
+  let unresolved = 0;
   for (const t of toCheck) {
     const spot = priceCache[t.asset + '|' + t.expiry];
-    if (spot == null) continue;
+    if (spot == null) { unresolved++; continue; }
     const trade = trades.find(tr => tr.id === t.id);
     if (!trade || trade.outcome !== 'EXPIRED') continue;
     if (t.type === 'CALL' && spot >= t.strike) { trade.outcome = 'CALLED';   changed = true; }
     if (t.type === 'PUT'  && spot <= t.strike) { trade.outcome = 'ASSIGNED'; changed = true; }
+  }
+  if (unresolved > 0) {
+    toast(unresolved + ' expired option' + (unresolved > 1 ? 's' : '') + ' — verify outcome manually', 'info');
   }
   return changed;
 }
