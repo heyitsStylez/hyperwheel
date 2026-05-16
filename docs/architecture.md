@@ -31,14 +31,16 @@ flowchart TD
     SyncAPI <-->|read / write| KV
     App -->|spot prices\nBTC / ETH / HYPE / SOL| CoinGecko
     App -->|chain sync\n?source=rysk or hypersurface| ChainAPI
-    ChainAPI -->|history + positions| Rysk
-    ChainAPI -->|trades GraphQL| Hypersurface
+    ChainAPI -->|positions + expiry-prices| Rysk
+    ChainAPI -->|trades GraphQL + positions GraphQL| Hypersurface
 ```
 
 **Notes:**
 - Chain sync is skipped when `hasProxy()` returns false (i.e. served over `file://`).
 - Cloud sync pushes **only `type === 'HOLDING'` trades**; options history is local-only.
-- CoinGecko is called directly from the browser (no proxy needed — no auth, no CORS issue).
+- CoinGecko is called directly from the browser for **spot prices only** (no proxy needed — no auth, no CORS issue). It is no longer used to infer expiry outcomes.
+- Rysk outcome resolution: `/api/expiry-prices/999/{underlying}` returns the on-chain Chainlink oracle price used at settlement (1e8 encoding). One call per unique underlying token per sync.
+- Hypersurface outcome resolution: a second Goldsky GQL query fetches short positions (`amount_lt:"0"`) and checks `redeemActions` — non-empty means the option was exercised. No price comparison needed. ADR: `docs/adr/0005-authoritative-outcome-resolution.md`.
 
 ---
 
