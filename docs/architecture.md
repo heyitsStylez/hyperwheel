@@ -63,6 +63,7 @@ flowchart TD
 
     subgraph PnL ["P&L — 05b-pnl.js"]
         CP["computePnl(trades, assetFilter, livePrices)\n→ { realised, unrealised, total,\n   missingSpotAssets,\n   realisedSeries, realisedByMonth }"]
+        BDS["buildDisplaySeries(series, period, today)\n→ [{date, val}]"]
     end
 
     subgraph Stats ["Stats — 05d-calc-stats.js"]
