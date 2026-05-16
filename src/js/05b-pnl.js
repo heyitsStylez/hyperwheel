@@ -80,6 +80,39 @@ function computePnl(trades, assetFilter, livePrices) {
   return { realised, unrealised, total, missingSpotAssets, realisedSeries, realisedByMonth };
 }
 
+function buildDisplaySeries(series, period, today) {
+  if (!series.length) return [];
+
+  const allSeries = [{ date: series[0].date, val: 0 }, ...series];
+
+  let dispSeries;
+  if (period === 'ALL') {
+    dispSeries = allSeries;
+  } else {
+    const days = period === '1M' ? 30 : 90;
+    const cutDate = new Date(today + 'T12:00:00');
+    cutDate.setDate(cutDate.getDate() - days);
+    const cutStr = cutDate.toISOString().slice(0, 10);
+
+    const lastBefore = allSeries.filter(p => p.date < cutStr);
+    const baseline = lastBefore.length ? lastBefore[lastBefore.length - 1].val : 0;
+    const inPeriod = allSeries.filter(p => p.date >= cutStr);
+
+    if (!inPeriod.length) {
+      dispSeries = [{ date: cutStr, val: baseline }, { date: today, val: baseline }];
+    } else {
+      dispSeries = [{ date: cutStr, val: baseline }, ...inPeriod];
+    }
+  }
+
+  const last = dispSeries[dispSeries.length - 1];
+  if (last.date < today) {
+    dispSeries = [...dispSeries, { date: today, val: last.val }];
+  }
+
+  return dispSeries;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { computePnl };
+  module.exports = { computePnl, buildDisplaySeries };
 }

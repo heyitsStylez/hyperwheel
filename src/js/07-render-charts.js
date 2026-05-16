@@ -65,42 +65,9 @@ function rCpnlChart() {
     return;
   }
 
-  // Period filter cutoff
-  const today = new Date();
-  let cutoff = null;
-  if (sCpnlPeriod === '1M') {
-    cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30);
-  } else if (sCpnlPeriod === '3M') {
-    cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
-  }
-
-  // Cumulative series: prepend a zero-baseline so the first point starts at 0.
-  const allSeries = [{ date: realisedSeries[0].date, val: 0 }, ...realisedSeries];
+  const todayStr = today();
   const totalPnl = realisedSeries[realisedSeries.length - 1].val;
-
-  // Filter series for display period
-  let dispSeries;
-  if (!cutoff) {
-    dispSeries = allSeries;
-  } else {
-    const cutStr = cutoff.toISOString().slice(0, 10);
-    let baseline = 0;
-    let lastBefore = allSeries.filter(p => p.date < cutStr);
-    if (lastBefore.length) baseline = lastBefore[lastBefore.length - 1].val;
-    const inPeriod = allSeries.filter(p => p.date >= cutStr);
-    if (!inPeriod.length) {
-      dispSeries = [{ date: cutStr, val: totalPnl }, { date: today.toISOString().slice(0, 10), val: totalPnl }];
-    } else {
-      dispSeries = [{ date: cutStr, val: baseline }, ...inPeriod];
-    }
-  }
-
-  // Add today as the final point (carries last value forward)
-  const todayStr = today.toISOString().slice(0, 10);
-  const last = dispSeries[dispSeries.length - 1];
-  if (last.date < todayStr) {
-    dispSeries = [...dispSeries, { date: todayStr, val: last.val }];
-  }
+  const dispSeries = buildDisplaySeries(realisedSeries, sCpnlPeriod, todayStr);
 
   // Period change
   const periodStart = dispSeries[0].val;

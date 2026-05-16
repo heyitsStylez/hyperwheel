@@ -242,3 +242,54 @@ test('realisedSeries: CALLED event contributes premium AND capital gain at expir
   assert.strictEqual(last.date, '2026-02-15');
   assert.strictEqual(last.val, 550);
 });
+
+// buildDisplaySeries tests
+const { buildDisplaySeries } = require('../../src/js/05b-pnl.js');
+
+test('buildDisplaySeries: empty input returns empty', () => {
+  assert.deepStrictEqual(buildDisplaySeries([], 'ALL', '2026-05-16'), []);
+});
+
+test("buildDisplaySeries: ALL prepends zero-baseline and appends today", () => {
+  const series = [
+    { date: '2026-01-15', val: 100 },
+    { date: '2026-03-01', val: 250 },
+  ];
+  const result = buildDisplaySeries(series, 'ALL', '2026-05-16');
+  assert.deepStrictEqual(result, [
+    { date: '2026-01-15', val: 0 },
+    { date: '2026-01-15', val: 100 },
+    { date: '2026-03-01', val: 250 },
+    { date: '2026-05-16', val: 250 },
+  ]);
+});
+
+test("buildDisplaySeries: 1M with no in-range points returns flat [{cutoff,lastVal},{today,lastVal}]", () => {
+  // All trades before the 30-day window
+  const series = [{ date: '2026-01-15', val: 100 }];
+  // today=2026-05-16 → cutoff=2026-04-16; series point is before cutoff
+  const result = buildDisplaySeries(series, '1M', '2026-05-16');
+  assert.strictEqual(result.length, 2);
+  assert.strictEqual(result[0].date, '2026-04-16');
+  assert.strictEqual(result[0].val, 100);
+  assert.strictEqual(result[1].date, '2026-05-16');
+  assert.strictEqual(result[1].val, 100);
+});
+
+test("buildDisplaySeries: baseline carry-forward is last point before the cutoff", () => {
+  // today=2026-05-16 → 1M cutoff=2026-04-16
+  // Two points before cutoff; baseline should be 250 (the later one)
+  // One point after cutoff at 300
+  const series = [
+    { date: '2026-01-15', val: 100 },
+    { date: '2026-03-01', val: 250 },
+    { date: '2026-04-20', val: 300 },
+  ];
+  const result = buildDisplaySeries(series, '1M', '2026-05-16');
+  // dispSeries: [{cutoff, 250}, {2026-04-20, 300}], then today appended
+  assert.deepStrictEqual(result, [
+    { date: '2026-04-16', val: 250 },
+    { date: '2026-04-20', val: 300 },
+    { date: '2026-05-16', val: 300 },
+  ]);
+});
