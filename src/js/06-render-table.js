@@ -133,11 +133,11 @@ function _histRow(r) {
     + '</tr>';
 }
 
-function rStats(streams, lots, displayRows) {
-  renderExpiryTable();
+function rStats(streams, lots, allRows, displayRows) {
+  renderExpiryTable(allRows);
 }
 
-function renderExpiryTable() {
+function renderExpiryTable(allRows) {
   const wrap = document.getElementById('expiry-table-wrap');
   if (!wrap) return;
 
@@ -146,12 +146,12 @@ function renderExpiryTable() {
   const weekOut = new Date(today);
   weekOut.setDate(weekOut.getDate() + 7);
 
-  const expiring = trades.filter(t => {
-    if (t.outcome !== 'OPEN') return false;
-    if (t.type !== 'PUT' && t.type !== 'CALL') return false;
-    if (sFilter !== 'ALL' && t.asset !== sFilter) return false;
-    if (!t.expiry) return false;
-    const exp = new Date(t.expiry + 'T00:00:00');
+  const expiring = (allRows || []).filter(r => {
+    if (r.outcome !== 'OPEN') return false;
+    if (r.type !== 'PUT' && r.type !== 'CALL') return false;
+    if (sFilter !== 'ALL' && r.asset !== sFilter) return false;
+    if (!r.expiry) return false;
+    const exp = new Date(r.expiry + 'T00:00:00');
     return exp <= weekOut;
   }).sort((a, b) => new Date(a.expiry) - new Date(b.expiry) || a.asset.localeCompare(b.asset));
 
@@ -177,38 +177,32 @@ function renderExpiryTable() {
 
   const assetCol = { BTC: 'btc', ETH: 'eth', HYPE: 'hype', SOL: 'sol' };
 
-  const enriched = expiring.map(t => {
-    const exp = new Date(t.expiry + 'T00:00:00');
-    const daysLeft = Math.round((exp - today) / (1000 * 60 * 60 * 24));
-    const dteLabel = daysLeft <= 0
-      ? '<span style="color:var(--red);font-weight:700">today</span>'
-      : daysLeft + 'd';
-    let aprHtml = '—';
-    if (t.dte > 0 && t.strike > 0 && t.size > 0) {
-      const ann = (t.premium / (t.strike * t.size)) * (365 / t.dte) * 100;
-      aprHtml = ann.toFixed(1) + '%';
-    }
+  const enriched = expiring.map(r => {
+    const exp = new Date(r.expiry + 'T00:00:00');
+    const daysLeft = Math.round((exp - today) / 86400000);
+    const dteLabel = _liveDte(r.expiry);
+    const aprHtml = r.annual != null ? r.annual.toFixed(1) + '%' : '—';
     let statusHtml = '<span style="color:var(--mu)">—</span>';
-    const spot = livePrices[t.asset];
+    const spot = livePrices[r.asset];
     if (spot) {
-      const isPut = t.type === 'PUT';
-      const isOTM = isPut ? spot > t.strike : spot < t.strike;
-      const pct = Math.abs((spot - t.strike) / spot * 100).toFixed(1);
+      const isPut = r.type === 'PUT';
+      const isOTM = isPut ? spot > r.strike : spot < r.strike;
+      const pct = Math.abs((spot - r.strike) / spot * 100).toFixed(1);
       statusHtml = isOTM
         ? '<span class="exp-otm">OTM ' + pct + '%</span>'
         : '<span class="exp-itm">ITM ' + pct + '%</span>';
     }
-    const col = assetCol[t.asset] || 'mu2';
-    const platBadge = (t.platform === 'HSFC')
+    const col = assetCol[r.asset] || 'mu2';
+    const platBadge = (r.platform === 'HSFC')
       ? '<span class="bplat bplat-hsfc">HSFC</span>'
       : '<span class="bplat bplat-rysk">RYSK</span>';
     const actionsHtml = '<div class="row-actions">'
-      + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + t.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
-      + (t.type === 'CALL'
-        ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + t.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
-        : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + t.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')
+      + '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp ✓</button>'
+      + (r.type === 'CALL'
+        ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called ↑</button>'
+        : '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn ↓</button>')
       + '</div>';
-    return { t, col, dteLabel, aprHtml, statusHtml, platBadge, actionsHtml, daysLeft };
+    return { t: r, col, dteLabel, aprHtml, statusHtml, platBadge, actionsHtml, daysLeft };
   });
 
   const rows = enriched.map(e => {
@@ -267,7 +261,7 @@ function fetchExpiryPrices() {
       const el = document.getElementById('expiry-last-refreshed');
       if (el) { const n = new Date(); el.textContent = 'refreshed ' + String(n.getUTCHours()).padStart(2,'0') + ':' + String(n.getUTCMinutes()).padStart(2,'0') + ' UTC'; }
       // Re-render whole page so holdings cards pick up live spot too
-      if (typeof render === 'function') render(); else renderExpiryTable();
+      render();
     })
     .catch(() => { /* silently fail — table shows — for status */ });
 }

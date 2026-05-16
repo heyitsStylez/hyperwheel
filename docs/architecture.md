@@ -80,7 +80,7 @@ flowchart TD
     LS -->|load on boot| Trades
     Trades -->|per-asset slice| LE
     LE -->|lots + accounting| CO
-    CO -->|displayRows| RT
+    CO -->|allRows + displayRows| RT
     CO -->|streams| RC
     Trades -->|all trades| CP
     CP -->|realisedSeries\nrealised + unrealised| RC
