@@ -405,35 +405,6 @@ function rCharts(displayRows, lots) {
   const el = document.getElementById('ppnl-body');
   if (!el) return;
 
-  function calcStats(rows) {
-    let totalPrem = 0, totalCount = 0;
-    let otmCount = 0, itmCount = 0;
-    let openCount = 0;
-    let aprWeightedSum = 0, aprWeightTotal = 0;
-    let assignmentLoss = 0, callAwayCredit = 0, totalNotional = 0;
-    rows.forEach(r => {
-      if (r.type === 'HOLDING') return;
-      const net = (r.premium || 0) - (r.closeCost || 0);
-      const notional = (r.strike || 0) * (r.size || 0);
-      totalPrem += net;
-      totalNotional += notional;
-      totalCount++;
-      if (r.outcome === 'OPEN') { openCount++; }
-      else if (r.outcome === 'EXPIRED') otmCount++;
-      else if (r.outcome === 'ASSIGNED') { itmCount++; assignmentLoss += notional; }
-      else if (r.outcome === 'CALLED') { itmCount++; callAwayCredit += notional; }
-      if (r.annual != null) {
-        aprWeightedSum += r.annual * notional;
-        aprWeightTotal += notional;
-      }
-    });
-    const settled = otmCount + itmCount;
-    const returnRate = settled > 0 ? otmCount / settled * 100 : null;
-    const portfolioAPR = aprWeightTotal > 0 ? aprWeightedSum / aprWeightTotal : null;
-    const netPnl = totalPrem - assignmentLoss + callAwayCredit;
-    return { totalPrem, totalCount, otmCount, itmCount, openCount, returnRate, settled, portfolioAPR, assignmentLoss, callAwayCredit, netPnl, totalNotional };
-  }
-
   const pos = n => n === 1 ? '1 position' : n + ' positions';
   const asgn = n => n === 1 ? '1 assignment' : n + ' assignments';
   const dash = '&mdash;';
@@ -444,7 +415,7 @@ function rCharts(displayRows, lots) {
   }
 
   if (sPpnlTab === 'total') {
-    const s = calcStats(displayRows);
+    const s = calcPremiumStats(displayRows);
     function tile(extraClass, label, main, sub, tip) {
       const tipAttr = tip ? ' data-tip="' + tip.replace(/"/g, '&quot;') + '"' : '';
       const cls = 'ppnl-card' + (extraClass ? ' ' + extraClass : '') + (tip ? ' has-tip' : '');
@@ -497,7 +468,7 @@ function rCharts(displayRows, lots) {
     }
 
     const rows = months.map(ym => {
-      const s = calcStats(monthMap[ym]);
+      const s = calcPremiumStats(monthMap[ym]);
       const rateClass = s.returnRate === null ? '' : s.returnRate >= 70 ? ' class="rate-hi"' : s.returnRate < 50 ? ' class="rate-lo"' : '';
       const realisedM = realisedByMonth[ym];
       const hasRealised = realisedM !== undefined;
