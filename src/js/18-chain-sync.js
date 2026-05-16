@@ -97,6 +97,58 @@ async function fetchRysk(type, address) {
   return res.json();
 }
 
+async function fetchRyskExpiryPrices(underlying) {
+  if (hasProxy()) {
+    const res = await fetch('/api/chain-sync?source=rysk&type=expiry-prices&underlying=' + encodeURIComponent(underlying));
+    if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+    return res.json();
+  }
+  const res = await fetch('https://v12.rysk.finance/api/expiry-prices/999/' + underlying);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// Resolve Rysk outcomes using the on-chain oracle settlement price.
+// positions = raw /api/user/positions array (has status, expiry, strike, txHash, address, collateral, isPut).
+// Expiry-prices endpoint returns {expiryTimestamp: rawPriceAt1e8} for each underlying token.
+// One fetch per unique underlying covers all strikes/expiries for that asset.
+// Returns true if any local trade outcome was updated.
+async function resolveRyskOutcomes(positions) {
+  const nowTs   = Math.floor(Date.now() / 1000);
+  const settled = positions.filter(p =>
+    p.status === 'SETTLED' && parseInt(p.expiry || '0') < nowTs
+  );
+  if (!settled.length) return false;
+
+  // One expiry-prices call per unique underlying (isPut → p.address, CALL → p.collateral)
+  const underlyings = [...new Set(settled.map(p => (p.isPut ? p.address : p.collateral)).filter(Boolean))];
+  const priceMap = {};
+  for (const u of underlyings) {
+    try { priceMap[u] = await fetchRyskExpiryPrices(u); } catch (e) { priceMap[u] = null; }
+  }
+
+  let changed = false;
+  for (const p of settled) {
+    const underlying  = p.isPut ? p.address : p.collateral;
+    const expiryPrices = priceMap[underlying];
+    if (!expiryPrices) continue;
+    const rawPrice = expiryPrices[String(parseInt(p.expiry || '0'))];
+    if (!rawPrice || rawPrice === '0') continue;
+
+    const settlementPrice = parseInt(rawPrice)         / 1e8;
+    const strikePrice     = parseInt(p.strike || '0')  / 1e18;
+    const target = p.isPut
+      ? (settlementPrice <= strikePrice ? 'ASSIGNED' : 'EXPIRED')
+      : (settlementPrice >= strikePrice ? 'CALLED'   : 'EXPIRED');
+
+    // Match by txHash (authoritative). Correct any non-CLOSED outcome including
+    // previously-wrong ASSIGNED/CALLED set by CoinGecko or time-based detection.
+    const local = trades.find(t => t.txHash === p.txHash && t.platform === 'RYSK' && t.outcome !== 'CLOSED');
+    if (local && local.outcome !== target) { local.outcome = target; changed = true; }
+  }
+  return changed;
+}
+
 async function syncRysk(address) {
   // /api/history is empty for most wallets; /api/user/positions returns all
   // open + expired positions and is the authoritative source.
@@ -112,22 +164,20 @@ async function syncRysk(address) {
     throw e;
   }
 
-  const synced         = loadSynced();
-  const newTrades      = [];
-  const correctedTrades = [];
-  let   corrected      = 0;
+  const synced    = loadSynced();
+  const newTrades = [];
+  let   corrected = 0;
 
   for (const r of (positions || [])) {
     if (r.txHash && synced.has(r.txHash)) {
-      // Already imported — but outcome may have been wrong (old bug set all to OPEN).
-      // Correct any expired trades that are still showing as OPEN.
+      // Already imported — correct OPEN→EXPIRED if now past expiry.
+      // resolveRyskOutcomes will then set the definitive ASSIGNED/CALLED/EXPIRED.
       const nowTs    = Math.floor(Date.now() / 1000);
       const expiryTs = r.expiry || 0;
       if (expiryTs > 0 && expiryTs < nowTs) {
         const existing = trades.find(t => t.txHash === r.txHash);
         if (existing && existing.outcome === 'OPEN') {
           existing.outcome = 'EXPIRED';
-          correctedTrades.push(existing);
           corrected++;
         }
       }
@@ -146,17 +196,18 @@ async function syncRysk(address) {
   openTrades.forEach(t => trades.push(t));
   closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
 
-  if (openTrades.length > 0 || closedCount > 0 || corrected > 0) {
+  // Resolve outcomes from Rysk oracle settlement prices (authoritative — no CoinGecko needed).
+  let posOutcomeChanged = false;
+  try {
+    posOutcomeChanged = await resolveRyskOutcomes(positions || []);
+  } catch (e) {
+    // expiry-prices query failed — outcomes stay as EXPIRED; retry on next sync
+  }
+
+  if (openTrades.length > 0 || closedCount > 0 || corrected > 0 || posOutcomeChanged) {
     save();
     render();
     saveSynced(synced);
-    const toDetect = [
-      ...openTrades.filter(t => t.outcome === 'EXPIRED'),
-      ...correctedTrades,
-    ];
-    if (toDetect.length) {
-      autoDetectOutcomes(toDetect).then(changed => { if (changed) { save(); render(); } });
-    }
   }
 
   return { imported: newTrades.length, corrected, skipped: (positions || []).length - newTrades.length - corrected };
@@ -234,17 +285,11 @@ function parseHsfcLeg(trade, leg) {
   };
 }
 
-async function fetchHsfcGoldsky(goldskyUrl, address) {
-  // Real schema: Trade → legs[] → oToken { symbol strikePrice expiryTimestamp isPut }
-  // Filter by taker (the user's address, stored lowercase in the subgraph)
-  const gql = JSON.stringify({
-    query: '{ trades(where:{taker:"' + address.toLowerCase() + '"}, orderBy:createdTimestamp, orderDirection:desc, first:1000){ id createdTimestamp createdTransaction totalPremium legs { id amount premium oToken { symbol strikePrice expiryTimestamp isPut underlyingAsset { symbol } } } } }'
-  });
-
+async function fetchHsfcGoldsky(goldskyUrl, gqlBody) {
   if (hasProxy()) {
     const res = await fetch(
       '/api/chain-sync?source=hypersurface&url=' + encodeURIComponent(goldskyUrl),
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: gql }
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: gqlBody }
     );
     if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
     return res.json();
@@ -253,19 +298,59 @@ async function fetchHsfcGoldsky(goldskyUrl, address) {
   const res = await fetch(goldskyUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: gql,
+    body: gqlBody,
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
 
+// Resolve HSFC outcomes from on-chain Position data.
+// redeemActions present on a short position → option was exercised → ASSIGNED or CALLED.
+// Returns true if any local trade outcome was updated.
+function resolveHsfcOutcomes(positions) {
+  const nowTs = Math.floor(Date.now() / 1000);
+  let changed = false;
+  for (const pos of positions) {
+    const oToken = pos.oToken;
+    if (!oToken) continue;
+    const expiryTs = parseInt(oToken.expiryTimestamp || '0');
+    if (!expiryTs || expiryTs > nowTs) continue;
+    if (!pos.redeemActions || !pos.redeemActions.length) continue;
+
+    const strike = parseInt(oToken.strikePrice || '0') / 1e8;
+    const expiry = unixToDate(expiryTs);
+    const isPut  = oToken.isPut;
+    const asset  = symbolToAsset((oToken.underlyingAsset && oToken.underlyingAsset.symbol) || '');
+    if (!['BTC', 'ETH', 'HYPE', 'SOL'].includes(asset)) continue;
+
+    const target = isPut ? 'ASSIGNED' : 'CALLED';
+    const local  = trades.find(t =>
+      t.platform === 'HSFC' &&
+      t.asset    === asset &&
+      t.expiry   === expiry &&
+      Math.abs(t.strike - strike) < 0.01 &&
+      t.type     === (isPut ? 'PUT' : 'CALL') &&
+      (t.outcome === 'OPEN' || t.outcome === 'EXPIRED')
+    );
+    if (local && local.outcome !== target) {
+      local.outcome = target;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 async function syncHypersurface(address) {
   const goldskyUrl = HSFC_GOLDSKY_URL;
+  const addr       = address.toLowerCase();
 
   let trades_raw = [];
 
   try {
-    const json = await fetchHsfcGoldsky(goldskyUrl, address);
+    const tradesGql = JSON.stringify({
+      query: '{ trades(where:{taker:"' + addr + '"}, orderBy:createdTimestamp, orderDirection:desc, first:1000){ id createdTimestamp createdTransaction totalPremium legs { id amount premium oToken { symbol strikePrice expiryTimestamp isPut underlyingAsset { symbol } } } } }'
+    });
+    const json = await fetchHsfcGoldsky(goldskyUrl, tradesGql);
     if (json.errors) throw new Error(json.errors[0].message || 'GraphQL error');
     trades_raw = (json.data && json.data.trades) || [];
   } catch (e) {
@@ -278,12 +363,26 @@ async function syncHypersurface(address) {
 
   const synced    = loadSynced();
   const newTrades = [];
+  let   corrected = 0;
 
   // Each trade can have multiple legs; each leg becomes one trade entry
   for (const trade of trades_raw) {
     for (const leg of (trade.legs || [])) {
       const key = (trade.createdTransaction || trade.id || '') + '-' + (leg.id || '');
-      if (key && synced.has(key)) continue;
+      if (key && synced.has(key)) {
+        // Already imported — correct OPEN→EXPIRED if now past expiry
+        const oToken   = leg.oToken;
+        const expiryTs = oToken ? parseInt(oToken.expiryTimestamp || '0') : 0;
+        const nowTs    = Math.floor(Date.now() / 1000);
+        if (expiryTs > 0 && expiryTs < nowTs) {
+          const existing = trades.find(t => t.txHash === key);
+          if (existing && existing.outcome === 'OPEN') {
+            existing.outcome = 'EXPIRED';
+            corrected++;
+          }
+        }
+        continue;
+      }
       const t = parseHsfcLeg(trade, leg);
       if (!t) continue;
       newTrades.push(t);
@@ -297,14 +396,26 @@ async function syncHypersurface(address) {
   openTrades.forEach(t => trades.push(t));
   closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
 
-  if (openTrades.length > 0 || closedCount > 0) {
+  // Resolve HSFC outcomes from on-chain Position data (authoritative — no CoinGecko needed).
+  // positions(account, amount_lt:"0") = short positions (options the user sold).
+  // redeemActions present → option was exercised → ASSIGNED (PUT) or CALLED (CALL).
+  let posOutcomeChanged = false;
+  try {
+    const posGql = JSON.stringify({
+      query: '{ positions(where:{account:"' + addr + '", amount_lt:"0"}, first:200) { id oToken { symbol strikePrice expiryTimestamp isPut underlyingAsset { symbol } } redeemActions { id } } }'
+    });
+    const posJson = await fetchHsfcGoldsky(goldskyUrl, posGql);
+    if (posJson.data && posJson.data.positions) {
+      posOutcomeChanged = resolveHsfcOutcomes(posJson.data.positions);
+    }
+  } catch (e) {
+    // positions query failed — outcomes stay as EXPIRED; will retry on next sync
+  }
+
+  if (openTrades.length > 0 || closedCount > 0 || corrected > 0 || posOutcomeChanged) {
     save();
     render();
     saveSynced(synced);
-    const expiredNew = openTrades.filter(t => t.outcome === 'EXPIRED');
-    if (expiredNew.length) {
-      autoDetectOutcomes(expiredNew).then(changed => { if (changed) { save(); render(); } });
-    }
   }
 
   const totalLegs = trades_raw.reduce((n, t) => n + (t.legs || []).length, 0);

@@ -69,7 +69,7 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `15-event-listeners.js` | 6 | global keydown (Esc closes modals/drawer) |
 | `16-clock.js` | 20 | UTC clock IIFE for header |
 | `17-boot.js` | 33 | init IIFE: load trades, wallet popup OR `render() + fetchExpiryPrices() + cloudPull → autoLoadChain` |
-| `18-chain-sync.js` | 459 | Rysk + Hypersurface chain sync: `autoLoadChain`, `syncRysk`, `syncHypersurface`, `applyCloseTrade`, `autoDetectOutcomes`, `migrateCloseTrades`. Routes through `/api/chain-sync` proxy. `hasProxy()` returns false on `file://` |
+| `18-chain-sync.js` | 579 | Rysk + Hypersurface chain sync: `autoLoadChain`, `syncRysk`, `syncHypersurface`, `resolveRyskOutcomes`, `resolveHsfcOutcomes`, `fetchRyskExpiryPrices`, `applyCloseTrade`, `autoDetectOutcomes` (stale-detection only), `migrateCloseTrades`. Routes through `/api/chain-sync` proxy. `hasProxy()` returns false on `file://` |
 
 **Line numbers above are approximate** — they shift as the code evolves. Use them
 as starting anchors, not exact addresses. Re-grep if a function moved.
@@ -198,11 +198,13 @@ There is **no AI-key entry, no scanner state, no preferences object**.
 - Routes through `/api/chain-sync` because direct calls hit CORS
 - `hasProxy()` returns false when served over `file://` — chain sync is silently
   skipped
-- Rysk: REST endpoints `?source=rysk&type=history|positions&address=...`
-- Hypersurface: GraphQL POST to a Goldsky URL passed via `?source=hypersurface&url=...`
+- Rysk: two REST calls per sync — `?source=rysk&type=positions&address=...` (all trades) and `?source=rysk&type=expiry-prices&underlying=0x...` (one call per unique underlying token, returns on-chain Chainlink settlement price at 1e8)
+- Hypersurface: two GraphQL POSTs per sync — trades query (user's bought/sold legs) and positions query (`amount_lt:"0"` = short positions, checks `redeemActions` for exercise)
 - Imported trades carry `txHash` and are tracked in `hw_synced_v1` to avoid dupes
-- `autoDetectOutcomes` matches close trades to opens; `migrateCloseTrades` is a
-  one-shot fix-up
+- `resolveRyskOutcomes`: compares settlement price to strike (`PUT: price ≤ strike → ASSIGNED`; `CALL: price ≥ strike → CALLED`). Matched by `txHash`. Runs every sync — overwrites any prior CoinGecko misclassification
+- `resolveHsfcOutcomes`: `redeemActions` non-empty → `ASSIGNED`/`CALLED`; empty → `EXPIRED`. Matched by asset+expiry+strike+type. Runs every sync
+- `autoDetectOutcomes` (CoinGecko) is called only from `autoLoadChain`'s boot-time stale-detection loop — for locally-known OPEN trades whose expiry passed while the app was closed. For SPOT trades it remains the only resolution path. ADR: `docs/adr/0005-authoritative-outcome-resolution.md`
+- `migrateCloseTrades` is a one-shot fix-up
 
 ---
 
@@ -265,6 +267,7 @@ CSS vars so adding themes later remains cheap.
 - **Inline SVG favicon** (`head.html`)
 - **Compute fix**: assigned-PUT premium now credits the new lot's `lotPremiums`
   (was previously only counted in portfolio P&L, leaving net cost too high)
+- **Authoritative outcome resolution** (`18-chain-sync.js`): Rysk outcomes now resolved via on-chain oracle settlement prices (`/api/expiry-prices`); Hypersurface outcomes via `redeemActions` on the Goldsky positions subgraph. Replaces CoinGecko daily-close price inference for both platforms. `autoDetectOutcomes` (CoinGecko) retained only for stale-detection of locally-tracked OPEN trades at boot and for SPOT platform trades. ADR: `docs/adr/0005-authoritative-outcome-resolution.md`. Integration tests: `test/integration/chain-sync-outcomes.test.js`
 
 ---
 

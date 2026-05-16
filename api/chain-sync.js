@@ -16,8 +16,26 @@ module.exports = async function handler(req, res) {
 
   // ── RYSK ────────────────────────────────────────────────────
   if (source === 'rysk') {
+    if (!['history', 'positions', 'expiry-prices'].includes(type)) {
+      return res.status(400).json({ error: 'type must be history, positions or expiry-prices' });
+    }
+
+    if (type === 'expiry-prices') {
+      const underlying = req.query.underlying || '';
+      // Validate: must be a checksummed or lowercase Ethereum address
+      if (!/^0x[0-9a-fA-F]{40}$/.test(underlying)) {
+        return res.status(400).json({ error: 'Invalid underlying address' });
+      }
+      try {
+        const upstream = await fetch(`https://v12.rysk.finance/api/expiry-prices/999/${underlying}`, { headers: { 'Accept': 'application/json' } });
+        const data = await upstream.json();
+        return res.status(upstream.status).json(data);
+      } catch (e) {
+        return res.status(502).json({ error: 'Rysk upstream failed: ' + e.message });
+      }
+    }
+
     if (!address) return res.status(400).json({ error: 'address required' });
-    if (!['history', 'positions'].includes(type)) return res.status(400).json({ error: 'type must be history or positions' });
 
     const endpoint = type === 'history'
       ? `https://v12.rysk.finance/api/history?address=${address}`
