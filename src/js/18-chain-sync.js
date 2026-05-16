@@ -164,37 +164,11 @@ async function syncRysk(address) {
     throw e;
   }
 
-  const synced    = loadSynced();
-  const newTrades = [];
-  let   corrected = 0;
-
-  for (const r of (positions || [])) {
-    if (r.txHash && synced.has(r.txHash)) {
-      // Already imported — correct OPEN→EXPIRED if now past expiry.
-      // resolveRyskOutcomes will then set the definitive ASSIGNED/CALLED/EXPIRED.
-      const nowTs    = Math.floor(Date.now() / 1000);
-      const expiryTs = r.expiry || 0;
-      if (expiryTs > 0 && expiryTs < nowTs) {
-        const existing = trades.find(t => t.txHash === r.txHash);
-        if (existing && existing.outcome === 'OPEN') {
-          existing.outcome = 'EXPIRED';
-          corrected++;
-        }
-      }
-      continue;
-    }
-    const t = parseRyskTrade(r);
-    if (!t) continue;
-    newTrades.push(t);
-    if (r.txHash) synced.add(r.txHash);
-  }
-
-  // Split: open trades imported first, then close trades applied against them
-  const openTrades  = newTrades.filter(t => !t.isClose);
-  const closeTrades = newTrades.filter(t =>  t.isClose);
-  let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  const synced      = loadSynced();
+  const allTrades   = (positions || []).map(parseRyskTrade).filter(Boolean);
+  const openTrades  = allTrades.filter(t => !t.isClose);
+  const closeTrades = allTrades.filter(t =>  t.isClose);
+  const { added, closedCount, corrected } = applyImportedTrades(trades, openTrades, closeTrades, synced);
 
   // Resolve outcomes from Rysk oracle settlement prices (authoritative — no CoinGecko needed).
   let posOutcomeChanged = false;
@@ -204,13 +178,13 @@ async function syncRysk(address) {
     // expiry-prices query failed — outcomes stay as EXPIRED; retry on next sync
   }
 
-  if (openTrades.length > 0 || closedCount > 0 || corrected > 0 || posOutcomeChanged) {
+  if (added + closedCount + corrected > 0 || posOutcomeChanged) {
     save();
     render();
     saveSynced(synced);
   }
 
-  return { imported: newTrades.length, corrected, skipped: (positions || []).length - newTrades.length - corrected };
+  return { imported: added, corrected, skipped: (positions || []).length - allTrades.length };
 }
 
 // ── HYPERSURFACE SYNC ─────────────────────────────────────
@@ -363,38 +337,19 @@ async function syncHypersurface(address) {
 
   const synced    = loadSynced();
   const newTrades = [];
-  let   corrected = 0;
 
   // Each trade can have multiple legs; each leg becomes one trade entry
   for (const trade of trades_raw) {
     for (const leg of (trade.legs || [])) {
-      const key = (trade.createdTransaction || trade.id || '') + '-' + (leg.id || '');
-      if (key && synced.has(key)) {
-        // Already imported — correct OPEN→EXPIRED if now past expiry
-        const oToken   = leg.oToken;
-        const expiryTs = oToken ? parseInt(oToken.expiryTimestamp || '0') : 0;
-        const nowTs    = Math.floor(Date.now() / 1000);
-        if (expiryTs > 0 && expiryTs < nowTs) {
-          const existing = trades.find(t => t.txHash === key);
-          if (existing && existing.outcome === 'OPEN') {
-            existing.outcome = 'EXPIRED';
-            corrected++;
-          }
-        }
-        continue;
-      }
       const t = parseHsfcLeg(trade, leg);
       if (!t) continue;
       newTrades.push(t);
-      if (key) synced.add(key);
     }
   }
 
   const openTrades  = newTrades.filter(t => !t.isClose);
   const closeTrades = newTrades.filter(t =>  t.isClose);
-  let closedCount = 0;
-  openTrades.forEach(t => trades.push(t));
-  closeTrades.forEach(t => { if (applyCloseTrade(t)) closedCount++; });
+  const { added, closedCount, corrected } = applyImportedTrades(trades, openTrades, closeTrades, synced);
 
   // Resolve HSFC outcomes from on-chain Position data (authoritative — no CoinGecko needed).
   // positions(account, amount_lt:"0") = short positions (options the user sold).
@@ -412,35 +367,17 @@ async function syncHypersurface(address) {
     // positions query failed — outcomes stay as EXPIRED; will retry on next sync
   }
 
-  if (openTrades.length > 0 || closedCount > 0 || corrected > 0 || posOutcomeChanged) {
+  if (added + closedCount + corrected > 0 || posOutcomeChanged) {
     save();
     render();
     saveSynced(synced);
   }
 
   const totalLegs = trades_raw.reduce((n, t) => n + (t.legs || []).length, 0);
-  return { imported: openTrades.length, closed: closedCount, skipped: totalLegs - newTrades.length };
+  return { imported: added, closed: closedCount, skipped: totalLegs - newTrades.length };
 }
 
-// ── CLOSE TRADE HANDLING ──────────────────────────────────
-// When a user buys back an option they sold, it arrives as a separate
-// trade entry with isClose=true. Instead of importing it as a row,
-// find the matching open trade and mark it CLOSED with closeCost set.
-
-function applyCloseTrade(closeTrade) {
-  const match = trades.find(t =>
-    t.asset   === closeTrade.asset &&
-    t.type    === closeTrade.type &&
-    t.expiry  === closeTrade.expiry &&
-    Math.abs(t.strike - closeTrade.strike) < 0.01 &&
-    t.outcome === 'OPEN'
-  );
-  if (!match) return false;
-  match.outcome   = 'CLOSED';
-  match.closeCost = Math.abs(closeTrade.premium);
-  return true;
-}
-
+// ── MIGRATION ─────────────────────────────────────────────
 // Migration: clean up already-imported negative-premium OPEN trades
 // (synced before this fix was deployed).
 function migrateCloseTrades() {

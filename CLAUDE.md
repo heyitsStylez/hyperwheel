@@ -69,7 +69,8 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `15-event-listeners.js` | 6 | global keydown (Esc closes modals/drawer) |
 | `16-clock.js` | 20 | UTC clock IIFE for header |
 | `17-boot.js` | 33 | init IIFE: load trades, wallet popup OR `render() + fetchExpiryPrices() + cloudPull → autoLoadChain` |
-| `18-chain-sync.js` | 579 | Rysk + Hypersurface chain sync: `autoLoadChain`, `syncRysk`, `syncHypersurface`, `resolveRyskOutcomes`, `resolveHsfcOutcomes`, `fetchRyskExpiryPrices`, `applyCloseTrade`, `autoDetectOutcomes` (stale-detection only), `migrateCloseTrades`. Routes through `/api/chain-sync` proxy. `hasProxy()` returns false on `file://` |
+| `18-chain-sync.js` | ~530 | Rysk + Hypersurface chain sync: `autoLoadChain`, `syncRysk`, `syncHypersurface`, `resolveRyskOutcomes`, `resolveHsfcOutcomes`, `fetchRyskExpiryPrices`, `autoDetectOutcomes` (stale-detection only), `migrateCloseTrades`. Routes through `/api/chain-sync` proxy. `hasProxy()` returns false on `file://` |
+| `18b-chain-apply.js` | ~55 | `applyCloseTrade(tradesArray, closeTrade)` → boolean; `applyImportedTrades(tradesArray, openTrades, closeTrades, synced)` → `{added, closedCount, corrected}`. Pure helpers extracted from chain-sync: dedup by txHash, open/close split, close-trade matching, OPEN→EXPIRED correction. Both dual-exported for Node tests |
 
 **Line numbers above are approximate** — they shift as the code evolves. Use them
 as starting anchors, not exact addresses. Re-grep if a function moved.
@@ -116,7 +117,7 @@ typecheck step — plain JS, no TS.
     `getContext`, `scrollIntoView`. Returns `{ window, teardown }`; jsdom tests
     must call `t.after(teardown)` to release the clock interval.
 - **Dual-export pattern** (used by `02-utils.js`, `04b-lot-engine.js`,
-  `05-compute.js`, `05a-merge-open-lots.js`): a guarded footer
+  `05-compute.js`, `05a-merge-open-lots.js`, `18b-chain-apply.js`): a guarded footer
   `if (typeof module !== 'undefined' && module.exports) module.exports = {...}`.
   No-op in the browser; `require()`-able from Node tests. `build.py` does no
   stripping — the footer ships into `hyperwheel.html` and is harmless.
