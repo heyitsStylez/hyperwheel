@@ -1,11 +1,9 @@
 // ── BOOT ──────────────────────────────────────────────
-(function init() {
-  // Load all persisted trades from localStorage
-  try {
-    trades = JSON.parse(localStorage.getItem(HW_HOLDINGS_KEY) || '[]');
-  } catch (e) {
-    trades = [];
-  }
+// bootReady resolves once trades are loaded and the first render has run.
+// Tests await it; the browser ignores it.
+var bootReady = (async function init() {
+  // Load all persisted trades through the persistence seam
+  trades = await loadTrades();
 
   // Migration: if hw_synced_v1 has entries but no chain-synced trades were
   // persisted (old save() bug only kept HOLDINGs), the synced set is stale.

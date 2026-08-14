@@ -12,7 +12,7 @@ function isoDaysFromToday(days) {
   return yyyy + '-' + mm + '-' + dd;
 }
 
-test('Expiring This Week APR matches Open Positions APR for the same trade', (t) => {
+test('Expiring This Week APR matches Open Positions APR for the same trade', async (t) => {
   // dte=21, premium=150, strike=50000, size=0.05
   // annual = (150 / (50000 * 0.05)) * (365 / 21) * 100 ≈ 104.8%
   const openPut = {
@@ -21,7 +21,7 @@ test('Expiring This Week APR matches Open Positions APR for the same trade', (t)
     dte: 21, strike: 50000, size: 0.05, premium: 150,
     outcome: 'OPEN', closeCost: 0, platform: 'RYSK',
   };
-  const { window, teardown } = setupJsdom({ trades: [openPut] });
+  const { window, teardown } = await setupJsdom({ trades: [openPut] });
   t.after(teardown);
 
   // Get APR from Open Positions table (column index 9 = APR: Asset,Platform,Date,Expiry,DTE,Type,Strike,Size,Premium,APR)
@@ -36,7 +36,7 @@ test('Expiring This Week APR matches Open Positions APR for the same trade', (t)
   assert.strictEqual(expiryApr, openApr, 'Expiring This Week APR must match Open Positions APR');
 });
 
-test('Expiring This Week respects asset filter', (t) => {
+test('Expiring This Week respects asset filter', async (t) => {
   const btcPut = {
     id: 1, asset: 'BTC', type: 'PUT',
     date: '2026-01-01', expiry: isoDaysFromToday(3),
@@ -49,7 +49,7 @@ test('Expiring This Week respects asset filter', (t) => {
     dte: 21, strike: 3000, size: 0.5, premium: 50,
     outcome: 'OPEN', closeCost: 0, platform: 'RYSK',
   };
-  const { window, teardown } = setupJsdom({ trades: [btcPut, ethPut] });
+  const { window, teardown } = await setupJsdom({ trades: [btcPut, ethPut] });
   t.after(teardown);
 
   // Apply ETH filter

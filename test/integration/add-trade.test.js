@@ -2,8 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { setupJsdom } = require('../helpers/setupJsdom');
 
-test('addTrade() from drawer pushes a HOLDING and persists to localStorage', (t) => {
-  const { window, teardown } = setupJsdom();
+test('addTrade() from drawer pushes a HOLDING and persists to localStorage', async (t) => {
+  const { window, teardown } = await setupJsdom();
   t.after(teardown);
 
   // Asset defaults to BTC; fill the form fields addTrade reads.

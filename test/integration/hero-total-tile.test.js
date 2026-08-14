@@ -18,8 +18,8 @@ const HOLDING_BTC = {
   closeCost: 0, platform: 'SPOT',
 };
 
-test('hero band contains a Total P&L tile in the header row', (t) => {
-  const { window, teardown } = setupJsdom({ trades: [HOLDING_ETH] });
+test('hero band contains a Total P&L tile in the header row', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: [HOLDING_ETH] });
   t.after(teardown);
 
   const tile = window.document.getElementById('cpnl-tile');
@@ -29,9 +29,9 @@ test('hero band contains a Total P&L tile in the header row', (t) => {
   assert.ok(hero.contains(tile), 'tile must live inside the hero band');
 });
 
-test('hero tile Total = Realised + Unrealised', (t) => {
+test('hero tile Total = Realised + Unrealised', async (t) => {
   // PUT EXPIRED netPrem 100 + HOLDING ETH 3000 size 1 spot 3500 → total = 600.
-  const { window, teardown } = setupJsdom({ trades: [PUT_ETH_EXPIRED, HOLDING_ETH] });
+  const { window, teardown } = await setupJsdom({ trades: [PUT_ETH_EXPIRED, HOLDING_ETH] });
   t.after(teardown);
 
   window.livePrices = { ETH: 3500 };
@@ -44,8 +44,8 @@ test('hero tile Total = Realised + Unrealised', (t) => {
   assert.match(unrealised, /\+\$500/, `expected +$500 Unrealised, got "${unrealised}"`);
 });
 
-test('hero tile respects asset filter', (t) => {
-  const { window, teardown } = setupJsdom({ trades: [HOLDING_BTC, HOLDING_ETH] });
+test('hero tile respects asset filter', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: [HOLDING_BTC, HOLDING_ETH] });
   t.after(teardown);
 
   window.livePrices = { BTC: 52000, ETH: 3500 };
@@ -58,8 +58,8 @@ test('hero tile respects asset filter', (t) => {
   assert.match(total, /\+\$200/, `BTC-only Total should be +$200, got "${total}"`);
 });
 
-test('hero tile partial missing-spot: renders partial Total + sub-line, no asterisk', (t) => {
-  const { window, teardown } = setupJsdom({ trades: [HOLDING_ETH, HOLDING_BTC] });
+test('hero tile partial missing-spot: renders partial Total + sub-line, no asterisk', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: [HOLDING_ETH, HOLDING_BTC] });
   t.after(teardown);
 
   window.livePrices = { ETH: 3500 }; // BTC missing
@@ -75,8 +75,8 @@ test('hero tile partial missing-spot: renders partial Total + sub-line, no aster
     `tile must not contain an asterisk under partial state, got "${tile.textContent}"`);
 });
 
-test('hero tile full missing-spot: dashes + sub-line; Realised stays visible', (t) => {
-  const { window, teardown } = setupJsdom({ trades: [HOLDING_ETH, PUT_ETH_EXPIRED] });
+test('hero tile full missing-spot: dashes + sub-line; Realised stays visible', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: [HOLDING_ETH, PUT_ETH_EXPIRED] });
   t.after(teardown);
 
   // livePrices stays {} → ETH spot missing for the only open lot.

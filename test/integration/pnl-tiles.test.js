@@ -25,13 +25,13 @@ function assertHasTooltip(card, tipPattern) {
   if (!ico) throw new Error('expected ⓘ glyph (.ppnl-tip-ico) inside .ppnl-lbl');
 }
 
-test('Total Premium Collected tile has tooltip + ⓘ glyph', (t) => {
+test('Total Premium Collected tile has tooltip + ⓘ glyph', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const card = findCard(window, /Total Premium Collected/i);
@@ -39,47 +39,47 @@ test('Total Premium Collected tile has tooltip + ⓘ glyph', (t) => {
   assertHasTooltip(card, /premium/i);
 });
 
-test('Total Notional tile has tooltip + ⓘ glyph', (t) => {
+test('Total Notional tile has tooltip + ⓘ glyph', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
   assertHasTooltip(findCard(window, /Total Notional/i), /notional|strike.*size/i);
 });
 
-test('Portfolio APR tile has tooltip + ⓘ glyph', (t) => {
+test('Portfolio APR tile has tooltip + ⓘ glyph', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
   assertHasTooltip(findCard(window, /Portfolio APR/i), /APR|annualised|annualized/i);
 });
 
-test('Return Rate tile has tooltip + ⓘ glyph', (t) => {
+test('Return Rate tile has tooltip + ⓘ glyph', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
   assertHasTooltip(findCard(window, /Return Rate/i), /OTM|expired/i);
 });
 
-test('Total tab uses hero + supporting trio layout (issue #42)', (t) => {
+test('Total tab uses hero + supporting trio layout (issue #42)', async (t) => {
   // Total Premium Collected is the hero (focal point); the other three live in a trio container.
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const hero = window.document.querySelector('.ppnl-hero');
@@ -101,7 +101,7 @@ test('Total tab uses hero + supporting trio layout (issue #42)', (t) => {
   assert.ok(hero.querySelector('.ppnl-tip-ico'), 'hero should keep the ⓘ glyph');
 });
 
-test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40)', (t) => {
+test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40)', async (t) => {
   // Per #40, the hero band is the canonical Realised/Unrealised/Total surface.
   // The Total tab must not duplicate them.
   const trades = [
@@ -112,7 +112,7 @@ test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40
       dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
       closeCost: 0, platform: 'SPOT' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   window.livePrices = { ETH: 3500 };
@@ -132,7 +132,7 @@ test('Total tab no longer renders Realised/Unrealised/Total P&L cards (issue #40
   assert.ok(findCard(window, /Return Rate/i));
 });
 
-test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', (t) => {
+test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', async (t) => {
   const trades = [
     { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
       dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
@@ -141,7 +141,7 @@ test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', (t) => {
       dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   assert.strictEqual(window.document.getElementById('npnl-val'), null,
@@ -154,7 +154,7 @@ test('Hero band has no duplicate Realised sparkline (#npnl-* removed)', (t) => {
     '.npnl-spark wrapper should be removed');
 });
 
-test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gain)', (t) => {
+test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gain)', async (t) => {
   // HOLDING + CALLED → realised = 50 + 500 = 550. Hero header (#cpnl-val) should
   // show +$550, proving capital gain feeds the cumulative series (not premium-only).
   const trades = [
@@ -165,7 +165,7 @@ test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gai
       dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const heroVal = window.document.getElementById('cpnl-val');
@@ -173,13 +173,13 @@ test('Cumulative-hero sparkline header shows Realised P&L (premium + capital gai
   assert.match(heroVal.textContent, /\+\$550/, `expected +$550 in cumulative hero, got "${heroVal.textContent}"`);
 });
 
-test('Premium P&L section is renamed to "Premium Economics" (issue #40)', (t) => {
+test('Premium P&L section is renamed to "Premium Economics" (issue #40)', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const titles = Array.from(window.document.querySelectorAll('.sec-ttl'))
@@ -190,13 +190,13 @@ test('Premium P&L section is renamed to "Premium Economics" (issue #40)', (t) =>
     `"Premium P&L" section title should be gone, got ${JSON.stringify(titles)}`);
 });
 
-test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)', (t) => {
+test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)', async (t) => {
   const trades = [
     { id: 1, asset: 'ETH', type: 'HOLDING', date: '2026-01-01', expiry: '',
       dte: null, strike: 3000, size: 1, premium: 0, outcome: 'OPEN',
       closeCost: 0, platform: 'SPOT' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   // The Net Cost hero block — find by its label.
@@ -219,13 +219,13 @@ test('Holdings card Net Cost hero has tooltip + ⓘ glyph (lens disambiguation)'
   assert.ok(ico, 'expected ⓘ glyph next to the Net Cost label');
 });
 
-test('Monthly tab header reads "Realised P&L" (renamed from Net P&L)', (t) => {
+test('Monthly tab header reads "Realised P&L" (renamed from Net P&L)', async (t) => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
       dte: 14, strike: 50000, size: 0.1, premium: 120, outcome: 'EXPIRED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   window.setPpnlTab('monthly');
@@ -238,7 +238,7 @@ test('Monthly tab header reads "Realised P&L" (renamed from Net P&L)', (t) => {
     `"Net P&L" header should be gone, got ${JSON.stringify(headers)}`);
 });
 
-test('Monthly tab Realised value comes from computePnl (HOLDING + CALLED → premium + cap gain)', (t) => {
+test('Monthly tab Realised value comes from computePnl (HOLDING + CALLED → premium + cap gain)', async (t) => {
   // HOLDING ETH at 3000 size 1 (Jan), then CALL at 3500 size 1 premium 50, called Feb.
   // Cash-flow Realised for Feb = 50 + (3500-3000)*1 = 550. Old netPnl formula would
   // include +call-away notional ($3500), giving a very different number.
@@ -250,7 +250,7 @@ test('Monthly tab Realised value comes from computePnl (HOLDING + CALLED → pre
       dte: 14, strike: 3500, size: 1, premium: 50, outcome: 'CALLED',
       closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   window.setPpnlTab('monthly');

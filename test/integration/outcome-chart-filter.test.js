@@ -25,9 +25,9 @@ function makeSettledSet(n, outcome = 'EXPIRED', asset = 'BTC') {
   return out;
 }
 
-test('chart hidden + pills shown when < 10 settled trades', (t) => {
+test('chart hidden + pills shown when < 10 settled trades', async (t) => {
   const trades = makeSettledSet(5, 'EXPIRED');
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const chart = window.document.getElementById('hist-outchart');
@@ -37,12 +37,12 @@ test('chart hidden + pills shown when < 10 settled trades', (t) => {
   assert.strictEqual(chart.querySelectorAll('.outchart-cell').length, 0);
 });
 
-test('chart shown + pills hidden when >= 10 settled trades', (t) => {
+test('chart shown + pills hidden when >= 10 settled trades', async (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const chart = window.document.getElementById('hist-outchart');
@@ -53,12 +53,12 @@ test('chart shown + pills hidden when >= 10 settled trades', (t) => {
   assert.strictEqual(cells.length, 2, 'two outcomes → two cells');
 });
 
-test('clicking a cell filters the history table to that outcome', (t) => {
+test('clicking a cell filters the history table to that outcome', async (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const cells = window.document.querySelectorAll('#hist-outchart .outchart-cell');
@@ -70,12 +70,12 @@ test('clicking a cell filters the history table to that outcome', (t) => {
   assert.strictEqual(histRows.length, 7);
 });
 
-test('clicking the active cell clears the filter (idempotent toggle)', (t) => {
+test('clicking the active cell clears the filter (idempotent toggle)', async (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED'),
     ...makeSettledSet(3, 'CALLED'),
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   const getExpired = () => [...window.document.querySelectorAll('#hist-outchart .outchart-cell')]
@@ -90,12 +90,12 @@ test('clicking the active cell clears the filter (idempotent toggle)', (t) => {
   assert.strictEqual(histRows.length, 10, 'all 10 settled rows back in history');
 });
 
-test('asset filter chip changes the chart data', (t) => {
+test('asset filter chip changes the chart data', async (t) => {
   const trades = [
     ...makeSettledSet(7, 'EXPIRED', 'BTC'),
     ...makeSettledSet(5, 'ASSIGNED', 'ETH'),
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   let cells = window.document.querySelectorAll('#hist-outchart .outchart-cell');

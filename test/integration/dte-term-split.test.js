@@ -26,7 +26,7 @@ function clickHeader(window, theadId, label) {
   throw new Error('header not found: ' + label);
 }
 
-test('Open Positions DTE column shows live countdown, not stored t.dte', (t) => {
+test('Open Positions DTE column shows live countdown, not stored t.dte', async (t) => {
   // Stored dte=99 is the original term at open; expiry is 3d away — live should win.
   const openPut = {
     id: 1, asset: 'BTC', type: 'PUT',
@@ -34,7 +34,7 @@ test('Open Positions DTE column shows live countdown, not stored t.dte', (t) => 
     dte: 99, strike: 50000, size: 0.05, premium: 100,
     outcome: 'OPEN', closeCost: 0, platform: 'RYSK',
   };
-  const { window, teardown } = setupJsdom({ trades: [openPut] });
+  const { window, teardown } = await setupJsdom({ trades: [openPut] });
   t.after(teardown);
 
   const cells = window.document.querySelectorAll('#ttbody-open tr td');
@@ -44,14 +44,14 @@ test('Open Positions DTE column shows live countdown, not stored t.dte', (t) => 
   assert.ok(!/99/.test(dteCellText), 'should not render stored term 99 in live DTE column');
 });
 
-test('Position History column header reads "Term"; cell shows stored t.dte', (t) => {
+test('Position History column header reads "Term"; cell shows stored t.dte', async (t) => {
   const settled = {
     id: 2, asset: 'BTC', type: 'PUT',
     date: '2026-01-01', expiry: '2026-01-22',
     dte: 21, strike: 50000, size: 0.05, premium: 100,
     outcome: 'EXPIRED', closeCost: 0, platform: 'RYSK',
   };
-  const { window, teardown } = setupJsdom({ trades: [settled] });
+  const { window, teardown } = await setupJsdom({ trades: [settled] });
   t.after(teardown);
 
   const histHdr = window.document.getElementById('hist-hdr');
@@ -63,7 +63,7 @@ test('Position History column header reads "Term"; cell shows stored t.dte', (t)
   assert.strictEqual(cells[4].textContent.trim(), '21');
 });
 
-test('Open Positions DTE column sorts by expiry', (t) => {
+test('Open Positions DTE column sorts by expiry', async (t) => {
   // Two opens: stored dte order (5, 10) is opposite to expiry order.
   // After clicking DTE, ascending order should be by expiry (soonest first).
   // All three trades share the same stored dte (20). Old behavior would tie on
@@ -77,7 +77,7 @@ test('Open Positions DTE column sorts by expiry', (t) => {
     { id: 3, asset: 'HYPE', type: 'PUT', date: '2026-01-01', expiry: isoDaysFromToday(20),
       dte: 20, strike: 20, size: 50, premium: 30, outcome: 'OPEN', closeCost: 0, platform: 'RYSK' },
   ];
-  const { window, teardown } = setupJsdom({ trades });
+  const { window, teardown } = await setupJsdom({ trades });
   t.after(teardown);
 
   clickHeader(window, 'open-hdr', 'DTE');
