@@ -7,11 +7,12 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 const { loadApp } = require('./loadApp');
+const { assembleBody } = require('./assemble');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-async function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
-  const body = fs.readFileSync(path.join(ROOT, 'src', 'html', 'body.html'), 'utf8');
+async function setupJsdom({ app = 'crypto', wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
+  const body = assembleBody(app);
   const modals = fs.readFileSync(path.join(ROOT, 'src', 'html', 'modals.html'), 'utf8');
 
   const html = `<!doctype html><html><head></head><body>${body}${modals}</body></html>`;
@@ -19,9 +20,14 @@ async function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) 
   const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'dangerously' });
   const { window } = dom;
 
-  // Pre-seed localStorage before app boot reads it.
-  window.localStorage.setItem('hw_wallet', wallet);
-  window.localStorage.setItem('hw_holdings', JSON.stringify(trades));
+  // Pre-seed localStorage before app boot reads it. Crypto reads a wallet +
+  // hw_holdings; Wheeler (tradfi) is local-only under wheeler_trades, no wallet.
+  if (app === 'tradfi') {
+    window.localStorage.setItem('wheeler_trades', JSON.stringify(trades));
+  } else {
+    window.localStorage.setItem('hw_wallet', wallet);
+    window.localStorage.setItem('hw_holdings', JSON.stringify(trades));
+  }
 
   // Network stub — every fetch returns a never-resolving promise so that
   // callbacks (fetchExpiryPrices, cloudPull, autoLoadChain) don't fire
@@ -57,7 +63,7 @@ async function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) 
     window.requestAnimationFrame = (cb) => setTimeout(cb, 0);
   }
 
-  loadApp(window);
+  loadApp(window, app);
 
   // Trades now load through the async persistence seam, so boot completes on a
   // microtask. Await it here (harness is async) to keep tests' synchronous
