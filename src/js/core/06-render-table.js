@@ -294,11 +294,21 @@ function rTable(displayRows, streams, lots) {
   let cardsHtml = '';
   let mergesHtml = '';
   let openLotCount = 0;
-  ['BTC','ETH','HYPE','SOL'].forEach(a => {
+  // Derive the holdings roster from the data so arbitrary tickers render. Known
+  // crypto assets keep their fixed order + brand CSS classes; unknown tickers
+  // append after and get an inline hash colour via assetColor().
+  const KNOWN_ASSETS = ['BTC','ETH','HYPE','SOL'];
+  const roster = [...KNOWN_ASSETS, ...Object.keys(lots).filter(a => !KNOWN_ASSETS.includes(a))];
+  roster.forEach(a => {
     if (sFilter !== 'ALL' && sFilter !== a) return;
     const assetLots = (lots[a] || []).filter(l => l.open);
     if (!assetLots.length) return;
     const col = { BTC:'btc', ETH:'eth', HYPE:'hype', SOL:'sol' }[a];
+    const cardClass = col ? 'hcard hcard-' + col : 'hcard';
+    const cardStyle = col ? '' : ' style="border-left:3px solid ' + assetColor(a) + '"';
+    const tickClass = col ? 'hcard-ticker hct-' + col : 'hcard-ticker';
+    const tickStyle = col ? '' : ' style="color:' + assetColor(a) + '"';
+    const glyph = sym[a] || '&#9679;';
     const totalAssetLots = (lots[a] || []).length;
     if (assetLots.length >= 2) {
       mergesHtml += '<button class="btn-merge" onclick="openMergeModal(\'' + a + '\')">Merge ' + a + ' Lots</button>';
@@ -348,10 +358,10 @@ function rTable(displayRows, streams, lots) {
           + '</div>';
       }
 
-      cardsHtml += '<div class="hcard hcard-' + col + '">'
+      cardsHtml += '<div class="' + cardClass + '"' + cardStyle + '>'
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
-        +     '<span class="hcard-ticker hct-' + col + '">' + sym[a] + ' ' + a + '</span>'
+        +     '<span class="' + tickClass + '"' + tickStyle + '>' + glyph + ' ' + a + '</span>'
         +     '<span class="hcard-size">' + fmt(lot.size) + '</span>'
         +     lotBadge
         +   '</div>'

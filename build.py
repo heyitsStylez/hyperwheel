@@ -100,22 +100,55 @@ def resolve_version(cwd=BASE):
     return described or 'unknown'
 
 
-def build():
-    css      = read(os.path.join(BASE, 'src', 'css', 'styles.css'))
-    head_tmpl = read(os.path.join(BASE, 'src', 'html', 'head.html'))
-    body_html = read(os.path.join(BASE, 'src', 'html', 'body.html'))
-    modals_html = read(os.path.join(BASE, 'src', 'html', 'modals.html'))
+# Two apps share the platform-neutral core/ and each add their own JS dir +
+# HTML fragments. build.py emits a single-file artifact per app.
+APPS = {
+    'crypto': {
+        'js_dir': 'crypto',
+        'title': 'HyperWheel',
+        'subtitle': 'WHEEL STRATEGY TRACKER',
+        'local': 'hyperwheel.html',
+        'public': os.path.join('public', 'index.html'),
+    },
+    'tradfi': {
+        'js_dir': 'tradfi',
+        'title': 'Wheeler',
+        'subtitle': 'TRADFI WHEEL TRACKER',
+        'local': 'wheeler.html',
+        'public': os.path.join('public', 'wheeler', 'index.html'),
+    },
+}
 
-    # Concatenate JS modules in numeric order. Modules live under
-    # src/js/core/ (platform-neutral) and src/js/crypto/ (crypto-specific);
-    # sort by basename so the numeric prefixes drive concatenation order
-    # regardless of which directory a module sits in.
+# Body/head markers of the form {{FRAG:name}} are replaced with the app's
+# src/html/<js_dir>/<name>.html fragment. Every app must supply every fragment.
+FRAGMENTS = ('wallet_overlay', 'header_actions', 'filter_tabs', 'trade_form', 'footer')
+
+
+def _fill_fragments(template, app_dir):
+    """Replace {{FRAG:name}} markers with the app-specific fragment files."""
+    out = template
+    for name in FRAGMENTS:
+        marker = '{{FRAG:' + name + '}}'
+        if marker not in out:
+            continue
+        frag = read(os.path.join(app_dir, name + '.html')).rstrip('\n')
+        out = out.replace(marker, frag)
+    return out
+
+
+def build_app(app, css, head_tmpl, body_html, modals_html, version):
+    cfg = APPS[app]
+    app_html_dir = os.path.join(BASE, 'src', 'html', cfg['js_dir'])
+
+    # JS = platform-neutral core/ + the app's own dir. Sort by basename so the
+    # numeric prefixes drive concatenation order regardless of directory.
     js_files = sorted(
-        glob.glob(os.path.join(BASE, 'src', 'js', '*', '*.js')),
+        glob.glob(os.path.join(BASE, 'src', 'js', 'core', '*.js'))
+        + glob.glob(os.path.join(BASE, 'src', 'js', cfg['js_dir'], '*.js')),
         key=os.path.basename,
     )
     if not js_files:
-        raise RuntimeError("No JS files found in src/js/")
+        raise RuntimeError(f"No JS files found for app '{app}'")
     js = '\n'.join(read(f) for f in js_files)
 
     # Inject CSS
@@ -136,28 +169,42 @@ def build():
         + '</html>\n'
     )
 
-    # Inject git-tag version. {{VERSION}} and {{VERSION_CLEAN}} are now
-    # identical (we no longer surface the -dirty suffix); kept as separate
-    # placeholders so existing template references still resolve.
-    version = resolve_version()
+    # App-specific fragments + name, then git-tag version. {{VERSION}} and
+    # {{VERSION_CLEAN}} are identical; kept separate so template refs resolve.
+    output = _fill_fragments(output, app_html_dir)
+    output = output.replace('{{APP_TITLE}}', cfg['title'])
+    output = output.replace('{{APP_SUBTITLE}}', cfg['subtitle'])
     output = output.replace('{{VERSION_CLEAN}}', version)
     output = output.replace('{{VERSION}}', version)
 
-    # Write local copy
-    local_path = os.path.join(BASE, 'hyperwheel.html')
+    local_path = os.path.join(BASE, cfg['local'])
     with open(local_path, 'w') as f:
         f.write(output)
     print(f"Built {local_path} ({len(output.splitlines())} lines, {len(js_files)} JS modules)")
 
-    # Write Vercel output
-    public_dir = os.path.join(BASE, 'public')
-    os.makedirs(public_dir, exist_ok=True)
-    public_path = os.path.join(public_dir, 'index.html')
+    public_path = os.path.join(BASE, cfg['public'])
+    os.makedirs(os.path.dirname(public_path), exist_ok=True)
     with open(public_path, 'w') as f:
         f.write(output)
     print(f"Wrote  {public_path}")
 
     return output, js
+
+
+def build():
+    css      = read(os.path.join(BASE, 'src', 'css', 'styles.css'))
+    head_tmpl = read(os.path.join(BASE, 'src', 'html', 'head.html'))
+    body_html = read(os.path.join(BASE, 'src', 'html', 'body.html'))
+    modals_html = read(os.path.join(BASE, 'src', 'html', 'modals.html'))
+    version = resolve_version()
+
+    built = {}
+    for app in APPS:
+        built[app] = build_app(app, css, head_tmpl, body_html, modals_html, version)
+
+    # Return crypto's (output, js) for the syntax check to stay backwards-compatible;
+    # syntax_check runs on each app's JS below.
+    return built
 
 
 def syntax_check(js):
@@ -174,6 +221,8 @@ def syntax_check(js):
 
 
 if __name__ == '__main__':
-    output, js = build()
+    built = build()
     if '--check' in sys.argv:
-        syntax_check(js)
+        for app, (output, js) in built.items():
+            print(f"[{app}]", end=' ')
+            syntax_check(js)

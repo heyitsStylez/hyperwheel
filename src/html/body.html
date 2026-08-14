@@ -1,31 +1,16 @@
 
-<!-- WALLET POPUP (first visit) — must be in body.html, before the <script> block -->
-<div class="overlay" id="wallet-overlay" style="display:none">
-  <div class="wallet-popup">
-    <div class="wp-header">&gt; hyperwheel {{VERSION}}</div>
-    <div class="wp-label">Enter Wallet Address</div>
-    <div class="wp-prompt-row">
-      <span class="wp-prompt-prefix">&gt;</span>
-      <input id="wp-wallet-input" type="text" class="wp-input" placeholder="0x..."
-        spellcheck="false" autocomplete="off"
-        oninput="document.getElementById('wp-enter-btn').disabled=!this.value.trim().startsWith('0x')">
-    </div>
-    <button id="wp-enter-btn" class="wp-btn" onclick="submitWalletPopup()" disabled>[ Track Wallet ]</button>
-    <div id="wp-status" class="wp-status"><span class="wp-cursor"></span>awaiting input...</div>
-  </div>
-</div>
+{{FRAG:wallet_overlay}}
 
 <header class="header">
   <div class="hl">
     <span class="hlogo-mark">//</span>
     <div>
-      <div class="htitle">HyperWheel<span class="title-cursor"></span></div>
-      <div class="hsub">WHEEL STRATEGY TRACKER</div>
+      <div class="htitle">{{APP_TITLE}}<span class="title-cursor"></span></div>
+      <div class="hsub">{{APP_SUBTITLE}}</div>
     </div>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:16px">
-    <button class="btn btn-g" style="font-size:.65rem" onclick="showWalletPopup()">[ WALLET ]</button>
-    <button class="btn btn-p" onclick="openTradeDrawer()">[ + ADD ASSET ]</button>
+{{FRAG:header_actions}}
     <div class="utc-clock" id="utc-clock"><div class="utc-time" id="utc-time">--:--:--</div><div class="utc-date" id="utc-date">--- -- --- UTC</div></div>
   </div>
 </header>
@@ -64,19 +49,7 @@
   <!-- ASSET FILTER TABS -->
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div class="asset-tabs">
-      <button class="asset-tab all active" id="fb-ALL" onclick="setFilter('ALL')">All Assets</button>
-      <button class="asset-tab btc" id="fb-BTC" onclick="setFilter('BTC')">
-        <span class="asset-dot ad-btc"></span> BTC
-      </button>
-      <button class="asset-tab eth" id="fb-ETH" onclick="setFilter('ETH')">
-        <span class="asset-dot ad-eth"></span> ETH
-      </button>
-          <button class="asset-tab hype" id="fb-HYPE" onclick="setFilter('HYPE')">
-        <span class="asset-dot ad-hype"></span> HYPE
-      </button>
-          <button class="asset-tab sol" id="fb-SOL" onclick="setFilter('SOL')">
-        <span class="asset-dot ad-sol"></span> SOL
-      </button>
+{{FRAG:filter_tabs}}
     </div>
   </div>
 
@@ -111,43 +84,7 @@
   <!-- TRADE DRAWER -->
   <div class="drawer-overlay" id="trade-drawer-overlay" onclick="closeTradeDrawer()"></div>
   <div id="trade-drawer">
-    <div class="drawer-hd">
-      <div class="sec-ttl"><span class="dot dp"></span>Add Existing Assets</div>
-      <button class="drawer-close" onclick="closeTradeDrawer()">&#10005; Close</button>
-    </div>
-    <div class="fi">
-      <!-- Asset -->
-      <div class="field fi-full">
-        <label>Asset</label>
-        <div class="tg">
-          <button class="tb active" id="ab-BTC" onclick="setAsset('BTC')" style="color:var(--btc);border-color:var(--btcb);background:var(--btcd)">&#9654; BTC</button>
-          <button class="tb" id="ab-ETH" onclick="setAsset('ETH')">&#9670; ETH</button>
-          <button class="tb" id="ab-HYPE" onclick="setAsset('HYPE')" style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9632; HYPE</button>
-          <button class="tb" id="ab-SOL"  onclick="setAsset('SOL')"  style="color:var(--mu);border-color:var(--bd2);background:transparent">&#9679; SOL</button>
-        </div>
-      </div>
-      <!-- Open date -->
-      <div class="field"><label>Purchase Date</label><div class="date-wrap"><input type="date" id="f-date"><button type="button" class="cal-btn" onclick="document.getElementById('f-date').showPicker()" title="Pick date">&#128197;</button></div></div>
-    </div>
-
-    <div class="holding-hint" id="holding-hint" style="display:block">
-      <strong>Spot / Manual Entry</strong> &mdash; Log assets you already hold from spot purchases.<br>
-      Enter your <strong>cost basis</strong> (what you paid per token) under Cost Basis / Token, your <strong>quantity</strong> as Size.<br>
-      The tracker will treat this as an open position so you can track your holdings.
-    </div>
-    <div class="fb">
-      <div class="field"><label id="f-strike-lbl">Cost Basis / Token ($)</label><input type="number" id="f-strike" placeholder="75000" step="100"></div>
-      <div class="field" id="field-size-wrap">
-        <label>Size</label>
-        <input type="number" id="f-size" value="0.05" step="0.01">
-        <span id="f-size-hint" style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">min 0.05 BTC</span>
-      </div>
-    </div>
-    <div style="padding:0 20px 20px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
-      <div></div>
-      <button class="btn btn-p" style="padding:9px 22px" onclick="addTrade()">Add &rarr;</button>
-    </div>
-    <div class="ferr" id="ferr"></div>
+{{FRAG:trade_form}}
   </div><!-- end trade-drawer -->
 
 
@@ -195,18 +132,7 @@
 </div><!-- end content-col -->
 
 <div class="footer-bar" id="footer-bar">
-  <span class="footer-live">LIVE</span>
-  <span class="footer-sep footer-deco">·</span>
-  <span id="footer-wallet">—</span>
-  <span class="footer-sep footer-deco">·</span>
-  <span class="footer-deco">RYSK + HYPERSURFACE</span>
-  <span class="footer-sep footer-deco">·</span>
-  <span id="footer-sync-time">—</span>
-  <span class="footer-sep">·</span>
-  <span><a href="https://github.com/heyitsStylez/hyperwheel/releases/tag/{{VERSION_CLEAN}}" target="_blank" rel="noopener">{{VERSION}}</a></span>
-  <span class="footer-sep">·</span>
-  <span id="footer-cloud" title="cloud sync" style="min-width:8px;display:inline-block;text-align:center"></span>
-  <a class="footer-source" href="https://github.com/heyitsStylez/hyperwheel" target="_blank" rel="noopener" title="View source on GitHub" aria-label="View source on GitHub"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+{{FRAG:footer}}
 </div>
 
 <!-- MOBILE FAB -->
