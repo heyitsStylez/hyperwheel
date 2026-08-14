@@ -155,6 +155,51 @@ test('Wheeler buy-to-close nets closeCost off the premium', async (t) => {
   assert.strictEqual(realised, 60);
 });
 
+test('Wheeler open option row shows a Close button; HyperWheel does not', async (t) => {
+  const seed = [
+    { id: 1, asset: 'PURR', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 65, size: 100, premium: 100, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const wheeler = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(wheeler.teardown);
+  const openBody = wheeler.window.document.getElementById('ttbody-open').innerHTML;
+  assert.match(openBody, /btn-qa-cls/, 'Wheeler open option should offer a Close button');
+  assert.match(openBody, /openEditModal\(1,'CLOSED'\)/);
+
+  const cryptoSeed = [
+    { id: 2, asset: 'BTC', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 90000, size: 0.05, premium: 100, outcome: 'OPEN', closeCost: 0, platform: 'RYSK' },
+  ];
+  const crypto = await setupJsdom({ app: 'crypto', trades: cryptoSeed });
+  t.after(crypto.teardown);
+  assert.doesNotMatch(crypto.window.document.getElementById('ttbody-open').innerHTML, /btn-qa-cls/,
+    'HyperWheel closes come from chain-sync — no manual Close button');
+});
+
+test('edit modal closes an open option: sets CLOSED + closeCost, nets premium', async (t) => {
+  const seed = [
+    { id: 7, asset: 'PURR', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 65, size: 100, premium: 100, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+
+  // Row Close button opens the edit modal preset to CLOSED, revealing close cost.
+  window.openEditModal(7, 'CLOSED');
+  assert.strictEqual(window.document.getElementById('ef-outcome').value, 'CLOSED');
+  assert.notStrictEqual(window.document.getElementById('ef-closecost-field').style.display, 'none');
+
+  window.document.getElementById('ef-closecost').value = '40';
+  window.saveEdit();
+
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored[0].outcome, 'CLOSED');
+  assert.strictEqual(stored[0].closeCost, 40);
+
+  // Realised = net premium = 100 − 40 = 60.
+  assert.strictEqual(window.computePnl(stored, 'ALL', {}).realised, 60);
+});
+
 test('seeded wheeler_trades load on boot and survive a reload', async (t) => {
   const seed = [
     { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,

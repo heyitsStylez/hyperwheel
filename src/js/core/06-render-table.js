@@ -43,10 +43,14 @@ function _th(label, col, s, fn) {
     + label + (active ? '<span class="sort-arrow">' + arrow + '</span>' : '') + '</th>';
 }
 
+function _isTradfi() {
+  return !!(document.body && document.body.dataset.app === 'tradfi');
+}
+
 // Wheeler (tradfi) has one manual platform, so its Platform column carries no
 // information — drop it there. Returns the cell only for multi-platform apps.
 function _platCol(cell) {
-  return (document.body && document.body.dataset.app === 'tradfi') ? '' : cell;
+  return _isTradfi() ? '' : cell;
 }
 
 function _openHeaders() {
@@ -86,11 +90,17 @@ function _openRow(r) {
   const aprStr = isHolding ? '&mdash;'
     : '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
       + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
-  const actions = isHolding ? '' : (r.type === 'CALL'
+  // Wheeler (manual) can buy-to-close an open option; crypto closes come from
+  // chain-sync, so the Close shortcut is Wheeler-only. It opens the edit modal
+  // preset to CLOSED so the user can enter the buy-back cost.
+  const closeBtn = (!isHolding && _isTradfi())
+    ? '<button class="btn-qa btn-qa-cls" onclick="openEditModal(' + r.id + ',\'CLOSED\')" title="Buy to close">Close \u2297</button>'
+    : '';
+  const actions = (isHolding ? '' : (r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
       + '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')" title="Mark called away">Called \u2191</button>'
     : '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
-      + '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>');
+      + '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>')) + closeBtn;
   return '<tr>'
     + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
     + _platCol('<td>' + platBadge + '</td>')

@@ -418,6 +418,7 @@ body::after {
 .btn-qa-exp { color: var(--green);  border-color: var(--gb); background: var(--gd); }
 .btn-qa-cal { color: var(--orange); border-color: var(--ob); background: var(--od); }
 .btn-qa-asg { color: var(--red);    border-color: var(--rb); background: var(--rd); }
+.btn-qa-cls { color: var(--purple); border-color: var(--pb); background: var(--pd); }
 .btn-qa:hover { filter: brightness(1.18); }
 /* Row action buttons — fade in on row hover */
 .row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }

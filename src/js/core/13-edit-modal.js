@@ -2,7 +2,7 @@
 
 let _editId = null;
 
-function openEditModal(id) {
+function openEditModal(id, presetOutcome) {
   const t = trades.find(t => t.id === id);
   if (!t) return;
   _editId = id;
@@ -39,17 +39,30 @@ function openEditModal(id) {
     html += f('strike',  'Strike ($)',   'number', t.strike, 'step="0.01" min="0"');
     html += f('size',    'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
+    const outcome = presetOutcome || t.outcome;
     html += sel('outcome', 'Outcome',
-      Object.entries(OUTCOMES)
-        .filter(([code]) => code !== 'CLOSED')
-        .map(([code, o]) => ({ v: code, l: o.title })),
-      t.outcome);
+      Object.entries(OUTCOMES).map(([code, o]) => ({ v: code, l: o.title })),
+      outcome);
+    // Buy-to-close cost, netted off premium; only meaningful for CLOSED.
+    html += '<div class="field" id="ef-closecost-field"><label>Close Cost ($)</label>'
+      + '<input id="ef-closecost" type="number" value="' + (t.closeCost || '') + '" step="0.01" min="0"></div>';
     html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
   }
 
   document.getElementById('edit-fields').innerHTML = html;
   document.getElementById('edit-err').textContent = '';
+
+  const outSel = document.getElementById('ef-outcome');
+  if (outSel) { outSel.addEventListener('change', toggleEditCloseCost); toggleEditCloseCost(); }
+
   document.getElementById('edit-overlay').classList.add('open');
+}
+
+// Show the Close Cost field only when the selected outcome is CLOSED.
+function toggleEditCloseCost() {
+  const sel = document.getElementById('ef-outcome');
+  const field = document.getElementById('ef-closecost-field');
+  if (sel && field) field.style.display = sel.value === 'CLOSED' ? '' : 'none';
 }
 
 function closeEditModal() {
@@ -86,6 +99,12 @@ function saveEdit() {
     const prem = parseFloat(get('premium').value);
     t.premium  = isNaN(prem) ? 0 : prem;
     t.outcome  = get('outcome').value;
+    if (t.outcome === 'CLOSED') {
+      const cc = parseFloat(get('closecost').value);
+      t.closeCost = isNaN(cc) ? 0 : cc;
+    } else {
+      t.closeCost = 0;
+    }
   }
 
   save();
