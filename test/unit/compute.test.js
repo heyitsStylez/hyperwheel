@@ -3,7 +3,7 @@ const assert = require('node:assert');
 
 // compute() reads `trades` and calls `lotEngine` from the global scope, since
 // in the browser they're concatenated into one script. Wire both before requiring.
-global.lotEngine = require('../../src/js/04b-lot-engine.js').lotEngine;
+global.lotEngine = require('../../src/js/core/04b-lot-engine.js').lotEngine;
 
 test('compute derives netCost = costBasis - lotPremiums/size for each open lot', () => {
   global.trades = [
@@ -13,7 +13,7 @@ test('compute derives netCost = costBasis - lotPremiums/size for each open lot',
     // BTC lot 2: assigned PUT
     { id: 3, asset: 'BTC', type: 'PUT',     date: '2026-02-01', strike: 48000, size: 0.05, premium: 60, outcome: 'ASSIGNED', closeCost: 0, dte: 21, expiry: '2026-02-22' },
   ];
-  const { compute } = require('../../src/js/05-compute.js');
+  const { compute } = require('../../src/js/core/05-compute.js');
   const { lots } = compute('ALL');
 
   assert.strictEqual(lots.BTC.length, 2);

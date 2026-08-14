@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 global.trades = [];
 global.livePrices = {};
 
-const { calcPremiumStats } = require('../../src/js/05d-calc-stats.js');
+const { calcPremiumStats } = require('../../src/js/core/05d-calc-stats.js');
 
 function makeRow(overrides) {
   return Object.assign({

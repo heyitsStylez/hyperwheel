@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { lotEngine } = require('../../src/js/04b-lot-engine.js');
+const { lotEngine } = require('../../src/js/core/04b-lot-engine.js');
 
 test('assigned PUT credits its net premium to the new lot lotPremiums (May 2026 fix)', () => {
   const { lots, portfolioPnl } = lotEngine([
