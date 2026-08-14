@@ -277,6 +277,9 @@ function renderExpiryTable(allRows) {
 }
 
 function fetchExpiryPrices() {
+  // Wheeler marks equities/ETFs to spot via its own provider stack (#92); the
+  // shared Refresh button + boot route through here for both apps.
+  if (_isTradfi()) return wheelerFetchPrices();
   fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,hyperliquid,solana&vs_currencies=usd')
     .then(r => r.json())
     .then(data => {

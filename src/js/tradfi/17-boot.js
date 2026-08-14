@@ -15,4 +15,5 @@ var bootReady = (async function init() {
 
   setType(sType);
   render();
+  fetchExpiryPrices();  // live equity/ETF spot for holdings cards (#92)
 })();

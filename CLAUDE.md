@@ -40,6 +40,9 @@ build.py                  # assembler: emits BOTH artifacts (core/ + crypto|trad
                           # tags the built <body data-app="crypto|tradfi"> for render-time app checks
 api/sync.js               # Vercel serverless: KV-backed cloud sync of HOLDINGs
 api/chain-sync.js         # Vercel serverless: CORS proxy to Rysk + Hypersurface
+api/quote.js              # Vercel serverless: key-injecting proxy for Wheeler
+                          # equity/ETF quotes (Finnhub + Twelve Data); keys live
+                          # in env vars FINNHUB_KEY / TWELVEDATA_KEY, not in HTML
 src/
   html/head.html          # <head> with /* CSS_PLACEHOLDER */ marker + {{APP_TITLE}}
   html/body.html          # shared <body> shell with {{FRAG:*}} markers
