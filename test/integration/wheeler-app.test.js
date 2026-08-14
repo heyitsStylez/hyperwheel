@@ -201,6 +201,27 @@ test('edit modal closes an open option: sets CLOSED + closeCost, nets premium', 
   assert.strictEqual(window.computePnl(stored, 'ALL', {}).realised, 60);
 });
 
+test('edit modal shows option size as contracts and stores shares on save', async (t) => {
+  const seed = [
+    { id: 3, asset: 'IBIT', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 70, size: 300, premium: 120, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+  const doc = window.document;
+
+  window.openEditModal(3);
+  // Field is labelled Contracts and shows 3, not 300 shares.
+  assert.match(doc.getElementById('edit-fields').innerHTML, /Contracts/);
+  assert.strictEqual(doc.getElementById('ef-size').value, '3');
+
+  // Editing to 5 contracts stores 500 shares.
+  doc.getElementById('ef-size').value = '5';
+  window.saveEdit();
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored[0].size, 500, '5 contracts must persist as 500 shares');
+});
+
 test('form boundary: entering N contracts stores N×100 shares (options only)', async (t) => {
   const { window, teardown } = await setupJsdom({ app: 'tradfi' });
   t.after(teardown);
