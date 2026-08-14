@@ -34,8 +34,13 @@ src/
   html/body.html          # <body>: header, main, drawer, footer, toast stack
   html/modals.html        # edit, merge, reset overlays
   css/styles.css          # all styles (single dark theme — see "Themes" note)
-  js/01-state.js .. 18-chain-sync.js   # numbered modules, concatenated in order
+  js/core/*.js            # platform-neutral modules (engine, compute, pnl, render, charts, modals)
+  js/crypto/*.js          # crypto-specific modules (wallet popup, cloud-sync, chain-sync, chain-apply)
 ```
+
+JS modules live under `src/js/core/` and `src/js/crypto/`; `build.py` globs both
+and concatenates by basename, so the numeric prefixes still drive order regardless
+of directory.
 
 JS modules are concatenated in lexicographic order, top-level functions become
 globals, and 17-boot.js runs an IIFE last to bootstrap the app.

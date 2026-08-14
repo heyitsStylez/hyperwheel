@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { fmt } = require('../../src/js/02-utils.js');
+const { fmt } = require('../../src/js/core/02-utils.js');
 
 test('fmt does not round strikes (max 2dp, never 0dp)', () => {
   assert.strictEqual(fmt(63000),     '63,000');

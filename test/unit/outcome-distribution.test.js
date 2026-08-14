@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { outcomeDistribution } = require('../../src/js/05c-outcome-distribution.js');
+const { outcomeDistribution } = require('../../src/js/core/05c-outcome-distribution.js');
 
 test('empty trades → empty array', () => {
   assert.deepStrictEqual(outcomeDistribution([]), []);

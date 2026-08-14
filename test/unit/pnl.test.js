@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { computePnl } = require('../../src/js/05b-pnl.js');
+const { computePnl } = require('../../src/js/core/05b-pnl.js');
 
 test('PUT EXPIRED → realised = netPrem', () => {
   const trades = [
@@ -244,7 +244,7 @@ test('realisedSeries: CALLED event contributes premium AND capital gain at expir
 });
 
 // buildDisplaySeries tests
-const { buildDisplaySeries } = require('../../src/js/05b-pnl.js');
+const { buildDisplaySeries } = require('../../src/js/core/05b-pnl.js');
 
 test('buildDisplaySeries: empty input returns empty', () => {
   assert.deepStrictEqual(buildDisplaySeries([], 'ALL', '2026-05-16'), []);

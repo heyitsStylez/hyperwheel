@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { applyCloseTrade, applyImportedTrades } = require('../../src/js/18b-chain-apply.js');
+const { applyCloseTrade, applyImportedTrades } = require('../../src/js/crypto/18b-chain-apply.js');
 
 const PAST_DATE   = '2020-01-01';
 const FUTURE_DATE = '2099-12-31';

@@ -106,8 +106,14 @@ def build():
     body_html = read(os.path.join(BASE, 'src', 'html', 'body.html'))
     modals_html = read(os.path.join(BASE, 'src', 'html', 'modals.html'))
 
-    # Concatenate JS modules in numeric order
-    js_files = sorted(glob.glob(os.path.join(BASE, 'src', 'js', '*.js')))
+    # Concatenate JS modules in numeric order. Modules live under
+    # src/js/core/ (platform-neutral) and src/js/crypto/ (crypto-specific);
+    # sort by basename so the numeric prefixes drive concatenation order
+    # regardless of which directory a module sits in.
+    js_files = sorted(
+        glob.glob(os.path.join(BASE, 'src', 'js', '*', '*.js')),
+        key=os.path.basename,
+    )
     if not js_files:
         raise RuntimeError("No JS files found in src/js/")
     js = '\n'.join(read(f) for f in js_files)
