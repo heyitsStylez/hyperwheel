@@ -296,16 +296,17 @@ test('display toggle: size renders as contracts or shares across tables + cards'
   const openBody = () => doc.getElementById('ttbody-open').innerHTML;
   const holdings = () => doc.getElementById('ncbwrap').innerHTML;
 
-  // Default is contracts: 300 shares → "3 ct".
+  // Default is contracts for option rows: 300 shares → "3 ct". Holdings are
+  // physical shares, so the holdings card always shows shares regardless of toggle.
   assert.match(openBody(), /3 ct/, 'open table should show contracts by default');
   assert.doesNotMatch(openBody(), /300 sh/);
-  assert.match(holdings(), /3 ct/, 'holdings card should show contracts by default');
+  assert.match(holdings(), /300 sh/, 'holdings card should always show shares');
 
   // Toggle to shares.
   window.setSizeDisplay('shares');
   assert.match(openBody(), /300 sh/, 'open table should show shares after toggle');
   assert.doesNotMatch(openBody(), /3 ct/);
-  assert.match(holdings(), /300 sh/, 'holdings card should show shares after toggle');
+  assert.match(holdings(), /300 sh/, 'holdings card stays in shares after toggle');
 
   // Toggle button reflects active state.
   assert.match(doc.getElementById('sd-shares').className, /active/);
