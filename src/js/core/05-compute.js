@@ -9,7 +9,8 @@
 // presentation-shape only.
 
 function compute(assetFilter) {
-  const assets = ['BTC', 'ETH', 'HYPE', 'SOL'];
+  // Derive the roster from the data so arbitrary tickers work with no registry.
+  const assets = [...new Set(trades.map(t => t.asset))];
   const streams = {};
   const lots = {};
 

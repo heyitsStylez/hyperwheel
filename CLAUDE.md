@@ -51,8 +51,9 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 
 | File | Lines | Key exports / purpose |
 |------|------:|-----------------------|
-| `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sHistOutcome/sHistFrom/sHistTo`, `livePrices{}`, `MIN_SIZE`, `ASSET_COLORS`, `mergeAsset` |
+| `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sHistOutcome/sHistFrom/sHistTo`, `livePrices{}`, `mergeAsset` |
 | `01a-outcomes.js` | 32 | `OUTCOMES` registry: per-outcome `{title, badgeClass, platforms}`. Single source of truth for outcome display data + picker membership. Lot-lifecycle effects live in the Lot Engine, not here |
+| `01b-asset-meta.js` | 24 | `assetColor(sym)` (brand override → stable symbol-hash HSL fallback) and `minSize(sym)` (contract minimum, `0` for unknown tickers). Backed by `ASSET_BRAND`/`ASSET_MIN_SIZE` registries populated by platform modules. Dual-exported. Lets arbitrary tickers work with no config |
 | `02-utils.js` | 33 | `today()`, `save()` (routes trades through the persistence seam `persist()`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`). Dual-exports `today/fmt/sk` for Node tests |
 | `03-form-controls.js` | 212 | `setAsset/setType/setPlatform/setSizeUnit/setOut/setFilter/setPpnlTab`, `refreshLotPicker`, `autoFillFromLot`, `autoDTE`, history filters: `setHistOutcome/setHistFrom/setHistTo/clearHistFilters` |
 | `04-trade-crud.js` | 39 | `addTrade()` (HOLDING-only — adds spot from drawer), `clearForm`, `deleteTrade`, `quickOutcome` (fires toasts) |
@@ -67,6 +68,7 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `08-render.js` | 8 | `render()` — orchestrator: `compute → rStats → rTable → rOutcomeChart → rCharts` |
 | `09-drawer-modal.js` | 15 | `openTradeDrawer`, `closeTradeDrawer`, `focusForm` |
 | `10-reset-modal.js` | 4 | `showReset`, `closeReset`, `doReset` (wipes `trades`) |
+| `11a-asset-brand.js` | 6 | Registers crypto brand colours + Rysk contract minimums as overrides on the core `ASSET_BRAND`/`ASSET_MIN_SIZE` registries (BTC/ETH/HYPE/SOL). Runs at load after `01b-asset-meta.js` |
 | `11-wallet-popup.js` | 34 | `showWalletPopup`, `hideWalletPopup`, `submitWalletPopup` (first-visit wallet entry) |
 | `12a-persistence.js` | 23 | **Persistence seam** (crypto impl): `loadTrades(): Promise<Trade[]>`, `persist(trades): Promise<void>`, `currentUserKey(): string`. Core reads/writes trades ONLY through these (async from day one, per #84). Crypto wraps `hw_holdings` + debounced cloud push |
 | `12-cloud-sync.js` | 66 | `_setCloudStatus`, `cloudPush` (debounced via `scheduleCloudPush`), `cloudPull` — pushes/pulls **only HOLDING trades** to `/api/sync` keyed by wallet. Toasts on error and on pull-with-data |
@@ -226,8 +228,14 @@ There is **no AI-key entry, no scanner state, no preferences object**.
 
 Hypersurface has no minimum contract size.
 
+Colours + minimums are now looked up via helpers (`01b-asset-meta.js`), not
+fixed maps: `assetColor(sym)` / `minSize(sym)`. Crypto brand values are
+registered as overrides in `11a-asset-brand.js`; unknown tickers fall back to a
+stable symbol-hash colour and `minSize` `0`.
+
 ```js
-const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
+// crypto/11a-asset-brand.js registers the overrides:
+Object.assign(ASSET_MIN_SIZE, { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 });
 ```
 
 Rysk size increments are exact: HYPE 50, ETH 0.5, BTC 0.05 (for both calls and puts).

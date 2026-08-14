@@ -6,8 +6,8 @@ let trades = [];
 let sAsset = 'BTC', sType = 'PUT', sOut = 'OPEN', sFilter = 'ALL', sPlatform = 'RYSK', sSizeUnit = 'contracts', sPpnlTab = 'total', sCpnlPeriod = 'ALL';
 var livePrices = {};
 
-const MIN_SIZE = { BTC: 0.05, ETH: 0.5, HYPE: 50, SOL: 10 };
-const ASSET_COLORS = { BTC: '#f7931a', ETH: '#627eea', HYPE: '#00e5a0', SOL: '#9945ff' };
+// Per-ticker colour + contract minimum live in 01b-asset-meta.js (assetColor /
+// minSize), with crypto brand overrides in crypto/11a-asset-brand.js.
 
 // Merge modal state
 let mergeAsset = null;
