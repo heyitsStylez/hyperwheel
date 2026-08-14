@@ -2,13 +2,13 @@
 // Equity/ETF spot for Wheeler holdings, mirroring HyperWheel's CoinGecko flow
 // (fetchExpiryPrices) but for stocks/ETFs (#92). Finnhub is the primary
 // real-time source; Twelve Data is the fallback and the sole source of the
-// market-open indicator. Both are browser-direct (CORS-clear) — no proxy.
+// market-open indicator.
 //
-// Keys are user-supplied — this is a personal, local tool. Fill them in below;
-// a wrong/blank key just makes that provider error out and fail over. Tests stub
-// fetch, so the values don't matter there.
-const WHEELER_FINNHUB_KEY = '';
-const WHEELER_TWELVEDATA_KEY = '';
+// Requests route through the /api/quote serverless proxy so the provider API
+// keys stay server-side (Vercel env vars FINNHUB_KEY / TWELVEDATA_KEY) instead
+// of shipping in the built HTML. Over file:// / a static server the proxy is
+// unreachable, so both providers "fail" and the feed silently shows no spot —
+// run `vercel dev` for live prices locally.
 
 // Market-open state from Twelve Data's is_market_open: true | false | null(unknown).
 // var (not let) so it lands on window for tests, like livePrices.
@@ -26,7 +26,7 @@ function wheelerHeldTickers() {
 async function finnhubPrices(tickers) {
   const out = {};
   await Promise.all(tickers.map(async t => {
-    const r = await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(t) + '&token=' + WHEELER_FINNHUB_KEY);
+    const r = await fetch('/api/quote?provider=finnhub&symbol=' + encodeURIComponent(t));
     if (!r.ok) throw new Error('finnhub ' + r.status);
     const d = await r.json();
     const p = d && d.c;
@@ -39,7 +39,7 @@ async function finnhubPrices(tickers) {
 // Twelve Data /quote — one batched call. Returns { prices, isMarketOpen }.
 // Single symbol → flat object; multiple → object keyed by symbol.
 async function twelveDataQuote(tickers) {
-  const r = await fetch('https://api.twelvedata.com/quote?symbol=' + tickers.map(encodeURIComponent).join(',') + '&apikey=' + WHEELER_TWELVEDATA_KEY);
+  const r = await fetch('/api/quote?provider=twelvedata&symbols=' + tickers.map(encodeURIComponent).join(','));
   if (!r.ok) throw new Error('twelvedata ' + r.status);
   const d = await r.json();
   if (d && d.status === 'error') throw new Error(d.message || 'twelvedata error');

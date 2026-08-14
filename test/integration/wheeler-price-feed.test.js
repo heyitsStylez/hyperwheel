@@ -31,8 +31,8 @@ test('Finnhub primary: marks held ticker to spot on the holdings card', async (t
   t.after(teardown);
 
   window.fetch = routedFetch([
-    ['finnhub.io', () => ok({ c: 66 })],
-    ['twelvedata.com', () => ok({ symbol: 'IBIT', close: '66', is_market_open: true })],
+    ['provider=finnhub', () => ok({ c: 66 })],
+    ['provider=twelvedata', () => ok({ symbol: 'IBIT', close: '66', is_market_open: true })],
   ]);
 
   await window.wheelerFetchPrices();
@@ -49,8 +49,8 @@ test('primary failure falls back to Twelve Data without blanking prices', async 
   t.after(teardown);
 
   window.fetch = routedFetch([
-    ['finnhub.io', () => fail(500)],
-    ['twelvedata.com', () => ok({ symbol: 'IBIT', close: '62.5', is_market_open: false })],
+    ['provider=finnhub', () => fail(500)],
+    ['provider=twelvedata', () => ok({ symbol: 'IBIT', close: '62.5', is_market_open: false })],
   ]);
 
   await window.wheelerFetchPrices();
@@ -65,8 +65,8 @@ test('market-open indicator reflects Twelve Data is_market_open', async (t) => {
 
   // Open
   window.fetch = routedFetch([
-    ['finnhub.io', () => fail(500)],
-    ['twelvedata.com', () => ok({ symbol: 'IBIT', close: '62', is_market_open: true })],
+    ['provider=finnhub', () => fail(500)],
+    ['provider=twelvedata', () => ok({ symbol: 'IBIT', close: '62', is_market_open: true })],
   ]);
   await window.wheelerFetchPrices();
   assert.strictEqual(window.sMarketOpen, true);
@@ -74,8 +74,8 @@ test('market-open indicator reflects Twelve Data is_market_open', async (t) => {
 
   // Closed
   window.fetch = routedFetch([
-    ['finnhub.io', () => fail(500)],
-    ['twelvedata.com', () => ok({ symbol: 'IBIT', close: '62', is_market_open: false })],
+    ['provider=finnhub', () => fail(500)],
+    ['provider=twelvedata', () => ok({ symbol: 'IBIT', close: '62', is_market_open: false })],
   ]);
   await window.wheelerFetchPrices();
   assert.strictEqual(window.sMarketOpen, false);
@@ -88,8 +88,8 @@ test('both providers down leaves existing prices intact', async (t) => {
 
   window.livePrices = { IBIT: 99 };
   window.fetch = routedFetch([
-    ['finnhub.io', () => fail(500)],
-    ['twelvedata.com', () => fail(500)],
+    ['provider=finnhub', () => fail(500)],
+    ['provider=twelvedata', () => fail(500)],
   ]);
 
   await window.wheelerFetchPrices();
@@ -106,8 +106,8 @@ test('multi-ticker Twelve Data fallback keyed by symbol', async (t) => {
   t.after(teardown);
 
   window.fetch = routedFetch([
-    ['finnhub.io', () => fail(500)],
-    ['twelvedata.com', () => ok({
+    ['provider=finnhub', () => fail(500)],
+    ['provider=twelvedata', () => ok({
       IBIT: { symbol: 'IBIT', close: '62', is_market_open: true },
       MSTR: { symbol: 'MSTR', close: '355', is_market_open: true },
     })],
