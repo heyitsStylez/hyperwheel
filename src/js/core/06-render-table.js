@@ -371,21 +371,12 @@ function rTable(displayRows, streams, lots) {
         const pnlPct = nc > 0 ? (pnlPerToken / nc * 100) : 0;
         const cls = pnlTotal >= 0 ? 'green' : 'red';
         const sign = pnlTotal >= 0 ? '+' : '';
-        let hint;
-        if (nc > spot) {
-          const need = ((nc - spot) / spot * 100).toFixed(1);
-          hint = '<div class="hcard-hint">Next call &ge; <b>$' + fmt(nc) + '</b> &mdash; ' + need + '% above spot to stay above net cost</div>';
-        } else {
-          const cushion = ((spot - nc) / spot * 100).toFixed(1);
-          hint = '<div class="hcard-hint hcard-hint-ok">Spot is ' + cushion + '% above net cost &mdash; any call &ge; spot is profitable</div>';
-        }
         spotBlock = '<div class="hcard-spot">'
           +   '<div class="hcard-spot-row">'
           +     '<span class="hcard-spot-lbl">Spot</span>'
           +     '<span class="hcard-spot-val">$' + fmt(spot) + '</span>'
           +     '<span class="hcard-pnl ' + cls + '">' + sign + '$' + fmt(pnlTotal) + ' (' + sign + pnlPct.toFixed(1) + '%)</span>'
           +   '</div>'
-          +   hint
           + '</div>';
       }
 
@@ -393,7 +384,7 @@ function rTable(displayRows, streams, lots) {
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
         +     '<span class="' + tickClass + '"' + tickStyle + '>' + glyph + ' ' + a + '</span>'
-        +     '<span class="hcard-size">' + fmtSize(lot.size) + '</span>'
+        +     '<span class="hcard-size">' + (_isTradfi() ? fmt(lot.size) + ' sh' : fmtSize(lot.size)) + '</span>'
         +     lotBadge
         +   '</div>'
         +   '<div style="display:flex;align-items:center;gap:8px">'
