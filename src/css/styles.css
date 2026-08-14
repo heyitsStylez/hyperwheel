@@ -307,6 +307,9 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .ppnl-card.has-tip:hover{border-color:var(--mu)}
 .has-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0c1119;color:var(--text);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:.7rem;line-height:1.45;width:max-content;max-width:300px;white-space:normal;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .12s ease;z-index:20}
 .has-tip:hover::after{opacity:1}
+/* Flip the popover below the anchor — for tips near the top of a section or
+   inside an overflow:hidden container (e.g. the cpnl hero tiles). */
+.has-tip--below::after{bottom:auto;top:calc(100% + 8px)}
 .ppnl-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--mu);font-family:var(--mono);margin-bottom:10px}
 .ppnl-main{font-size:1.05rem;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1.1}
 .ppnl-sub{font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:4px}
