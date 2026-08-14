@@ -8,6 +8,17 @@ function setTicker(v) {
   refreshLotPicker();
 }
 
+// Contracts↔shares display toggle (Wheeler). Flips how stored `size` (always
+// shares) is rendered across tables and cards; no effect on stored data.
+function setSizeDisplay(unit) {
+  sSizeDisplay = unit;
+  ['contracts', 'shares'].forEach(u => {
+    const btn = document.getElementById('sd-' + u);
+    if (btn) btn.classList.toggle('active', u === unit);
+  });
+  render();
+}
+
 function wheelerAddTrade() {
   const errEl = document.getElementById('ferr');
   errEl.style.display = 'none';
@@ -40,7 +51,9 @@ function wheelerAddTrade() {
     // premium received. Only meaningful for the CLOSED outcome.
     const closeCost = sOut === 'CLOSED' ? (parseFloat(g('f-closecost')) || 0) : 0;
     if (!expiry) return err('Expiry required.');
-    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size, premium, outcome: sOut, closeCost, platform: 'MANUAL' };
+    // Options are entered in contracts; store shares so the lot engine (shares)
+    // lines up with holdings entered as raw share counts.
+    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size: contractsToShares(size), premium, outcome: sOut, closeCost, platform: 'MANUAL' };
   }
 
   trades.push(tradeObj);

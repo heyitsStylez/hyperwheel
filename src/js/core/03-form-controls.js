@@ -65,8 +65,12 @@ function setType(t) {
     if (document.getElementById('f-prem').value === '0') {
       document.getElementById('f-prem').value = '';
     }
-    document.getElementById('f-size').value = minSize(sAsset);
+    document.getElementById('f-size').value = minSize(sAsset) || '';
   }
+  // Wheeler enters options in contracts and holdings in raw shares — label the
+  // size field to match (crypto's form has no f-size-lbl, so this is a no-op).
+  const sizeLbl = document.getElementById('f-size-lbl');
+  if (sizeLbl && _isTradfi()) sizeLbl.textContent = isHolding ? 'Shares' : 'Contracts';
   refreshLotPicker();
   refreshSizeUnitToggle();
   if (t !== 'PUT') setSizeUnit('contracts');
@@ -135,7 +139,7 @@ function refreshLotPicker() {
   const openLots = (lots[sAsset] || []).filter(l => l.open);
   if (openLots.length < 2) { row.style.display = 'none'; return; }
   sel.innerHTML = openLots.map(l =>
-    '<option value="' + l.lotNum + '">Lot ' + l.lotNum + ' \u2014 ' + l.size + ' ' + sAsset + ' @ $' + fmt(l.costBasis) + '</option>'
+    '<option value="' + l.lotNum + '">Lot ' + l.lotNum + ' \u2014 ' + fmtSize(l.size, sAsset) + ' @ $' + fmt(l.costBasis) + '</option>'
   ).join('');
   row.style.display = '';
   autoFillFromLot(); // auto-fill if outcome is already EXPIRED/CALLED
@@ -165,7 +169,9 @@ function autoFillFromLot() {
   const sizeEl   = document.getElementById('f-size');
   const premEl   = document.getElementById('f-prem');
   if (strikeEl) strikeEl.value = prev.strike;
-  if (sizeEl)   sizeEl.value   = prev.size;
+  // Wheeler's size field is contracts; prev.size is stored shares — convert back
+  // so the round-trip through wheelerAddTrade's ×100 doesn't overstate size.
+  if (sizeEl)   sizeEl.value   = _isTradfi() ? sharesToContracts(prev.size) : prev.size;
   // EXPIRED / CALLED = closing event; premium was already collected at OPEN, set to 0
   if (premEl && !premEl.readOnly) premEl.value = '0';
 }

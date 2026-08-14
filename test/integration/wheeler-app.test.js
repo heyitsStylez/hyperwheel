@@ -36,7 +36,8 @@ test('manual HOLDING + covered CALL on arbitrary ticker tracks net cost', async 
   setVal('f-size', '100');
   window.wheelerAddTrade();
 
-  // Covered CALL against the lot: strike 65, size 100, premium $100 (stays open).
+  // Covered CALL against the lot: strike 65, 1 contract (= 100 shares),
+  // premium $100 (stays open).
   window.setTicker('IBIT');
   window.setType('CALL');
   window.setOut('OPEN');
@@ -44,7 +45,7 @@ test('manual HOLDING + covered CALL on arbitrary ticker tracks net cost', async 
   setVal('f-expiry', '2026-02-05');
   setVal('f-dte', '31');
   setVal('f-strike', '65');
-  setVal('f-size', '100');
+  setVal('f-size', '1');
   setVal('f-prem', '100');
   window.wheelerAddTrade();
 
@@ -84,7 +85,7 @@ test('two rapid manual adds get distinct ids (no Date.now collision)', async (t)
   setVal('f-date', '2026-01-05');
   setVal('f-expiry', '2026-02-05');
   setVal('f-strike', '65');
-  setVal('f-size', '100');
+  setVal('f-size', '1');
   setVal('f-prem', '100');
   window.wheelerAddTrade();
 
@@ -140,7 +141,7 @@ test('Wheeler buy-to-close nets closeCost off the premium', async (t) => {
   setVal('f-date', '2026-01-05');
   setVal('f-expiry', '2026-02-05');
   setVal('f-strike', '65');
-  setVal('f-size', '100');
+  setVal('f-size', '1');
   setVal('f-prem', '100');
   setVal('f-closecost', '40');
   window.wheelerAddTrade();
@@ -198,6 +199,96 @@ test('edit modal closes an open option: sets CLOSED + closeCost, nets premium', 
 
   // Realised = net premium = 100 − 40 = 60.
   assert.strictEqual(window.computePnl(stored, 'ALL', {}).realised, 60);
+});
+
+test('form boundary: entering N contracts stores N×100 shares (options only)', async (t) => {
+  const { window, teardown } = await setupJsdom({ app: 'tradfi' });
+  t.after(teardown);
+  const setVal = (id, v) => { window.document.getElementById(id).value = v; };
+
+  // Option: 3 contracts → 300 shares.
+  window.setTicker('IBIT');
+  window.setType('PUT');
+  window.setOut('OPEN');
+  setVal('f-date', '2026-01-05');
+  setVal('f-expiry', '2026-02-05');
+  setVal('f-strike', '55');
+  setVal('f-size', '3');
+  setVal('f-prem', '90');
+  window.wheelerAddTrade();
+
+  // Holding: entered as a raw share count — no ×100.
+  window.setTicker('IBIT');
+  window.setType('HOLDING');
+  setVal('f-date', '2026-01-02');
+  setVal('f-strike', '60');
+  setVal('f-size', '250');
+  window.wheelerAddTrade();
+
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  const put = stored.find(t => t.type === 'PUT');
+  const holding = stored.find(t => t.type === 'HOLDING');
+  assert.strictEqual(put.size, 300, '3 contracts must store 300 shares');
+  assert.strictEqual(holding.size, 250, 'holding share count must not be multiplied');
+});
+
+test('autofill from lot rewrites size as contracts (round-trips through ×100)', async (t) => {
+  // A prior CALL (300 shares = 3 contracts) is what autoFillFromLot pulls back
+  // into the contracts field when logging its EXPIRED close.
+  const seed = [
+    { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,
+      strike: 60, size: 300, premium: 0, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+    { id: 2, asset: 'IBIT', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 70, size: 300, premium: 120, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+
+  // Log the CALL expiring: selecting the outcome autofills strike/size from the
+  // prior CALL. The size field must show 3 (contracts), not 300 (shares).
+  window.setTicker('IBIT');
+  window.setType('CALL');
+  window.setOut('EXPIRED');
+  assert.strictEqual(window.document.getElementById('f-size').value, '3',
+    'autofill must convert stored shares back to contracts');
+
+  window.document.getElementById('f-date').value = '2026-02-05';
+  window.document.getElementById('f-expiry').value = '2026-02-05';
+  window.wheelerAddTrade();
+
+  // Re-storing must land back on 300 shares, not 30000.
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  const expired = stored.find(s => s.outcome === 'EXPIRED');
+  assert.strictEqual(expired.size, 300, 'round-trip must preserve share count');
+});
+
+test('display toggle: size renders as contracts or shares across tables + cards', async (t) => {
+  const seed = [
+    { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,
+      strike: 60, size: 300, premium: 0, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+    { id: 2, asset: 'IBIT', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 70, size: 300, premium: 120, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+  const doc = window.document;
+  const openBody = () => doc.getElementById('ttbody-open').innerHTML;
+  const holdings = () => doc.getElementById('ncbwrap').innerHTML;
+
+  // Default is contracts: 300 shares → "3 ct".
+  assert.match(openBody(), /3 ct/, 'open table should show contracts by default');
+  assert.doesNotMatch(openBody(), /300 sh/);
+  assert.match(holdings(), /3 ct/, 'holdings card should show contracts by default');
+
+  // Toggle to shares.
+  window.setSizeDisplay('shares');
+  assert.match(openBody(), /300 sh/, 'open table should show shares after toggle');
+  assert.doesNotMatch(openBody(), /3 ct/);
+  assert.match(holdings(), /300 sh/, 'holdings card should show shares after toggle');
+
+  // Toggle button reflects active state.
+  assert.match(doc.getElementById('sd-shares').className, /active/);
+  assert.doesNotMatch(doc.getElementById('sd-contracts').className, /active/);
 });
 
 test('seeded wheeler_trades load on boot and survive a reload', async (t) => {

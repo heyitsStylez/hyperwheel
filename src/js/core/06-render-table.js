@@ -53,6 +53,18 @@ function _platCol(cell) {
   return _isTradfi() ? '' : cell;
 }
 
+// Display boundary for `size` (always stored in shares). Wheeler shows either
+// contracts (shares ÷ 100) or shares per the sSizeDisplay toggle; crypto is
+// unaffected — pass `asset` to append the token symbol as before.
+function fmtSize(shares, asset) {
+  if (_isTradfi()) {
+    return sSizeDisplay === 'shares'
+      ? fmt(shares) + ' sh'
+      : fmt(sharesToContracts(shares)) + ' ct';
+  }
+  return asset != null ? fmt(shares) + ' ' + asset : fmt(shares);
+}
+
 function _openHeaders() {
   const s = tSortOpen, fn = 'sortOpen';
   return _th('Asset','asset',s,fn) + _platCol(_th('Platform','platform',s,fn)) + _th('Date','date',s,fn)
@@ -109,7 +121,7 @@ function _openRow(r) {
     + '<td class="mu">' + (isHolding ? '&mdash;' : _liveDte(r.expiry)) + '</td>'
     + '<td>' + typeBadge + '</td>'
     + '<td>$' + fmt(r.strike) + (isHolding ? '<br><span style="font-size:.65rem;color:var(--mu)">cost basis</span>' : '') + '</td>'
-    + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
+    + '<td class="mu">' + fmtSize(r.size, r.asset) + '</td>'
     + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td class="td-act"><div class="row-actions">' + actions
@@ -137,7 +149,7 @@ function _histRow(r) {
     + '<td class="mu">' + (r.dte || '&mdash;') + '</td>'
     + '<td>' + typeBadge + '</td>'
     + '<td>$' + fmt(r.strike) + '</td>'
-    + '<td class="mu">' + r.size + ' ' + r.asset + '</td>'
+    + '<td class="mu">' + fmtSize(r.size, r.asset) + '</td>'
     + '<td class="cr">' + (r.outcome === 'CLOSED'
         ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
         : '+$' + fmt(r.premium)) + '</td>'
@@ -228,7 +240,7 @@ function renderExpiryTable(allRows) {
       + _platCol('<td>' + e.platBadge + '</td>')
       + '<td><span class="badge b' + t.type.toLowerCase() + '">' + t.type + '</span></td>'
       + '<td>$' + fmt(t.strike) + '</td>'
-      + '<td>' + fmt(t.size) + '</td>'
+      + '<td>' + fmtSize(t.size) + '</td>'
       + '<td>' + e.dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
       + '<td>' + e.aprHtml + '</td>'
@@ -248,7 +260,7 @@ function renderExpiryTable(allRows) {
       + '</div>'
       + '<div class="exp-card-row2">'
       +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(t.strike) + '</div>'
-      +   '<div><span class="exp-card-lbl">Size</span> ' + fmt(t.size) + '</div>'
+      +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(t.size) + '</div>'
       +   '<div><span class="exp-card-lbl">Prem</span> $' + fmt(t.premium) + '</div>'
       +   '<div><span class="exp-card-lbl">APR</span> ' + e.aprHtml + '</div>'
       +   '<div class="exp-card-status">' + e.statusHtml + '</div>'
@@ -378,7 +390,7 @@ function rTable(displayRows, streams, lots) {
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
         +     '<span class="' + tickClass + '"' + tickStyle + '>' + glyph + ' ' + a + '</span>'
-        +     '<span class="hcard-size">' + fmt(lot.size) + '</span>'
+        +     '<span class="hcard-size">' + fmtSize(lot.size) + '</span>'
         +     lotBadge
         +   '</div>'
         +   '<div style="display:flex;align-items:center;gap:8px">'
