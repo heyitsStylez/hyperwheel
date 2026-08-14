@@ -24,3 +24,20 @@ test('compute derives netCost = costBasis - lotPremiums/size for each open lot',
   // Lot 2: costBasis 48000, lotPremiums 60 (assigned-PUT premium), size 0.05 → 48000 - 60/0.05 = 46800
   assert.strictEqual(lots.BTC[1].netCost, 46800);
 });
+
+test('compute derives the roster from trades[] — arbitrary tickers work', () => {
+  global.trades = [
+    { id: 1, asset: 'TSLA', type: 'HOLDING', date: '2026-01-01', strike: 200, size: 10, premium: 0,  outcome: 'OPEN',    closeCost: 0, dte: null, expiry: '' },
+    { id: 2, asset: 'TSLA', type: 'CALL',    date: '2026-01-15', strike: 240, size: 10, premium: 50, outcome: 'EXPIRED', closeCost: 0, dte: 14,   expiry: '2026-01-29' },
+    { id: 3, asset: 'AAPL', type: 'HOLDING', date: '2026-02-01', strike: 180, size: 5,  premium: 0,  outcome: 'OPEN',    closeCost: 0, dte: null, expiry: '' },
+  ];
+  const { compute } = require('../../src/js/core/05-compute.js');
+  const { streams, lots } = compute('ALL');
+
+  // Streams/lots exist only for the tickers present in trades — no fixed four.
+  assert.deepStrictEqual(Object.keys(lots).sort(), ['AAPL', 'TSLA']);
+  assert.deepStrictEqual(Object.keys(streams).sort(), ['AAPL', 'TSLA']);
+
+  // TSLA lot: costBasis 200, lotPremiums 50 (call), size 10 → 200 - 50/10 = 195
+  assert.strictEqual(lots.TSLA[0].netCost, 195);
+});

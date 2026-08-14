@@ -18,8 +18,8 @@ function setAsset(a) {
       btn.style.cssText = `${baseStyle} var(--bd2);color:var(--mu);background:transparent`;
     }
   });
-  document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : MIN_SIZE[a];
-  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? '' : 'min ' + MIN_SIZE[a] + ' ' + a;
+  document.getElementById('f-size').value = sPlatform === 'HSFC' ? '' : minSize(a);
+  document.getElementById('f-size-hint').textContent = sPlatform === 'HSFC' ? '' : 'min ' + minSize(a) + ' ' + a;
   document.getElementById('f-strike').placeholder = assetVars[a]?.placeholder || '100';
   refreshLotPicker();
 }
@@ -65,7 +65,7 @@ function setType(t) {
     if (document.getElementById('f-prem').value === '0') {
       document.getElementById('f-prem').value = '';
     }
-    document.getElementById('f-size').value = MIN_SIZE[sAsset];
+    document.getElementById('f-size').value = minSize(sAsset);
   }
   refreshLotPicker();
   refreshSizeUnitToggle();
@@ -85,9 +85,9 @@ function setPlatform(p) {
   if (OUTCOMES[sOut] && !OUTCOMES[sOut].platforms.includes(p)) setOut('OPEN');
   // Update size hint and default
   const sizeHint = document.getElementById('f-size-hint');
-  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + MIN_SIZE[sAsset] + ' ' + sAsset;
+  if (sizeHint) sizeHint.textContent = p === 'HSFC' ? '' : 'min ' + minSize(sAsset) + ' ' + sAsset;
   const sizeEl = document.getElementById('f-size');
-  if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : MIN_SIZE[sAsset];
+  if (sizeEl && !sizeEl.value) sizeEl.value = p === 'HSFC' ? '' : minSize(sAsset);
   // Show/hide size unit toggle (only for HSFC puts)
   refreshSizeUnitToggle();
   // Reset to contracts when switching away from HSFC
