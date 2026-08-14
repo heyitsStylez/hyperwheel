@@ -22,24 +22,24 @@ const baseTrades = [
     closeCost: 0, platform: 'RYSK' },
 ];
 
-test('holding card has no hero sub-line', (t) => {
-  const { window, teardown } = setupJsdom({ trades: baseTrades });
+test('holding card has no hero sub-line', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: baseTrades });
   t.after(teardown);
   const card = getHcard(window);
   assert.strictEqual(card.querySelector('.hcard-hero-sub'), null,
     '.hcard-hero-sub should be removed');
 });
 
-test('holding card has no premium-reduction bar', (t) => {
-  const { window, teardown } = setupJsdom({ trades: baseTrades });
+test('holding card has no premium-reduction bar', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: baseTrades });
   t.after(teardown);
   const card = getHcard(window);
   assert.strictEqual(card.querySelector('.hcard-bar-wrap'), null,
     '.hcard-bar-wrap should be removed');
 });
 
-test('holding card footer has 3 stats: Cost Basis | CC Premiums | Premium Reduction %', (t) => {
-  const { window, teardown } = setupJsdom({ trades: baseTrades });
+test('holding card footer has 3 stats: Cost Basis | CC Premiums | Premium Reduction %', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: baseTrades });
   t.after(teardown);
   const card = getHcard(window);
 
@@ -59,8 +59,8 @@ test('holding card footer has 3 stats: Cost Basis | CC Premiums | Premium Reduct
   assert.match(values[2], /^2\.0%$/, `Reduction % value, got "${values[2]}"`);
 });
 
-test('Cost Basis appears exactly once on the card', (t) => {
-  const { window, teardown } = setupJsdom({ trades: baseTrades });
+test('Cost Basis appears exactly once on the card', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: baseTrades });
   t.after(teardown);
   const card = getHcard(window);
   const labels = Array.from(card.querySelectorAll('.hcard-stat-lbl'))

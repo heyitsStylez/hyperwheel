@@ -10,7 +10,7 @@ const { loadApp } = require('./loadApp');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
+async function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
   const body = fs.readFileSync(path.join(ROOT, 'src', 'html', 'body.html'), 'utf8');
   const modals = fs.readFileSync(path.join(ROOT, 'src', 'html', 'modals.html'), 'utf8');
 
@@ -58,6 +58,11 @@ function setupJsdom({ wallet = '0x' + '1'.repeat(40), trades = [] } = {}) {
   }
 
   loadApp(window);
+
+  // Trades now load through the async persistence seam, so boot completes on a
+  // microtask. Await it here (harness is async) to keep tests' synchronous
+  // "seed trades → act → assert" pattern working.
+  if (window.bootReady) await window.bootReady;
 
   // 16-clock.js sets a setInterval that would keep Node's event loop alive
   // forever. Tests must dispose the window to release timers.

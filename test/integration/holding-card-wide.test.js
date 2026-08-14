@@ -25,16 +25,16 @@ function getGrid(window) {
   return g;
 }
 
-test('1 visible open lot: holdings-grid has --wide class', (t) => {
-  const { window, teardown } = setupJsdom({ trades: [ethHolding] });
+test('1 visible open lot: holdings-grid has --wide class', async (t) => {
+  const { window, teardown } = await setupJsdom({ trades: [ethHolding] });
   t.after(teardown);
   const grid = getGrid(window);
   assert.ok(grid.classList.contains('holdings-grid--wide'),
     'grid should have holdings-grid--wide class with 1 visible lot');
 });
 
-test('2 visible open lots: holdings-grid has --wide class', (t) => {
-  const { window, teardown } = setupJsdom({
+test('2 visible open lots: holdings-grid has --wide class', async (t) => {
+  const { window, teardown } = await setupJsdom({
     trades: [ethHolding, btcHolding(2, 2)],
   });
   t.after(teardown);
@@ -43,8 +43,8 @@ test('2 visible open lots: holdings-grid has --wide class', (t) => {
     'grid should have holdings-grid--wide class with 2 visible lots');
 });
 
-test('3 visible open lots: holdings-grid does NOT have --wide class', (t) => {
-  const { window, teardown } = setupJsdom({
+test('3 visible open lots: holdings-grid does NOT have --wide class', async (t) => {
+  const { window, teardown } = await setupJsdom({
     trades: [ethHolding, btcHolding(2, 2), btcHolding(3, 3)],
   });
   t.after(teardown);
@@ -53,8 +53,8 @@ test('3 visible open lots: holdings-grid does NOT have --wide class', (t) => {
     'grid should NOT have holdings-grid--wide class with 3+ visible lots');
 });
 
-test('asset filter honored: BTC filter w/ 1 BTC lot among many → wide', (t) => {
-  const { window, teardown } = setupJsdom({
+test('asset filter honored: BTC filter w/ 1 BTC lot among many → wide', async (t) => {
+  const { window, teardown } = await setupJsdom({
     trades: [ethHolding, btcHolding(2, 2), btcHolding(3, 3),
              { ...ethHolding, id: 4, date: '2026-02-01' }],
   });
@@ -66,9 +66,9 @@ test('asset filter honored: BTC filter w/ 1 BTC lot among many → wide', (t) =>
     'asset filter should narrow visible-lot count for the threshold');
 });
 
-test('missing spot: card renders stable Spot — placeholder', (t) => {
+test('missing spot: card renders stable Spot — placeholder', async (t) => {
   // No livePrices stub → spot is undefined.
-  const { window, teardown } = setupJsdom({ trades: [ethHolding] });
+  const { window, teardown } = await setupJsdom({ trades: [ethHolding] });
   t.after(teardown);
   const card = window.document.querySelector('.hcard');
   const spot = card.querySelector('.hcard-spot');
@@ -79,9 +79,9 @@ test('missing spot: card renders stable Spot — placeholder', (t) => {
     'placeholder sub-line should read "spot unavailable"');
 });
 
-test('wide layout preserves edit btn, lot badge, merge btn', (t) => {
+test('wide layout preserves edit btn, lot badge, merge btn', async (t) => {
   // 2 ETH lots: edit btn (HOLDING), lot badge (>1 lot), merge btn (>=2 open).
-  const { window, teardown } = setupJsdom({
+  const { window, teardown } = await setupJsdom({
     trades: [
       ethHolding,
       { ...ethHolding, id: 2, date: '2026-02-01', strike: 3200 },

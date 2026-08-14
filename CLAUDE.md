@@ -53,7 +53,7 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 |------|------:|-----------------------|
 | `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sHistOutcome/sHistFrom/sHistTo`, `livePrices{}`, `MIN_SIZE`, `ASSET_COLORS`, `mergeAsset` |
 | `01a-outcomes.js` | 32 | `OUTCOMES` registry: per-outcome `{title, badgeClass, platforms}`. Single source of truth for outcome display data + picker membership. Lot-lifecycle effects live in the Lot Engine, not here |
-| `02-utils.js` | 33 | `today()`, `save()` (also kicks `scheduleCloudPush`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`). Dual-exports `today/fmt/sk` for Node tests |
+| `02-utils.js` | 33 | `today()`, `save()` (routes trades through the persistence seam `persist()`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`). Dual-exports `today/fmt/sk` for Node tests |
 | `03-form-controls.js` | 212 | `setAsset/setType/setPlatform/setSizeUnit/setOut/setFilter/setPpnlTab`, `refreshLotPicker`, `autoFillFromLot`, `autoDTE`, history filters: `setHistOutcome/setHistFrom/setHistTo/clearHistFilters` |
 | `04-trade-crud.js` | 39 | `addTrade()` (HOLDING-only — adds spot from drawer), `clearForm`, `deleteTrade`, `quickOutcome` (fires toasts) |
 | `04b-lot-engine.js` | 140 | `lotNetCost(costBasis, lotPremiums, size)` and `lotEngine(assetTrades)` → `{lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting}`. **Single source of truth** for wheel invariants (see Lot model below). Pure; dual-exported for Node. **Key invariant:** assigned-PUT premium IS credited to the new lot's `lotPremiums` |
@@ -68,12 +68,13 @@ globals, and 17-boot.js runs an IIFE last to bootstrap the app.
 | `09-drawer-modal.js` | 15 | `openTradeDrawer`, `closeTradeDrawer`, `focusForm` |
 | `10-reset-modal.js` | 4 | `showReset`, `closeReset`, `doReset` (wipes `trades`) |
 | `11-wallet-popup.js` | 34 | `showWalletPopup`, `hideWalletPopup`, `submitWalletPopup` (first-visit wallet entry) |
+| `12a-persistence.js` | 23 | **Persistence seam** (crypto impl): `loadTrades(): Promise<Trade[]>`, `persist(trades): Promise<void>`, `currentUserKey(): string`. Core reads/writes trades ONLY through these (async from day one, per #84). Crypto wraps `hw_holdings` + debounced cloud push |
 | `12-cloud-sync.js` | 66 | `_setCloudStatus`, `cloudPush` (debounced via `scheduleCloudPush`), `cloudPull` — pushes/pulls **only HOLDING trades** to `/api/sync` keyed by wallet. Toasts on error and on pull-with-data |
 | `13-edit-modal.js` | 102 | `openEditModal(id)`, `closeEditModal`, `saveEdit` — fields prefixed `ef-` (NOT `e-` despite older docs) |
 | `14-merge-modal.js` | 91 | `openMergeModal(asset)`, `closeMergeModal`, `confirmMerge`. View + confirmation only; merge logic lives in `05a-merge-open-lots.js` |
 | `15-event-listeners.js` | 6 | global keydown (Esc closes modals/drawer) |
 | `16-clock.js` | 20 | UTC clock IIFE for header |
-| `17-boot.js` | 33 | init IIFE: load trades, wallet popup OR `render() + fetchExpiryPrices() + cloudPull → autoLoadChain` |
+| `17-boot.js` | 33 | async init IIFE (exposes `bootReady` promise): `trades = await loadTrades()`, wallet popup OR `render() + fetchExpiryPrices() + cloudPull → autoLoadChain`. Tests await `bootReady` via `setupJsdom` |
 | `18-chain-sync.js` | ~530 | Rysk + Hypersurface chain sync: `autoLoadChain`, `syncRysk`, `syncHypersurface`, `resolveRyskOutcomes`, `resolveHsfcOutcomes`, `fetchRyskExpiryPrices`, `autoDetectOutcomes` (stale-detection only), `migrateCloseTrades`. Routes through `/api/chain-sync` proxy. `hasProxy()` returns false on `file://` |
 | `18b-chain-apply.js` | ~55 | `applyCloseTrade(tradesArray, closeTrade)` → boolean; `applyImportedTrades(tradesArray, openTrades, closeTrades, synced)` → `{added, closedCount, corrected}`. Pure helpers extracted from chain-sync: dedup by txHash, open/close split, close-trade matching, OPEN→EXPIRED correction. Both dual-exported for Node tests |
 

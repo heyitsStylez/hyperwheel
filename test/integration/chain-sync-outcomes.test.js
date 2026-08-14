@@ -47,14 +47,14 @@ function ryskPosition({ isPut, strike, expiry, txHash, address, collateral, stat
 
 // ── resolveHsfcOutcomes ───────────────────────────────────────────────────────
 
-test('resolveHsfcOutcomes: PUT with redeemActions → ASSIGNED', (t) => {
+test('resolveHsfcOutcomes: PUT with redeemActions → ASSIGNED', async (t) => {
   const trade = {
     id: 1, asset: 'HYPE', type: 'PUT', platform: 'HSFC',
     date: '2026-04-01', expiry: PAST_EXPIRY_DATE,
     strike: 30.5, size: 50, premium: 10, outcome: 'EXPIRED',
     closeCost: 0, txHash: 'key-1',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -66,14 +66,14 @@ test('resolveHsfcOutcomes: PUT with redeemActions → ASSIGNED', (t) => {
   assert.strictEqual(storedOutcome(window, 1), 'ASSIGNED');
 });
 
-test('resolveHsfcOutcomes: CALL with redeemActions → CALLED', (t) => {
+test('resolveHsfcOutcomes: CALL with redeemActions → CALLED', async (t) => {
   const trade = {
     id: 2, asset: 'HYPE', type: 'CALL', platform: 'HSFC',
     date: '2026-04-01', expiry: PAST_EXPIRY_DATE,
     strike: 41.5, size: 50, premium: 8, outcome: 'EXPIRED',
     closeCost: 0, txHash: 'key-2',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -85,14 +85,14 @@ test('resolveHsfcOutcomes: CALL with redeemActions → CALLED', (t) => {
   assert.strictEqual(storedOutcome(window, 2), 'CALLED');
 });
 
-test('resolveHsfcOutcomes: empty redeemActions → stays EXPIRED', (t) => {
+test('resolveHsfcOutcomes: empty redeemActions → stays EXPIRED', async (t) => {
   const trade = {
     id: 3, asset: 'HYPE', type: 'PUT', platform: 'HSFC',
     date: '2026-04-01', expiry: PAST_EXPIRY_DATE,
     strike: 30.5, size: 50, premium: 10, outcome: 'EXPIRED',
     closeCost: 0, txHash: 'key-3',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -104,14 +104,14 @@ test('resolveHsfcOutcomes: empty redeemActions → stays EXPIRED', (t) => {
   assert.strictEqual(storedOutcome(window, 3), 'EXPIRED');
 });
 
-test('resolveHsfcOutcomes: CLOSED trade is not touched', (t) => {
+test('resolveHsfcOutcomes: CLOSED trade is not touched', async (t) => {
   const trade = {
     id: 4, asset: 'HYPE', type: 'PUT', platform: 'HSFC',
     date: '2026-04-01', expiry: PAST_EXPIRY_DATE,
     strike: 30.5, size: 50, premium: 10, outcome: 'CLOSED',
     closeCost: 5, txHash: 'key-4',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -123,14 +123,14 @@ test('resolveHsfcOutcomes: CLOSED trade is not touched', (t) => {
   assert.strictEqual(storedOutcome(window, 4), 'CLOSED');
 });
 
-test('resolveHsfcOutcomes: future expiry position is ignored', (t) => {
+test('resolveHsfcOutcomes: future expiry position is ignored', async (t) => {
   const trade = {
     id: 5, asset: 'HYPE', type: 'PUT', platform: 'HSFC',
     date: '2026-05-01', expiry: FUTURE_EXPIRY_DATE,
     strike: 30.5, size: 50, premium: 10, outcome: 'OPEN',
     closeCost: 0, txHash: 'key-5',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -142,14 +142,14 @@ test('resolveHsfcOutcomes: future expiry position is ignored', (t) => {
   assert.strictEqual(storedOutcome(window, 5), 'OPEN');
 });
 
-test('resolveHsfcOutcomes: unknown asset symbol is skipped', (t) => {
+test('resolveHsfcOutcomes: unknown asset symbol is skipped', async (t) => {
   const trade = {
     id: 6, asset: 'HYPE', type: 'PUT', platform: 'HSFC',
     date: '2026-04-01', expiry: PAST_EXPIRY_DATE,
     strike: 30.5, size: 50, premium: 10, outcome: 'EXPIRED',
     closeCost: 0, txHash: 'key-6',
   };
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   const changed = window.resolveHsfcOutcomes([
@@ -175,7 +175,7 @@ test('resolveRyskOutcomes: PUT settlementPrice <= strike → ASSIGNED', async (t
     closeCost: 0, txHash: '0xhash10',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
@@ -204,7 +204,7 @@ test('resolveRyskOutcomes: PUT settlementPrice > strike → EXPIRED', async (t) 
     closeCost: 0, txHash: '0xhash11',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
@@ -233,7 +233,7 @@ test('resolveRyskOutcomes: CALL settlementPrice >= strike → CALLED', async (t)
     closeCost: 0, txHash: '0xhash12',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
@@ -262,7 +262,7 @@ test('resolveRyskOutcomes: CALL settlementPrice < strike → EXPIRED', async (t)
     closeCost: 0, txHash: '0xhash13',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
@@ -291,7 +291,7 @@ test('resolveRyskOutcomes: CLOSED trade is not touched', async (t) => {
     closeCost: 3, txHash: '0xhash14',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
@@ -318,7 +318,7 @@ test('resolveRyskOutcomes: non-SETTLED position is skipped', async (t) => {
     closeCost: 0, txHash: '0xhash15',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   let fetchCalled = false;
@@ -344,7 +344,7 @@ test('resolveRyskOutcomes: expiry-prices fetch failure → no crash, outcome unc
     closeCost: 0, txHash: '0xhash16',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.reject(new Error('Network error'));
@@ -370,7 +370,7 @@ test('resolveRyskOutcomes: PUT at exact strike boundary → ASSIGNED', async (t)
     closeCost: 0, txHash: '0xhash17',
   };
 
-  const { window, teardown } = setupJsdom({ trades: [trade] });
+  const { window, teardown } = await setupJsdom({ trades: [trade] });
   t.after(teardown);
 
   window.fetch = () => Promise.resolve({
