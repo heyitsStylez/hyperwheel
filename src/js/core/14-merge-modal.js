@@ -43,11 +43,11 @@ function openMergeModal(asset) {
   const resultNow = compute('ALL');
   const assetLotsNow = (resultNow.lots[asset] || []).filter(l => l.open);
   assetLotsNow.forEach(l => {
-    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + l.size + ' ' + asset + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(l.netCost) + ')</span></div>';
+    html += '<div class="mp-row"><span class="mp-lbl">Lot ' + l.lotNum + '</span><span class="mp-val">' + fmtSize(l.size, asset) + ' @ $' + fmt(l.costBasis) + ' (NC: $' + fmt(l.netCost) + ')</span></div>';
   });
   html += '<div style="border-top:1px solid var(--bd2);margin:8px 0"></div>';
   html += '<div style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:8px">Merged result</div>';
-  html += '<div class="mp-row"><span class="mp-lbl">Size</span><span class="mp-val">' + totalSize + ' ' + asset + '</span></div>';
+  html += '<div class="mp-row"><span class="mp-lbl">Size</span><span class="mp-val">' + fmtSize(totalSize, asset) + '</span></div>';
   html += '<div class="mp-row"><span class="mp-lbl">Avg Cost Basis</span><span class="mp-val">$' + fmt(avgCost) + '</span></div>';
   html += '<div class="mp-row"><span class="mp-lbl">CC Premiums</span><span class="mp-val green">$' + fmt(totalCCPrem) + '</span></div>';
   html += '<div class="mp-row"><span class="mp-lbl">Net Cost / ' + asset + '</span><span class="mp-val orange">$' + fmt(mergedNC) + '</span></div>';

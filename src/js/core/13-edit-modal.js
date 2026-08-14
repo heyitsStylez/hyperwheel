@@ -37,7 +37,11 @@ function openEditModal(id, presetOutcome) {
     html += f('expiry',  'Expiry',       'date',   t.expiry, '');
     html += f('dte',     'DTE',          'number', t.dte,    'step="1" min="0"');
     html += f('strike',  'Strike ($)',   'number', t.strike, 'step="0.01" min="0"');
-    html += f('size',    'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
+    // Wheeler options are entered in contracts (×100 shares); show the stored
+    // share count as contracts and convert back on save. Crypto stays in tokens.
+    html += _isTradfi()
+      ? f('size', 'Contracts', 'number', sharesToContracts(t.size), 'step="0.01" min="0"')
+      : f('size', 'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
     const outcome = presetOutcome || t.outcome;
     html += sel('outcome', 'Outcome',
@@ -89,7 +93,8 @@ function saveEdit() {
 
   t.date   = date;
   t.strike = strike;
-  t.size   = size;
+  // Wheeler options edit in contracts; store shares. Holdings/crypto are raw.
+  t.size   = (_isTradfi() && !isHolding) ? contractsToShares(size) : size;
   t.notes  = get('notes').value.trim();
 
   if (!isHolding) {
