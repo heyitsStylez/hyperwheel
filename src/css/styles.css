@@ -164,6 +164,7 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .te.active{background:var(--gd);border-color:var(--green);color:var(--green)}
 .ta.active{background:var(--rd);border-color:var(--red);color:var(--red)}
 .tk.active{background:var(--od);border-color:var(--orange);color:var(--orange)}
+.tx.active{background:var(--pd);border-color:var(--purple);color:var(--purple)}
 
 /* TRADE LOG SECTIONS */
 .tlog-sub-hd{display:flex;align-items:center;gap:10px;padding:14px 0 8px;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu2);font-family:var(--mono)}

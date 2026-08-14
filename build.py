@@ -158,7 +158,7 @@ def build_app(app, css, head_tmpl, body_html, modals_html, version):
 
     output = (
         head
-        + '<body>\n'
+        + '<body data-app="' + app + '">\n'
         + body_html
         + '<script>\n'
         + js

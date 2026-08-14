@@ -113,6 +113,48 @@ test('Wheeler persists to wheeler_trades and never writes hw_holdings', async (t
     'Wheeler must not write the crypto holdings key');
 });
 
+test('Wheeler drops the Platform column; HyperWheel keeps it', async (t) => {
+  const wheeler = await setupJsdom({ app: 'tradfi' });
+  t.after(wheeler.teardown);
+  assert.doesNotMatch(wheeler.window._openHeaders(), /Platform/,
+    'Wheeler open table must not show a Platform column');
+  assert.doesNotMatch(wheeler.window._histHeaders(), /Platform/,
+    'Wheeler history table must not show a Platform column');
+
+  const crypto = await setupJsdom({ app: 'crypto' });
+  t.after(crypto.teardown);
+  assert.match(crypto.window._openHeaders(), /Platform/,
+    'HyperWheel must still show the Platform column');
+});
+
+test('Wheeler buy-to-close nets closeCost off the premium', async (t) => {
+  const { window, teardown } = await setupJsdom({ app: 'tradfi' });
+  t.after(teardown);
+  const setVal = (id, v) => { window.document.getElementById(id).value = v; };
+
+  window.setTicker('IBIT');
+  window.setType('CALL');
+  window.setOut('CLOSED');
+  // Close-cost field is revealed only for the CLOSED outcome.
+  assert.notStrictEqual(window.document.getElementById('field-closecost').style.display, 'none');
+  setVal('f-date', '2026-01-05');
+  setVal('f-expiry', '2026-02-05');
+  setVal('f-strike', '65');
+  setVal('f-size', '100');
+  setVal('f-prem', '100');
+  setVal('f-closecost', '40');
+  window.wheelerAddTrade();
+
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored.length, 1);
+  assert.strictEqual(stored[0].outcome, 'CLOSED');
+  assert.strictEqual(stored[0].closeCost, 40);
+
+  // Cash-flow lens: realised = net premium = 100 − 40 = 60.
+  const { realised } = window.computePnl(stored, 'ALL', {});
+  assert.strictEqual(realised, 60);
+});
+
 test('seeded wheeler_trades load on boot and survive a reload', async (t) => {
   const seed = [
     { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,

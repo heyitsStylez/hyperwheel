@@ -15,7 +15,7 @@ async function setupJsdom({ app = 'crypto', wallet = '0x' + '1'.repeat(40), trad
   const body = assembleBody(app);
   const modals = fs.readFileSync(path.join(ROOT, 'src', 'html', 'modals.html'), 'utf8');
 
-  const html = `<!doctype html><html><head></head><body>${body}${modals}</body></html>`;
+  const html = `<!doctype html><html><head></head><body data-app="${app}">${body}${modals}</body></html>`;
 
   const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'dangerously' });
   const { window } = dom;
