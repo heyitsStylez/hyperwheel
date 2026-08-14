@@ -36,8 +36,11 @@ function wheelerAddTrade() {
     const expiry  = g('f-expiry');
     const dte     = parseInt(g('f-dte')) || null;
     const premium = parseFloat(g('f-prem')) || 0;
+    // Buy-to-close: the amount paid to close the option early, netted off the
+    // premium received. Only meaningful for the CLOSED outcome.
+    const closeCost = sOut === 'CLOSED' ? (parseFloat(g('f-closecost')) || 0) : 0;
     if (!expiry) return err('Expiry required.');
-    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size, premium, outcome: sOut, closeCost: 0, platform: 'MANUAL' };
+    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size, premium, outcome: sOut, closeCost, platform: 'MANUAL' };
   }
 
   trades.push(tradeObj);

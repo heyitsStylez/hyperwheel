@@ -43,9 +43,15 @@ function _th(label, col, s, fn) {
     + label + (active ? '<span class="sort-arrow">' + arrow + '</span>' : '') + '</th>';
 }
 
+// Wheeler (tradfi) has one manual platform, so its Platform column carries no
+// information — drop it there. Returns the cell only for multi-platform apps.
+function _platCol(cell) {
+  return (document.body && document.body.dataset.app === 'tradfi') ? '' : cell;
+}
+
 function _openHeaders() {
   const s = tSortOpen, fn = 'sortOpen';
-  return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
+  return _th('Asset','asset',s,fn) + _platCol(_th('Platform','platform',s,fn)) + _th('Date','date',s,fn)
     + _th('Expiry','expiry',s,fn) + _th('DTE','expiry',s,fn) + _th('Type','type',s,fn)
     + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
     + _th('APR','annual',s,fn) + '<th></th>';
@@ -53,7 +59,7 @@ function _openHeaders() {
 
 function _histHeaders() {
   const s = tSortHist, fn = 'sortHist';
-  return _th('Asset','asset',s,fn) + _th('Platform','platform',s,fn) + _th('Date','date',s,fn)
+  return _th('Asset','asset',s,fn) + _platCol(_th('Platform','platform',s,fn)) + _th('Date','date',s,fn)
     + _th('Expiry','expiry',s,fn) + _th('Term','dte',s,fn) + _th('Type','type',s,fn)
     + _th('Strike','strike',s,fn) + _th('Size','size',s,fn) + _th('Premium','premium',s,fn)
     + _th('APR','annual',s,fn) + _th('Outcome','outcome',s,fn) + '<th></th>';
@@ -87,7 +93,7 @@ function _openRow(r) {
       + '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')" title="Mark assigned">Asgn \u2193</button>');
   return '<tr>'
     + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
-    + '<td>' + platBadge + '</td>'
+    + _platCol('<td>' + platBadge + '</td>')
     + '<td class="mu" style="font-size:.72rem">' + r.date + '</td>'
     + '<td class="mu" style="font-size:.72rem">' + (isHolding ? '&mdash;' : (r.expiry || '&mdash;')) + '</td>'
     + '<td class="mu">' + (isHolding ? '&mdash;' : _liveDte(r.expiry)) + '</td>'
@@ -115,7 +121,7 @@ function _histRow(r) {
     : '';
   return '<tr>'
     + '<td><span class="badge ' + assetCls + '">' + r.asset + '</span></td>'
-    + '<td>' + platBadge + '</td>'
+    + _platCol('<td>' + platBadge + '</td>')
     + '<td class="mu" style="font-size:.72rem">' + r.date + '</td>'
     + '<td class="mu" style="font-size:.72rem">' + (r.expiry || '&mdash;') + '</td>'
     + '<td class="mu">' + (r.dte || '&mdash;') + '</td>'
@@ -209,7 +215,7 @@ function renderExpiryTable(allRows) {
     const t = e.t;
     return '<tr>'
       + '<td><span class="badge b' + e.col + '">' + t.asset + '</span></td>'
-      + '<td>' + e.platBadge + '</td>'
+      + _platCol('<td>' + e.platBadge + '</td>')
       + '<td><span class="badge b' + t.type.toLowerCase() + '">' + t.type + '</span></td>'
       + '<td>$' + fmt(t.strike) + '</td>'
       + '<td>' + fmt(t.size) + '</td>'
@@ -228,7 +234,7 @@ function renderExpiryTable(allRows) {
       +   '<span class="exp-card-asset" style="color:var(--' + e.col + ')">' + t.asset + '</span>'
       +   '<span class="exp-card-type">' + t.type + '</span>'
       +   '<span class="exp-card-dte">' + e.dteLabel + '</span>'
-      +   e.platBadge
+      +   _platCol(e.platBadge)
       + '</div>'
       + '<div class="exp-card-row2">'
       +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(t.strike) + '</div>'
@@ -242,7 +248,7 @@ function renderExpiryTable(allRows) {
   }).join('');
 
   wrap.innerHTML = '<table class="expiry-tbl">'
-    + '<thead><tr><th>Asset</th><th>Platform</th><th>Type</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th></th></tr></thead>'
+    + '<thead><tr><th>Asset</th>' + _platCol('<th>Platform</th>') + '<th>Type</th><th>Strike</th><th>Size</th><th>DTE</th><th>Premium</th><th>APR</th><th>Status</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table>'
     + '<div class="exp-cards">' + cards + '</div>';

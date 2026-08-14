@@ -48,8 +48,12 @@
           <button class="tb te" id="tog-EXPIRED" onclick="setOut('EXPIRED')">EXPIRED</button>
           <button class="tb ta" id="tog-ASSIGNED" onclick="setOut('ASSIGNED')">ASSIGNED</button>
           <button class="tb tk" id="tog-CALLED" onclick="setOut('CALLED')">CALLED</button>
+          <button class="tb tx" id="tog-CLOSED" onclick="setOut('CLOSED')">CLOSED</button>
         </div>
       </div>
+    </div>
+    <div class="fb" id="field-closecost" style="display:none">
+      <div class="field fi-full"><label>Close Cost ($)</label><input type="number" id="f-closecost" placeholder="40" step="1"><span style="font-size:.65rem;color:var(--mu);font-family:var(--mono);margin-top:2px">Buy-to-close cost &mdash; subtracted from premium</span></div>
     </div>
     <div style="padding:0 20px 20px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
       <div></div>
