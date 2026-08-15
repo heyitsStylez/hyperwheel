@@ -24,7 +24,7 @@ function _setAuthUI(authed, email) {
   if (authed) {
     el.innerHTML =
       '<span class="wheeler-auth-email" title="' + (email || '') + '">' + (email || 'signed in') + '</span>' +
-      '<button class="btn" onclick="wheelerSignOut()">[ SIGN OUT ]</button>';
+      '<button class="btn btn-g" onclick="wheelerSignOut()">[ SIGN OUT ]</button>';
   } else {
     el.innerHTML =
       '<button class="btn btn-p" onclick="wheelerSignIn()">[ SIGN IN WITH GOOGLE ]</button>';
