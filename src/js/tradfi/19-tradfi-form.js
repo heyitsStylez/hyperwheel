@@ -42,7 +42,7 @@ function wheelerAddTrade() {
 
   let tradeObj;
   if (sType === 'HOLDING') {
-    tradeObj = { id, asset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' };
+    tradeObj = { id, asset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', closeCost: 0, closeDate: '', platform: 'MANUAL' };
   } else {
     const expiry  = g('f-expiry');
     const dte     = parseInt(g('f-dte')) || null;
@@ -50,10 +50,12 @@ function wheelerAddTrade() {
     // Buy-to-close: the amount paid to close the option early, netted off the
     // premium received. Only meaningful for the CLOSED outcome.
     const closeCost = sOut === 'CLOSED' ? (parseFloat(g('f-closecost')) || 0) : 0;
+    // Realisation date for buy-to-close (defaults to today via setOut).
+    const closeDate = sOut === 'CLOSED' ? g('f-closedate') : '';
     if (!expiry) return err('Expiry required.');
     // Options are entered in contracts; store shares so the lot engine (shares)
     // lines up with holdings entered as raw share counts.
-    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size: contractsToShares(size), premium, outcome: sOut, closeCost, platform: 'MANUAL' };
+    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size: contractsToShares(size), premium, outcome: sOut, closeCost, closeDate, platform: 'MANUAL' };
   }
 
   trades.push(tradeObj);

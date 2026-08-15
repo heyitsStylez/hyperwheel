@@ -232,6 +232,9 @@ typecheck step — plain JS, no TS.
   premium: 150,             // premium collected (0 for HOLDING)
   outcome: 'OPEN',          // OPEN | EXPIRED | ASSIGNED | CALLED | CLOSED
   closeCost: 0,             // for CLOSED outcome (Hypersurface buy-to-close)
+  closeDate: '',            // realisation date for CLOSED (buy-to-close); empty
+                            // otherwise. computePnl buckets CLOSED realised P&L
+                            // on this date (falls back to expiry if unset)
   platform: 'RYSK',         // RYSK | HSFC | SPOT
   lotNum: 2,                // optional explicit lot for CALLs (else attaches to openLot)
   txHash: '0x…',            // present iff imported from chain-sync

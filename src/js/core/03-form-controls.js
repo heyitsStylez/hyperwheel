@@ -128,6 +128,8 @@ function setOut(o) {
   // Show close cost field only when CLOSED
   const ccField = document.getElementById('field-closecost');
   if (ccField) ccField.style.display = (o === 'CLOSED') ? '' : 'none';
+  const cdInput = document.getElementById('f-closedate');
+  if (o === 'CLOSED' && cdInput && !cdInput.value) cdInput.value = today();
   autoFillFromLot();
 }
 function refreshLotPicker() {

@@ -50,6 +50,9 @@ function openEditModal(id, presetOutcome) {
     // Buy-to-close cost, netted off premium; only meaningful for CLOSED.
     html += '<div class="field" id="ef-closecost-field"><label>Close Cost ($)</label>'
       + '<input id="ef-closecost" type="number" value="' + (t.closeCost || '') + '" step="0.01" min="0"></div>';
+    // Realisation date for buy-to-close; only meaningful for CLOSED.
+    html += '<div class="field" id="ef-closedate-field"><label>Close Date</label>'
+      + '<input id="ef-closedate" type="date" value="' + (t.closeDate || '') + '"></div>';
     html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
   }
 
@@ -65,8 +68,13 @@ function openEditModal(id, presetOutcome) {
 // Show the Close Cost field only when the selected outcome is CLOSED.
 function toggleEditCloseCost() {
   const sel = document.getElementById('ef-outcome');
-  const field = document.getElementById('ef-closecost-field');
-  if (sel && field) field.style.display = sel.value === 'CLOSED' ? '' : 'none';
+  const show = !!sel && sel.value === 'CLOSED';
+  const ccField = document.getElementById('ef-closecost-field');
+  const cdField = document.getElementById('ef-closedate-field');
+  if (ccField) ccField.style.display = show ? '' : 'none';
+  if (cdField) cdField.style.display = show ? '' : 'none';
+  const cd = document.getElementById('ef-closedate');
+  if (show && cd && !cd.value) cd.value = today();
 }
 
 function closeEditModal() {
@@ -107,8 +115,10 @@ function saveEdit() {
     if (t.outcome === 'CLOSED') {
       const cc = parseFloat(get('closecost').value);
       t.closeCost = isNaN(cc) ? 0 : cc;
+      t.closeDate = get('closedate').value.trim();
     } else {
       t.closeCost = 0;
+      t.closeDate = '';
     }
   }
 

@@ -59,7 +59,9 @@ function computePnl(trades, assetFilter, livePrices) {
           delta += gain;
         }
       }
-      const evDate = t.expiry || t.date;
+      // Realised on the close date for buy-to-close (may be before expiry —
+      // "closed early"); otherwise on expiry. Falls back to open date.
+      const evDate = (t.outcome === 'CLOSED' && t.closeDate) ? t.closeDate : (t.expiry || t.date);
       events.push({ date: evDate, delta });
       const ym = (evDate || '').slice(0, 7);
       if (ym) realisedByMonth[ym] = (realisedByMonth[ym] || 0) + delta;
