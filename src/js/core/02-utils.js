@@ -19,6 +19,13 @@ function capturePct(premium, closeCost) {
   if (!premium) return null;
   return (premium - (closeCost || 0)) / premium * 100;
 }
+// Days left on the clock when a position was bought to close early
+// (expiry − closeDate). Completes the close-vs-hold story next to capturePct:
+// "kept 91% with 5 days early". Returns null when either date is missing.
+function daysEarly(expiry, closeDate) {
+  if (!expiry || !closeDate) return null;
+  return Math.round((new Date(expiry + 'T00:00:00') - new Date(closeDate + 'T00:00:00')) / 86400000);
+}
 function loadWallet() {
   return localStorage.getItem(HW_WALLET_KEY) || '';
 }
@@ -43,5 +50,5 @@ function toast(msg, kind) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { today, fmt, sk, SHARES_PER_CONTRACT, contractsToShares, sharesToContracts, capturePct };
+  module.exports = { today, fmt, sk, SHARES_PER_CONTRACT, contractsToShares, sharesToContracts, capturePct, daysEarly };
 }
