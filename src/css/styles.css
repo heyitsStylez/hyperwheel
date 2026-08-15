@@ -129,6 +129,13 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
   .exp-cards{display:flex}
 }
 
+/* Mobile cards for the Trade Log tables (open + history) */
+.tlog-cards{display:none;flex-direction:column;gap:8px;padding:6px 0 2px}
+@media(max-width:600px){
+  #tlog .twrap{display:none}
+  #tlog .tlog-cards{display:flex}
+}
+
 /* SECTION */
 .sec{border-left:2px solid var(--green);background:var(--surface);padding:20px 24px}
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -306,7 +313,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .has-tip:hover .tip-ico,.has-tip:hover .ppnl-tip-ico{opacity:1;color:var(--text)}
 .ppnl-card.has-tip:hover{border-color:var(--mu)}
 .has-tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0c1119;color:var(--text);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:.7rem;line-height:1.45;width:max-content;max-width:300px;white-space:normal;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .12s ease;z-index:20}
-.has-tip:hover::after{opacity:1}
+.has-tip:hover::after,.has-tip.tip-open::after{opacity:1}
 /* Flip the popover below the anchor — for tips near the top of a section or
    inside an overflow:hidden container (e.g. the cpnl hero tiles). */
 .has-tip--below::after{bottom:auto;top:calc(100% + 8px)}
@@ -361,6 +368,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .fb{grid-template-columns:1fr}
   .header{padding:10px 12px}
   .hsub{display:none}
+  .wheeler-auth-email{display:none}
   .cpnl-hero-hd{padding:14px 14px 10px}
   .cpnl-hero-val{font-size:1.5rem}
   .cpnl-tile-total{font-size:1.5rem}
