@@ -304,6 +304,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .hcard-pnl.red{color:var(--red)}
 .hcard-hint{margin-top:6px;font-size:.6rem;color:var(--mu2);font-family:var(--mono);line-height:1.45}
 .lot-badge{font-size:.5rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;background:var(--s3);border:1px solid var(--bd2);color:var(--mu2);font-family:var(--mono)}
+.cap-badge{display:inline-block;margin-left:6px;font-size:.6rem;font-weight:700;font-family:var(--mono);letter-spacing:.3px}
 .hcard-spot-muted{color:var(--mu2)}
 
 /* Wide-card layout: when <=2 visible open lots and viewport >=720px,
