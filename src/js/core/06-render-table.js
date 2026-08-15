@@ -249,6 +249,8 @@ function rStats(streams, lots, allRows, displayRows) {
 }
 
 function renderExpiryTable(allRows) {
+  // Wheeler hides the Expiring This Week section (CSS); skip populating it.
+  if (_isTradfi()) return;
   const wrap = document.getElementById('expiry-table-wrap');
   if (!wrap) return;
 

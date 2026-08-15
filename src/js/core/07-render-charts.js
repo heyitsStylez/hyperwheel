@@ -400,10 +400,10 @@ function rCharts(displayRows, lots) {
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
         'Sum of every option premium collected (gross of buy-to-close costs). Includes settled and open positions.') +
       '<div class="ppnl-trio">' +
-        tile('', 'Total Notional',
+        (_isTradfi() ? '' : tile('', 'Total Notional',
           s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
           s.totalCount > 0 ? pos(s.totalCount) + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
-          'Total Notional = Σ strike × size across every option (settled and open). The capital you would tie up if every put were assigned at strike.') +
+          'Total Notional = Σ strike × size across every option (settled and open). The capital you would tie up if every put were assigned at strike.')) +
         tile('', 'Portfolio APR',
           s.portfolioAPR !== null ? s.portfolioAPR.toFixed(1) + '%' : dash,
           s.settled > 0 ? 'notional-weighted · ' + s.settled + ' settled' : '',
