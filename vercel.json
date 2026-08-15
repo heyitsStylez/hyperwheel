@@ -6,6 +6,14 @@
     }
   },
   "framework": null,
+  "redirects": [
+    {
+      "source": "/wheeler/:path*",
+      "has": [{ "type": "host", "value": "hyperwheel.vercel.app" }],
+      "destination": "https://gowheeler.vercel.app/:path*",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
