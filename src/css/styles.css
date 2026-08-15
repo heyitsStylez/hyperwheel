@@ -98,6 +98,40 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 /* EXPIRY WATCH */
 .expiry-section{background:var(--surface);border-left:2px solid var(--green);padding:14px 16px 0;margin-bottom:0}
 body[data-app="tradfi"] .expiry-section{display:none}
+
+/* ── P&L Calendar (Wheeler only) ─────────────────────────── */
+body[data-app="crypto"] .pnl-cal-sec{display:none}
+.cal-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.cal-ttl{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
+.cal-nav{display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+.cal-total{font-size:1rem;font-weight:700}
+.cal-total.pos{color:var(--green)}
+.cal-total.neg{color:var(--red)}
+.cal-total.zero{color:var(--mu)}
+.cal-month{min-width:118px;text-align:center;font-size:.8rem;color:var(--text)}
+.cal-navbtn{background:var(--s2);border:1px solid var(--bd2);color:var(--text);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:1rem;line-height:1;display:flex;align-items:center;justify-content:center}
+.cal-navbtn:hover{border-color:var(--green)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr) .85fr;gap:5px}
+.cal-dow{font-size:.6rem;font-family:var(--mono);color:var(--mu);text-align:center;padding-bottom:2px;letter-spacing:.06em}
+.cal-dow-wk{color:var(--mu2)}
+.cal-cell{min-height:62px;border:1px solid var(--bd);border-radius:7px;background:var(--s2);padding:5px 6px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.cal-cell.cal-out{background:transparent;border-color:transparent}
+.cal-cell.pos{background:var(--gd);border-color:var(--gb)}
+.cal-cell.neg{background:var(--rd);border-color:var(--rb)}
+.cal-cell.cal-today{box-shadow:0 0 0 1.5px var(--green) inset}
+.cal-daynum{font-size:.62rem;font-family:var(--mono);color:var(--mu2)}
+.cal-pnl{font-size:.78rem;font-weight:700;font-family:var(--mono)}
+.cal-pnl.pos{color:var(--green)}
+.cal-pnl.neg{color:var(--red)}
+.cal-act{font-size:.56rem;font-family:var(--mono);color:var(--mu);margin-top:auto}
+.cal-week{background:var(--surface);border-style:dashed;justify-content:center}
+@media(max-width:600px){
+  .cal-grid{gap:3px}
+  .cal-cell{min-height:48px;padding:3px 4px}
+  .cal-pnl{font-size:.62rem}
+  .cal-act{font-size:.5rem}
+  .cal-dow{font-size:.5rem}
+}
 #expiry-table-wrap{overflow-x:auto;background:linear-gradient(to right,var(--surface) 20px,transparent) left/40px 100% no-repeat,linear-gradient(to left,var(--surface) 20px,transparent) right/40px 100% no-repeat,radial-gradient(farthest-side at 0% 50%,rgba(0,214,143,.12),transparent) left/8px 100% no-repeat,radial-gradient(farthest-side at 100% 50%,rgba(0,214,143,.12),transparent) right/8px 100% no-repeat;background-attachment:local,local,scroll,scroll}
 .expiry-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .expiry-ttl{font-size:.65rem;font-weight:500;letter-spacing:2px;color:var(--green)}
