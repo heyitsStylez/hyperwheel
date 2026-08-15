@@ -150,6 +150,17 @@ function _openRow(r) {
     + '</tr>';
 }
 
+// "% of premium captured" badge for buy-to-close (CLOSED) rows — how much of the
+// collected premium you kept by closing early. Hidden when there is no premium
+// to capture. Graded green/orange/red by how much was kept.
+function _captureBadge(r) {
+  if (r.outcome !== 'CLOSED') return '';
+  const pct = capturePct(r.premium, r.closeCost);
+  if (pct === null) return '';
+  const col = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
+  return '<span class="cap-badge" style="color:' + col + '">' + Math.round(pct) + '% kept</span>';
+}
+
 function _histRow(r) {
   const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
@@ -175,6 +186,7 @@ function _histRow(r) {
         : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>'
+      + _captureBadge(r)
       + (r.outcome === 'CLOSED' && r.closeDate
           ? '<div class="mu" style="font-size:.6rem;margin-top:2px">closed ' + r.closeDate + '</div>' : '')
       + '</td>'
@@ -221,7 +233,7 @@ function _openCard(r) {
 function _histCard(r) {
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-  const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>';
+  const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>' + _captureBadge(r);
   const premHtml = r.outcome === 'CLOSED'
     ? '+$' + fmt(r.premium - (r.closeCost || 0))
     : '+$' + fmt(r.premium);
