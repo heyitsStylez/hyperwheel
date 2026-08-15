@@ -188,9 +188,17 @@ finish() {
 TOTAL_STAGES=5
 
 # Keep captured secrets out of the repo's real .env — this file is for the
-# wizard's own re-run memory only. Never commit it.
-ENV_FILE="${ENV_FILE:-.wheeler-auth.env}"
+# wizard's own re-run memory only, and is gitignored. Set unconditionally: the
+# library already defaulted ENV_FILE to .env above, so a `:-` default wouldn't
+# take. Override with WIZARD_ENV_FILE=... if you really want somewhere else.
+ENV_FILE="${WIZARD_ENV_FILE:-.wheeler-auth.env}"
 VERCEL_KEYS=()   # env-var names destined for Vercel
+
+# ask_required / ask_secret_required — like ask/ask_secret but re-prompt until
+# the human actually enters something (empty required values silently break the
+# OAuth setup — e.g. a blank domain yields https:///api/auth/google).
+ask_required()        { while :; do ask        "$1" "$2"; [[ -n "${!1}" ]] && break; warn "Required — please enter a value."; done; }
+ask_secret_required() { while :; do ask_secret "$1" "$2"; [[ -n "${!1}" ]] && break; warn "Required — please enter a value."; done; }
 
 # vercel_env NAME VALUE — push a var to all three Vercel environments via the
 # CLI (idempotent: remove-then-add). Records the name for the dashboard-paste
@@ -221,9 +229,13 @@ stage "Your Wheeler domain"
 say "Google needs the exact redirect URI your deployment uses. We'll build it"
 say "from your Vercel domain (the one that serves /wheeler)."
 note "e.g. hyperwheel.vercel.app  or  your custom domain"
-ask WHEELER_DOMAIN "Domain (no https://, no trailing slash):"
-WHEELER_DOMAIN="${WHEELER_DOMAIN#https://}"; WHEELER_DOMAIN="${WHEELER_DOMAIN#http://}"
-WHEELER_DOMAIN="${WHEELER_DOMAIN%/}"
+while :; do
+  ask_required WHEELER_DOMAIN "Domain (no https://, no trailing slash):"
+  WHEELER_DOMAIN="${WHEELER_DOMAIN#https://}"; WHEELER_DOMAIN="${WHEELER_DOMAIN#http://}"
+  WHEELER_DOMAIN="${WHEELER_DOMAIN%/}"
+  [[ -n "$WHEELER_DOMAIN" ]] && break
+  warn "Domain is required."
+done
 REDIRECT_URI="https://${WHEELER_DOMAIN}/api/auth/google"
 write_env WHEELER_DOMAIN "$WHEELER_DOMAIN"
 say ""
@@ -254,8 +266,8 @@ step "Application type: Web application. Name: Wheeler web."
 step "Under 'Authorized redirect URIs' → + ADD URI, paste EXACTLY:"
 printf '  %s%s%s\n' "$BOLD" "$REDIRECT_URI" "$RESET"
 step "Create. A dialog shows the Client ID and Client secret."
-ask        GOOGLE_CLIENT_ID     "Paste the Client ID (ends .apps.googleusercontent.com):"
-ask_secret GOOGLE_CLIENT_SECRET "Paste the Client secret:"
+ask_required        GOOGLE_CLIENT_ID     "Paste the Client ID (ends .apps.googleusercontent.com):"
+ask_secret_required GOOGLE_CLIENT_SECRET "Paste the Client secret:"
 write_env GOOGLE_CLIENT_ID     "$GOOGLE_CLIENT_ID"
 write_env GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
 
@@ -272,7 +284,7 @@ else
 fi
 note "WHEELER_ALLOWED_EMAILS is comma-separated; must include every test user"
 note "from stage 2 who should reach their trades (start with just your email)."
-ask WHEELER_ALLOWED_EMAILS "Allowed email(s), comma-separated:"
+ask_required WHEELER_ALLOWED_EMAILS "Allowed email(s), comma-separated:"
 write_env WHEELER_SESSION_SECRET "$WHEELER_SESSION_SECRET"
 write_env WHEELER_ALLOWED_EMAILS "$WHEELER_ALLOWED_EMAILS"
 
