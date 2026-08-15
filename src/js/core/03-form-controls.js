@@ -177,7 +177,7 @@ function autoFillFromLot() {
 }
 function setFilter(f) {
   sFilter = f;
-  ['ALL','BTC','ETH','HYPE','SOL'].forEach(x => { const el = document.getElementById('fb-'+x); if(el) el.classList.toggle('active', x===f); });
+  document.querySelectorAll('.asset-tabs [id^="fb-"]').forEach(el => el.classList.toggle('active', el.id === 'fb-'+f));
   render();
 }
 

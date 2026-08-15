@@ -324,3 +324,36 @@ test('seeded wheeler_trades load on boot and survive a reload', async (t) => {
   const { lots } = window.compute();
   assert.ok((lots.IBIT || []).some(l => l.open), 'seeded IBIT holding should load into a lot');
 });
+
+test('filter tabs are derived from traded tickers and scope the view', async (t) => {
+  const seed = [
+    { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,
+      strike: 60, size: 100, premium: 0, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+    { id: 2, asset: 'PURR', type: 'HOLDING', date: '2026-01-03', expiry: '', dte: null,
+      strike: 12, size: 200, premium: 0, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+  const doc = window.document;
+
+  // One tab per traded ticker plus the All Tickers tab — no fixed crypto roster.
+  const bar = doc.querySelector('.asset-tabs');
+  assert.ok(doc.getElementById('fb-IBIT'), 'IBIT tab rendered from trades');
+  assert.ok(doc.getElementById('fb-PURR'), 'PURR tab rendered from trades');
+  assert.strictEqual(doc.getElementById('fb-BTC'), null, 'no fixed crypto tabs on Wheeler');
+  assert.match(bar.innerHTML, /All Tickers/);
+
+  // setFilter scopes to a single ticker and marks its tab active.
+  window.setFilter('PURR');
+  assert.match(doc.getElementById('fb-PURR').className, /active/);
+  assert.doesNotMatch(doc.getElementById('fb-IBIT').className, /active/);
+  const holdings = doc.getElementById('ncbwrap').innerHTML;
+  assert.match(holdings, /PURR/);
+  assert.doesNotMatch(holdings, /IBIT/);
+
+  // Deleting the filtered ticker's last trade falls back to ALL, not an empty view.
+  window.deleteTrade(2);
+  assert.strictEqual(doc.getElementById('fb-PURR'), null, 'vanished ticker has no tab');
+  assert.match(doc.getElementById('fb-ALL').className, /active/, 'filter falls back to ALL');
+  assert.match(doc.getElementById('ncbwrap').innerHTML, /IBIT/, 'remaining ticker still shows');
+});

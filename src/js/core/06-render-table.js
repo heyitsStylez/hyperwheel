@@ -53,6 +53,26 @@ function _platCol(cell) {
   return _isTradfi() ? '' : cell;
 }
 
+// Wheeler tickers are arbitrary and discovered from trades[], so its filter bar
+// is data-derived: one tab per traded ticker with a stable assetColor() dot.
+// Crypto keeps its static fixed-roster fragment untouched.
+function rFilterTabs() {
+  if (!_isTradfi()) return;
+  const bar = document.querySelector('.asset-tabs');
+  if (!bar) return;
+  const tickers = [...new Set(trades.map(t => t.asset).filter(Boolean))].sort();
+  let html = '<button class="asset-tab all' + (sFilter === 'ALL' ? ' active' : '')
+    + '" id="fb-ALL" onclick="setFilter(\'ALL\')">All Tickers</button>';
+  tickers.forEach(t => {
+    const on = sFilter === t;
+    const style = on ? ' style="border-color:' + assetColor(t) + ';color:' + assetColor(t) + '"' : '';
+    html += '<button class="asset-tab' + (on ? ' active' : '') + '" id="fb-' + t + '" onclick="setFilter(\''
+      + t + '\')"' + style + '><span class="asset-dot" style="background:' + assetColor(t) + '"></span> '
+      + t + '</button>';
+  });
+  bar.innerHTML = html;
+}
+
 // Display boundary for `size` (always stored in shares). Wheeler shows either
 // contracts (shares ÷ 100) or shares per the sSizeDisplay toggle; crypto is
 // unaffected — pass `asset` to append the token symbol as before.
