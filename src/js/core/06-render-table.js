@@ -161,6 +161,14 @@ function _captureBadge(r) {
   return '<span class="cap-badge" style="color:' + col + '">' + Math.round(pct) + '% kept</span>';
 }
 
+// "days early" tag for a buy-to-close — days still on the clock at close
+// (expiry − closeDate). Completes the close-vs-hold story next to % kept.
+function _daysEarlyTag(r) {
+  const de = daysEarly(r.expiry, r.closeDate);
+  if (de === null) return '';
+  return de > 0 ? ' &middot; ' + de + 'd early' : de === 0 ? ' &middot; on expiry' : '';
+}
+
 function _histRow(r) {
   const assetCls = { BTC:'bbtc', ETH:'beth', HYPE:'bhype', SOL:'bsol' }[r.asset] || 'bbtc';
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
@@ -188,7 +196,7 @@ function _histRow(r) {
     + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>'
       + _captureBadge(r)
       + (r.outcome === 'CLOSED' && r.closeDate
-          ? '<div class="mu" style="font-size:.6rem;margin-top:2px">closed ' + r.closeDate + '</div>' : '')
+          ? '<div class="mu" style="font-size:.6rem;margin-top:2px">closed ' + r.closeDate + _daysEarlyTag(r) + '</div>' : '')
       + '</td>'
     + '<td class="td-act"><div class="row-actions">' + corrBtn
       + '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
@@ -255,7 +263,7 @@ function _histCard(r) {
     +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(r.size, r.asset) + '</div>'
     +   '<div><span class="exp-card-lbl">Prem</span> ' + premHtml + '</div>'
     +   (r.outcome === 'CLOSED' && r.closeDate
-          ? '<div><span class="exp-card-lbl">Closed</span> ' + r.closeDate + '</div>' : '')
+          ? '<div><span class="exp-card-lbl">Closed</span> ' + r.closeDate + _daysEarlyTag(r) + '</div>' : '')
     + '</div>'
     + '<div class="exp-card-row3"><div class="row-actions">' + corrBtn
     +   '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
