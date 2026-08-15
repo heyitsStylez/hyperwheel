@@ -16,4 +16,5 @@ var bootReady = (async function init() {
   setType(sType);
   render();
   fetchExpiryPrices();  // live equity/ETF spot for holdings cards (#92)
+  authInit();           // Google sign-in state + per-user cloud sync (#110)
 })();
