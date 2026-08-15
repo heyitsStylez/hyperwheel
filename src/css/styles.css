@@ -63,7 +63,7 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .page-wrap{padding:28px 32px 80px;display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
 .content-col{display:flex;flex-direction:column;gap:24px;min-width:0}
 .top-left{display:flex;flex-direction:column;gap:24px;min-width:0}
-@media(max-width:720px){.page-wrap{padding:18px 12px 60px}.hbtns{display:none!important}}
+@media(max-width:720px){.page-wrap{padding:18px 12px 60px}}
 
 /* TRADE DRAWER */
 .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
@@ -347,8 +347,12 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .fi{grid-template-columns:1fr 1fr}
   .fb{grid-template-columns:1fr 1fr}
   .cgrid{grid-template-columns:1fr}
-  .header{padding:14px 16px}
-  .hbtns{display:none!important}
+  .header{padding:14px 16px;flex-wrap:wrap;gap:12px}
+  .hbtns{flex-wrap:wrap;gap:8px!important;justify-content:flex-end}
+  .hbtns>.btn-p{display:none} /* header add button — mobile FAB covers it */
+  .utc-clock{display:none}
+  .cpnl-hero-hd{flex-wrap:wrap}
+  .cpnl-hero-tile{margin-left:0;border-left:none;padding-left:0}
   .main{padding:18px 12px 60px}
 }
 
@@ -359,6 +363,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .hsub{display:none}
   .cpnl-hero-hd{padding:14px 14px 10px}
   .cpnl-hero-val{font-size:1.5rem}
+  .cpnl-tile-total{font-size:1.5rem}
   .sec{padding:14px 14px}
   .page-wrap{gap:16px}
   /* Font size floor */
