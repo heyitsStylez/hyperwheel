@@ -174,8 +174,12 @@ function _histRow(r) {
         ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
         : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
-    + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span></td>'
+    + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>'
+      + (r.outcome === 'CLOSED' && r.closeDate
+          ? '<div class="mu" style="font-size:.6rem;margin-top:2px">closed ' + r.closeDate + '</div>' : '')
+      + '</td>'
     + '<td class="td-act"><div class="row-actions">' + corrBtn
+      + '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -238,8 +242,11 @@ function _histCard(r) {
     +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(r.strike) + '</div>'
     +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(r.size, r.asset) + '</div>'
     +   '<div><span class="exp-card-lbl">Prem</span> ' + premHtml + '</div>'
+    +   (r.outcome === 'CLOSED' && r.closeDate
+          ? '<div><span class="exp-card-lbl">Closed</span> ' + r.closeDate + '</div>' : '')
     + '</div>'
     + '<div class="exp-card-row3"><div class="row-actions">' + corrBtn
+    +   '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
     +   '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button></div></div>'
     + '</div>';
 }

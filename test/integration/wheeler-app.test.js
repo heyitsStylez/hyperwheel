@@ -61,6 +61,19 @@ test('manual HOLDING + covered CALL on arbitrary ticker tracks net cost', async 
   assert.match(window.document.getElementById('ttbody-open').innerHTML, /IBIT/);
 });
 
+test('closed-early history row shows the close date and an edit affordance', async (t) => {
+  const trades = [
+    { id: 1, asset: 'PURR', type: 'CALL', date: '2026-07-15', expiry: '2026-08-21',
+      dte: 37, strike: 9, size: 100, premium: 55, outcome: 'CLOSED',
+      closeCost: 5, closeDate: '2026-08-11', platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades });
+  t.after(teardown);
+  const hist = window.document.getElementById('ttbody-hist').innerHTML;
+  assert.match(hist, /closed 2026-08-11/, 'close date is surfaced on the closed row');
+  assert.match(hist, /openEditModal\(1\)/, 'closed rows expose an edit affordance');
+});
+
 test('two rapid manual adds get distinct ids (no Date.now collision)', async (t) => {
   const { window, teardown } = await setupJsdom({ app: 'tradfi' });
   t.after(teardown);
