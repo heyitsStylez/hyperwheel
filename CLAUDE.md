@@ -36,10 +36,10 @@ Each app is its own **standalone site**, both git-connected to
   `outputDirectory` — it would force both projects to the same dir.
 - `wheeler.vercel.app` is **owned by someone else** — unavailable. Wheeler lives
   at `gowheeler.vercel.app`.
-- **Auto-deploy on `main` is disabled** (`git.deploymentEnabled.main: false`,
-  shared by both). Push to `main` does NOT deploy; trigger prod manually:
-  `vercel link --project <name>` then `vercel --prod`. PR branches still get
-  preview deployments.
+- **Auto-deploy on `main` is enabled** (`git.deploymentEnabled.main: true`,
+  shared by both). Merging to `main` deploys **both** projects to prod. PR
+  branches still get preview deployments. To deploy out-of-band you can still
+  run `vercel link --project <name>` then `vercel --prod`.
 - **Legacy `/wheeler` on hyperwheel is retired** (#121): `vercel.json` has a
   host-scoped 307 redirect `/wheeler/:path* → https://gowheeler.vercel.app/:path*`
   (the `has` host condition pins it to `hyperwheel.vercel.app`, so `gowheeler`

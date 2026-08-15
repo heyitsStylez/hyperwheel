@@ -2,7 +2,7 @@
   "buildCommand": "git fetch --tags --depth=1 origin || true; python3 build.py --check",
   "git": {
     "deploymentEnabled": {
-      "main": false
+      "main": true
     }
   },
   "framework": null,
