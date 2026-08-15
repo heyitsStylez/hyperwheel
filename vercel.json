@@ -5,7 +5,6 @@
       "main": false
     }
   },
-  "outputDirectory": "public",
   "framework": null,
   "headers": [
     {
