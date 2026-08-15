@@ -1,0 +1,19 @@
+{
+  "fragments": ["wallet_overlay", "header_actions", "filter_tabs", "trade_form", "footer"],
+  "apps": {
+    "crypto": {
+      "js_dir": "crypto",
+      "title": "HyperWheel",
+      "subtitle": "WHEEL STRATEGY TRACKER",
+      "local": "hyperwheel.html",
+      "public": "public/index.html"
+    },
+    "tradfi": {
+      "js_dir": "tradfi",
+      "title": "Wheeler",
+      "subtitle": "TRADFI WHEEL TRACKER",
+      "local": "wheeler.html",
+      "public": "public/wheeler/index.html"
+    }
+  }
+}

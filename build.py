@@ -22,6 +22,7 @@ import sys
 import subprocess
 import os
 import glob
+import json
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -102,26 +103,22 @@ def resolve_version(cwd=BASE):
 
 # Two apps share the platform-neutral core/ and each add their own JS dir +
 # HTML fragments. build.py emits a single-file artifact per app.
+#
+# The app/fragment config is the single source of truth in src/app-manifest.json,
+# read by both this file and test/helpers/assemble.js so the two never drift (#98).
+_MANIFEST = json.loads(read(os.path.join(BASE, 'src', 'app-manifest.json')))
+
+# Manifest stores output paths POSIX-style; normalise to the host separator.
 APPS = {
-    'crypto': {
-        'js_dir': 'crypto',
-        'title': 'HyperWheel',
-        'subtitle': 'WHEEL STRATEGY TRACKER',
-        'local': 'hyperwheel.html',
-        'public': os.path.join('public', 'index.html'),
-    },
-    'tradfi': {
-        'js_dir': 'tradfi',
-        'title': 'Wheeler',
-        'subtitle': 'TRADFI WHEEL TRACKER',
-        'local': 'wheeler.html',
-        'public': os.path.join('public', 'wheeler', 'index.html'),
-    },
+    app: {**cfg,
+          'local': os.path.normpath(cfg['local']),
+          'public': os.path.normpath(cfg['public'])}
+    for app, cfg in _MANIFEST['apps'].items()
 }
 
 # Body/head markers of the form {{FRAG:name}} are replaced with the app's
 # src/html/<js_dir>/<name>.html fragment. Every app must supply every fragment.
-FRAGMENTS = ('wallet_overlay', 'header_actions', 'filter_tabs', 'trade_form', 'footer')
+FRAGMENTS = tuple(_MANIFEST['fragments'])
 
 
 def _fill_fragments(template, app_dir):
