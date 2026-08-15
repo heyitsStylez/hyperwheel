@@ -57,7 +57,9 @@ function wheelerAddTrade() {
   }
 
   trades.push(tradeObj);
-  save(); render(); clearForm();
+  save(); render();
+  fetchExpiryPrices();  // price any newly-added ticker without a page reload
+  clearForm();
   closeTradeDrawer();
   toast(asset + ' ' + sType.toLowerCase() + ' added');
   const tlog = document.getElementById('tlog');
