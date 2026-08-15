@@ -181,6 +181,69 @@ function _histRow(r) {
     + '</tr>';
 }
 
+// Mobile card mirrors of the open/history table rows (shown <600px in place of
+// the horizontally-scrolling tables). Reuse the .exp-card styling family.
+function _openCard(r) {
+  const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
+  const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
+  const aprStr = '<span style="font-weight:700;color:' + (r.annual > 0 ? 'var(--green)' : 'var(--mu2)') + '">'
+    + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
+  const closeBtn = _isTradfi()
+    ? '<button class="btn-qa btn-qa-cls" onclick="openEditModal(' + r.id + ',\'CLOSED\')" title="Buy to close">Close ⊗</button>'
+    : '';
+  const actions = (r.type === 'CALL'
+    ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')">Exp ✓</button>'
+      + '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')">Called ↑</button>'
+    : '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')">Exp ✓</button>'
+      + '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')">Asgn ↓</button>') + closeBtn;
+  return '<div class="exp-card">'
+    + '<div class="exp-card-row1">'
+    +   '<span class="exp-card-asset" style="color:' + assetColor(r.asset) + '">' + r.asset + '</span>'
+    +   typeBadge
+    +   '<span class="exp-card-dte">' + _liveDte(r.expiry) + '</span>'
+    +   _platCol(platBadge)
+    + '</div>'
+    + '<div class="exp-card-row2">'
+    +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(r.strike) + '</div>'
+    +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(r.size, r.asset) + '</div>'
+    +   '<div><span class="exp-card-lbl">Prem</span> +$' + fmt(r.premium) + '</div>'
+    +   '<div><span class="exp-card-lbl">APR</span> ' + aprStr + '</div>'
+    + '</div>'
+    + '<div class="exp-card-row3"><div class="row-actions">' + actions
+    +   '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button></div></div>'
+    + '</div>';
+}
+
+function _histCard(r) {
+  const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
+  const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
+  const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>';
+  const premHtml = r.outcome === 'CLOSED'
+    ? '+$' + fmt(r.premium - (r.closeCost || 0))
+    : '+$' + fmt(r.premium);
+  const corrBtn = r.outcome === 'EXPIRED' && r.type === 'CALL'
+    ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')">Called ↑</button>'
+    : r.outcome === 'EXPIRED' && r.type === 'PUT'
+    ? '<button class="btn-qa btn-qa-asg" onclick="quickOutcome(' + r.id + ',\'ASSIGNED\')">Asgn ↓</button>'
+    : '';
+  return '<div class="exp-card">'
+    + '<div class="exp-card-row1">'
+    +   '<span class="exp-card-asset" style="color:' + assetColor(r.asset) + '">' + r.asset + '</span>'
+    +   typeBadge
+    +   '<span class="exp-card-dte">' + outBadge + '</span>'
+    +   _platCol(platBadge)
+    + '</div>'
+    + '<div class="exp-card-row2">'
+    +   '<div><span class="exp-card-lbl">Date</span> ' + r.date + '</div>'
+    +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(r.strike) + '</div>'
+    +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(r.size, r.asset) + '</div>'
+    +   '<div><span class="exp-card-lbl">Prem</span> ' + premHtml + '</div>'
+    + '</div>'
+    + '<div class="exp-card-row3"><div class="row-actions">' + corrBtn
+    +   '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button></div></div>'
+    + '</div>';
+}
+
 function rStats(streams, lots, allRows, displayRows) {
   renderExpiryTable(allRows);
 }
@@ -326,12 +389,16 @@ function rTable(displayRows, streams, lots) {
   const histHdr  = document.getElementById('hist-hdr');
   const ocntEl   = document.getElementById('ocnt');
   const hcntEl   = document.getElementById('hcnt');
+  const openCards = document.getElementById('tcards-open');
+  const histCards = document.getElementById('tcards-hist');
 
   if (!displayRows.length) {
     if (openHdr)  openHdr.innerHTML  = _openHeaders();
     if (histHdr)  histHdr.innerHTML  = _histHeaders();
     if (openBody) openBody.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="empty-icon">&#9678;</div><div class="empty-title">No trades logged yet</div><div class="empty-sub">Start by logging your first position \u2014 a PUT, CALL, or spot HOLDING. Your P&amp;L, net cost basis, and premium income will appear here automatically.</div><button class="empty-cta" onclick="openTradeDrawer()">+ LOG FIRST TRADE</button></div></td></tr>';
     if (histBody) histBody.innerHTML = '';
+    if (openCards) openCards.innerHTML = '';
+    if (histCards) histCards.innerHTML = '';
     ncWrap.innerHTML = ''; cntEl.textContent = '';
     if (ocntEl) ocntEl.textContent = '';
     if (hcntEl) hcntEl.textContent = '';
@@ -461,12 +528,18 @@ function rTable(displayRows, streams, lots) {
   if (openBody) openBody.innerHTML = sortedOpen.length
     ? sortedOpen.map(_openRow).join('')
     : '<tr><td colspan="11" style="padding:14px 12px;color:var(--mu);font-size:.75rem;text-align:center;font-family:var(--mono)">No open positions</td></tr>';
+  if (openCards) openCards.innerHTML = sortedOpen.length
+    ? sortedOpen.map(_openCard).join('')
+    : '<div class="exp-empty">No open positions</div>';
 
   // Position history
   const sortedHist = _sortRows(histRows, tSortHist);
   if (histBody) histBody.innerHTML = sortedHist.length
     ? sortedHist.map(_histRow).join('')
     : '<tr><td colspan="12" style="padding:14px 12px;color:var(--mu);font-size:.75rem;text-align:center;font-family:var(--mono)">No closed positions yet</td></tr>';
+  if (histCards) histCards.innerHTML = sortedHist.length
+    ? sortedHist.map(_histCard).join('')
+    : '<div class="exp-empty">No closed positions yet</div>';
 }
 
 function exportHistoryCSV() {
