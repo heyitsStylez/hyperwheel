@@ -40,6 +40,27 @@ Each app is its own **standalone site**, both git-connected to
   shared by both). Push to `main` does NOT deploy; trigger prod manually:
   `vercel link --project <name>` then `vercel --prod`. PR branches still get
   preview deployments.
+- **Legacy `/wheeler` on hyperwheel is retired** (#121): `vercel.json` has a
+  host-scoped 307 redirect `/wheeler/:path* → https://gowheeler.vercel.app/:path*`
+  (the `has` host condition pins it to `hyperwheel.vercel.app`, so `gowheeler`
+  is unaffected). `public/wheeler/` still ships in hyperwheel's output but users
+  are bounced to the standalone site.
+
+**Per-project env vars** — each project owns its own set (Vercel projects don't
+share env):
+- `hyperwheel`: KV vars only (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, plus the
+  KV integration's `REDIS_URL`/`KV_URL`/read-only token) for HOLDING cloud sync.
+- `gowheeler`: the full Wheeler set — `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+  `WHEELER_SESSION_SECRET`, `WHEELER_ALLOWED_EMAILS` (auth #110), `FINNHUB_KEY` +
+  `TWELVEDATA_KEY` (quotes), `KV_REST_API_URL` + `KV_REST_API_TOKEN` (same KV
+  store; Wheeler keys are `wheeler:<sub>`), and `WHEELER_APP_PATH=/`.
+- `WHEELER_APP_PATH` sets the post-login/logout redirect target in
+  `api/auth/google.js` (`/` on gowheeler; defaults to `/wheeler` if unset).
+- Google OAuth **Authorized redirect URI** must include
+  `https://gowheeler.vercel.app/api/auth/google`.
+- Copying **Sensitive** env vars between projects can't use `vercel env pull`
+  (it emits the literal `[SENSITIVE]`); pull a Non-sensitive env (e.g. Development)
+  or re-enter the real value.
 
 ---
 
