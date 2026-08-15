@@ -34,11 +34,15 @@ module.exports = async function handler(req, res) {
 
   const { code, state, action, error } = req.query;
 
+  // Where the app lives on this deployment: '/' when Wheeler is a standalone
+  // site (gowheeler.vercel.app), '/wheeler' when served under HyperWheel.
+  const appPath = process.env.WHEELER_APP_PATH || '/wheeler';
+
   // Logout — clear the session cookie and return to the app.
   if (action === 'logout') {
     res.setHeader('Set-Cookie', cookie(auth.SESSION_COOKIE, '', 0));
     res.statusCode = 302;
-    res.setHeader('Location', '/wheeler');
+    res.setHeader('Location', appPath);
     return res.end();
   }
 
@@ -75,7 +79,7 @@ module.exports = async function handler(req, res) {
         cookie(auth.STATE_COOKIE, '', 0),
       ]);
       res.statusCode = 302;
-      res.setHeader('Location', '/wheeler');
+      res.setHeader('Location', appPath);
       return res.end();
     } catch {
       return res.status(502).send('Sign-in failed. Please try again.');
