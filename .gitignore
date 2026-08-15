@@ -13,3 +13,7 @@ memory/
 *.backup.html
 *-mock.html
 options-*-analysis-prompt.md
+
+# Wheeler auth wizard — local captured secrets (never commit)
+.env
+.wheeler-auth.env

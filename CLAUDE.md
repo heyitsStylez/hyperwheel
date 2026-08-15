@@ -43,6 +43,14 @@ api/chain-sync.js         # Vercel serverless: CORS proxy to Rysk + Hypersurface
 api/quote.js              # Vercel serverless: key-injecting proxy for Wheeler
                           # equity/ETF quotes (Finnhub + Twelve Data); keys live
                           # in env vars FINNHUB_KEY / TWELVEDATA_KEY, not in HTML
+api/_auth.js              # Hand-rolled auth helpers (#110): HS256 session JWT
+                          # sign/verify + Google id_token (RS256) JWKS verify +
+                          # allow-list. Underscore = shared module, not a route.
+                          # Pure; dual-exported for test/unit/auth.test.js
+api/auth/google.js        # Vercel serverless: Google OAuth (OIDC) login redirect,
+                          # callback (code→id_token→session cookie), logout
+api/wheeler-sync.js       # Vercel serverless: session-authed GET/PUT of the FULL
+                          # Wheeler trade array, keyed wheeler:<sub> in Upstash KV
 src/
   html/head.html          # <head> with /* CSS_PLACEHOLDER */ marker + {{APP_TITLE}}
   html/body.html          # shared <body> shell with {{FRAG:*}} markers
@@ -105,8 +113,9 @@ Tests mirror this: `test/helpers/assemble.js` does the fragment substitution and
 
 | File | Lines | Key exports / purpose |
 |------|------:|-----------------------|
-| `12a-persistence.js` | ~26 | **Persistence seam** (tradfi impl): local-only under `wheeler_trades`, `currentUserKey() → 'local'` (#84). Same basename as crypto's so it fills the same order slot — only one app dir is built at a time. No cloud push |
-| `17-boot.js` | ~22 | **Wheeler boot**: no wallet popup / chain / cloud. `trades = await loadTrades()`, `sAsset = ''` (free-text ticker), `setType(sType)`, `render()`. Empty trades → rTable's "add your first trade" prompt |
+| `12a-persistence.js` | ~28 | **Persistence seam** (tradfi impl): local-first under `wheeler_trades`, `currentUserKey() → 'local'` (#84). Same basename as crypto's so it fills the same order slot. `persist()` also calls `scheduleCloudPush()` when signed in (#110) |
+| `12-cloud-sync.js` | ~95 | **Wheeler cloud sync** (#110, ADR 0007, Design B): `authInit` (boot: GET `/api/wheeler-sync` → set gate UI, pull-if-newer or back-up-local), `cloudPush`/`scheduleCloudPush` (debounced POST of the FULL trade array), `wheelerSignIn`/`wheelerSignOut`, `_setAuthUI`, `_setCloudStatus`. Auth state via session cookie; only pushes when signed in |
+| `17-boot.js` | ~23 | **Wheeler boot**: no wallet popup / chain. `trades = await loadTrades()`, `sAsset = ''` (free-text ticker), `setType(sType)`, `render()`, `fetchExpiryPrices()`, `authInit()` (fire-and-forget). Empty trades → rTable's "add your first trade" prompt |
 | `19-tradfi-form.js` | ~50 | `setTicker(v)` (mirrors free-text ticker → `sAsset`, uppercased) and `wheelerAddTrade()` — manual PUT/CALL/HOLDING entry (crypto's core `addTrade()` is HOLDING-only), routed through `save()`/`render()`. Trades carry `platform: 'MANUAL'`. Supports the CLOSED (buy-to-close) outcome: reads `f-closecost` and stores `closeCost` (netted off premium by the core cash-flow lens). **Options are entered in contracts and stored as shares** via `contractsToShares` (holdings stay raw shares); `setSizeDisplay(unit)` flips the header contracts↔shares toggle and re-renders. Display of `size` routes through `fmtSize` in `06-render-table.js` (#91) |
 
 **Line numbers above are approximate** — they shift as the code evolves. Use them
