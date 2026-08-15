@@ -118,7 +118,7 @@ body[data-app="crypto"] .pnl-cal-sec{display:none}
 .cal-cell.cal-out{background:transparent;border-color:transparent}
 .cal-cell.pos{background:var(--gd);border-color:var(--gb)}
 .cal-cell.neg{background:var(--rd);border-color:var(--rb)}
-.cal-cell.cal-today{box-shadow:0 0 0 1.5px var(--green) inset}
+.cal-cell.cal-today{box-shadow:0 0 0 1.5px var(--accent) inset}
 .cal-daynum{font-size:.62rem;font-family:var(--mono);color:var(--mu2)}
 .cal-pnl{font-size:.78rem;font-weight:700;font-family:var(--mono)}
 .cal-pnl.pos{color:var(--green)}
@@ -468,6 +468,7 @@ body::after {
 .btn-qa-cal { color: var(--orange); border-color: var(--ob); background: var(--od); }
 .btn-qa-asg { color: var(--red);    border-color: var(--rb); background: var(--rd); }
 .btn-qa-cls { color: var(--purple); border-color: var(--pb); background: var(--pd); }
+.btn-qa-edit { color: var(--mu2); border-color: var(--bd2); background: none; }
 .btn-qa:hover { filter: brightness(1.18); }
 /* Row action buttons — fade in on row hover */
 .row-actions { display:flex; gap:4px; align-items:center; justify-content:flex-end; opacity:0; transition:opacity .15s; pointer-events:none; }

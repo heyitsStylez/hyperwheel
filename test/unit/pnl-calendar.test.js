@@ -12,10 +12,10 @@ function cell(cal, iso) {
   return null;
 }
 
-test('grid covers the month with Sun-start full weeks', () => {
+test('grid covers the month with Mon-start full weeks', () => {
   // August 2026: 1st is a Saturday, 31st is a Monday.
   const cal = pnlCalendar([], 'ALL', '2026-08');
-  assert.strictEqual(cal.weeks[0][0].date, '2026-07-26', 'first cell is the Sun on/before the 1st');
+  assert.strictEqual(cal.weeks[0][0].date, '2026-07-27', 'first cell is the Mon on/before the 1st');
   assert.strictEqual(cal.weeks[0][0].inMonth, false);
   assert.strictEqual(cell(cal, '2026-08-01').inMonth, true);
   assert.strictEqual(cell(cal, '2026-08-31').inMonth, true);

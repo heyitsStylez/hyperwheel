@@ -12,7 +12,7 @@
 const CAL_MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 
-// Build the Sun–Sat grid for `ym` ('YYYY-MM') with per-day realised + counts,
+// Build the Mon–Sun grid for `ym` ('YYYY-MM') with per-day realised + counts,
 // weekly totals and a month total. Cells outside the month carry no stats.
 function pnlCalendar(trades, assetFilter, ym) {
   const cp = (typeof computePnl !== 'undefined')
@@ -40,7 +40,8 @@ function pnlCalendar(trades, assetFilter, ym) {
 
   const [y, m] = ym.split('-').map(Number);
   const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const startDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();  // 0=Sun
+  // Days from Monday to the 1st (Mon=0 … Sun=6).
+  const startDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
 
   const cur = new Date(Date.UTC(y, m - 1, 1 - startDow));
   const weeks = [], weekTotals = [];
@@ -100,7 +101,7 @@ function rPnlCalendar() {
     '</div>';
 
   html += '<div class="cal-grid">';
-  ['SUN','MON','TUE','WED','THU','FRI','SAT','WEEK'].forEach(d =>
+  ['MON','TUE','WED','THU','FRI','SAT','SUN','WEEK'].forEach(d =>
     html += '<div class="cal-dow' + (d === 'WEEK' ? ' cal-dow-wk' : '') + '">' + d + '</div>');
 
   weeks.forEach((row, wi) => {
