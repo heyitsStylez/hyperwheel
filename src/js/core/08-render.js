@@ -9,4 +9,5 @@ function render() {
   rTable(displayRows, streams, lots);
   rOutcomeChart();
   rCharts(displayRows, lots);
+  rPnlCalendar();  // Wheeler only — self-gates on tradfi
 }

@@ -19,3 +19,7 @@ let mergeAsset = null;
 let sHistOutcome = 'ALL';  // ALL | EXPIRED | ASSIGNED | CALLED | CLOSED
 let sHistFrom = '';        // YYYY-MM-DD or empty
 let sHistTo   = '';
+
+// P&L Calendar displayed month (Wheeler only), 'YYYY-MM'. Empty → current month
+// (lazily set on first render in 07b-render-pnl-calendar.js).
+let sCalMonth = '';

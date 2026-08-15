@@ -123,7 +123,7 @@ Tests mirror this: `test/helpers/assemble.js` does the fragment substitution and
 
 | File | Lines | Key exports / purpose |
 |------|------:|-----------------------|
-| `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sSizeDisplay` (Wheeler contracts↔shares display toggle; crypto ignores it), `sHistOutcome/sHistFrom/sHistTo`, `livePrices{}`, `mergeAsset` |
+| `01-state.js` | 18 | `HW_WALLET_KEY`, `HW_HOLDINGS_KEY`, `HW_SYNCED_KEY`, `trades[]`, `sAsset/sType/sFilter/sPlatform/sSizeUnit/sPpnlTab/sCpnlPeriod`, `sSizeDisplay` (Wheeler contracts↔shares display toggle; crypto ignores it), `sHistOutcome/sHistFrom/sHistTo`, `sCalMonth` (P&L Calendar month, Wheeler; empty → current), `livePrices{}`, `mergeAsset` |
 | `01a-outcomes.js` | 32 | `OUTCOMES` registry: per-outcome `{title, badgeClass, platforms}`. Single source of truth for outcome display data + picker membership. Lot-lifecycle effects live in the Lot Engine, not here |
 | `01b-asset-meta.js` | 24 | `assetColor(sym)` (brand override → stable symbol-hash HSL fallback) and `minSize(sym)` (contract minimum, `0` for unknown tickers). Backed by `ASSET_BRAND`/`ASSET_MIN_SIZE` registries populated by platform modules. Dual-exported. Lets arbitrary tickers work with no config |
 | `02-utils.js` | 33 | `today()`, `save()` (routes trades through the persistence seam `persist()`), `fmt()` (max 2dp), `sk()` (K-abbrev), `loadWallet()`, `saveWallet()`, `toast(msg, kind?)` (`'ok'`/`'err'`/`'info'`). **TradFi contract seam:** `SHARES_PER_CONTRACT` (100), `contractsToShares`/`sharesToContracts` — the single place the ×100 lives (#91); the lot engine works purely in shares. Dual-exports `today/fmt/sk` + the contract helpers for Node tests |
@@ -132,12 +132,13 @@ Tests mirror this: `test/helpers/assemble.js` does the fragment substitution and
 | `04b-lot-engine.js` | 140 | `lotNetCost(costBasis, lotPremiums, size)` and `lotEngine(assetTrades)` → `{lots, portfolioPnl, portfolioPremiums, putOnlyPnl, tradeAccounting}`. **Single source of truth** for wheel invariants (see Lot model below). Pure; dual-exported for Node. **Key invariant:** assigned-PUT premium IS credited to the new lot's `lotPremiums` |
 | `05-compute.js` | 89 | `compute(assetFilter)` → `{streams, lots, allRows, displayRows}`. Cross-asset orchestrator: per-asset grouping, calls `lotEngine`, applies asset filter, sorts, assigns idx, derives display fields (`returnPct`, `monthly`, `annual`, `lotPnl`). Dual-exports `compute` for Node tests (reads `trades`/`lotEngine` from globals — set them before `require`) |
 | `05a-merge-open-lots.js` | 113 | `mergeOpenLots(trades, asset)` → `trades'`. Pure helper that merges all open lots for one asset (size-weighted `costBasis`, summed `lotPremiums`, earliest opener kept, CALL `lotNum` cleared). Prefers `lotEngine`, falls back to `compute` or a HOLDING/ASSIGNED heuristic for Node tests |
-| `05b-pnl.js` | 90 | `computePnl(trades, assetFilter, livePrices)` → `{ realised, unrealised, total, missingSpotAssets, realisedSeries, realisedByMonth }`. Cash-flow-lens P&L calculator. Realised: `Σ settled netPrem + Σ (strike − costBasis) × calledSize` (open contributions are zero). Unrealised: `Σ over open lots of (spot − costBasis) × size`, marked against raw `costBasis` (never `netCost`); assets missing spot are excluded from the sum and reported in `missingSpotAssets`. Total = Realised + Unrealised. HOLDING- and ASSIGNED-originated lots are treated symmetrically in both paths. Pure; dual-exported. ADR: `docs/adr/0003-pnl-cash-flow-lens.md` |
+| `05b-pnl.js` | 90 | `computePnl(trades, assetFilter, livePrices)` → `{ realised, unrealised, total, missingSpotAssets, realisedSeries, realisedByMonth, realisedByDay }`. CLOSED trades are dated on `closeDate` (falls back to expiry); `realisedByDay` is a per-day realised map feeding the P&L Calendar. Cash-flow-lens P&L calculator. Realised: `Σ settled netPrem + Σ (strike − costBasis) × calledSize` (open contributions are zero). Unrealised: `Σ over open lots of (spot − costBasis) × size`, marked against raw `costBasis` (never `netCost`); assets missing spot are excluded from the sum and reported in `missingSpotAssets`. Total = Realised + Unrealised. HOLDING- and ASSIGNED-originated lots are treated symmetrically in both paths. Pure; dual-exported. ADR: `docs/adr/0003-pnl-cash-flow-lens.md` |
 | `05c-outcome-distribution.js` | 32 | `outcomeDistribution(trades, assetFilter)` → `[{outcome, count, premium}]`. Pure helper for the Position History outcome treemap. Excludes OPEN, orders EXPIRED/ASSIGNED/CALLED/CLOSED, nets `closeCost` from CLOSED premium (cash-flow lens). Dual-exported |
 | `06-render-table.js` | 452 | `sortOpen/sortHist`, `renderExpiryTable(allRows)` (today badge + mobile cards — reads enriched rows from `compute`, uses `r.annual` and `_liveDte`; no longer reads raw `trades[]`), `fetchExpiryPrices` (CoinGecko, calls `render()` on success), `rTable` (holdings cards — roster derived from `lots` so arbitrary tickers render, known crypto assets keep brand CSS classes + fixed order, unknown tickers get an inline `assetColor()`; open & history tables, history filter application), `rStats(streams, lots, allRows, displayRows)` (forwards `allRows` to `renderExpiryTable`), `exportHistoryCSV` (downloads filtered history as CSV). `_platCol(cell)`/`_isTradfi()` drop the Platform column/badge when `document.body.dataset.app === 'tradfi'` (Wheeler's single MANUAL platform carries no info). Wheeler open option rows also get a **Close ⊗** quick-action (`btn-qa-cls`) that opens the edit modal preset to CLOSED for buy-to-close |
 | `06a-render-outcome-chart.js` | 75 | `rOutcomeChart()` — renders a horizontal treemap of `outcomeDistribution` into `#hist-outchart` when ≥10 settled trades; otherwise hides itself and shows `#hist-pills`. Each cell click toggles `setHistOutcome`. Cells coloured via CSS vars (EXPIRED/ASSIGNED/CALLED/CLOSED → green/red/orange/blue) |
 | `07-render-charts.js` | 640 | `setCpnlPeriod` (1M/3M/ALL), `rCpnlChart` (cumulative Realised P&L hero — sources `realisedSeries` from `computePnl` — plus secondary Realised sparkline), `rCharts` (Premium P&L total/monthly tabs — Total tab consumes `computePnl` for the Realised tile), `cOpts` (Chart.js options factory) |
-| `08-render.js` | 8 | `render()` — orchestrator: `compute → rStats → rTable → rOutcomeChart → rCharts` |
+| `07b-render-pnl-calendar.js` | ~185 | `pnlCalendar(trades, assetFilter, ym)` (pure, dual-exported) → `{ ym, weeks, weekTotals, monthTotal }`: Sun–Sat grid of per-day realised P&L + `closed`/`new` counts (realised sourced from `computePnl.realisedByDay`; "new" = options opened that day). `rPnlCalendar()` renders it into `#pnl-cal-sec` — **Wheeler only** (self-gates on `_isTradfi()`; CSS hides the section on crypto). `setCalMonth(delta)` shifts `sCalMonth` and re-renders |
+| `08-render.js` | 9 | `render()` — orchestrator: `compute → rStats → rTable → rOutcomeChart → rCharts → rPnlCalendar` |
 | `09-drawer-modal.js` | 15 | `openTradeDrawer`, `closeTradeDrawer`, `focusForm` |
 | `10-reset-modal.js` | 4 | `showReset`, `closeReset`, `doReset` (wipes `trades`) |
 | `11a-asset-brand.js` | 6 | Registers crypto brand colours + Rysk contract minimums as overrides on the core `ASSET_BRAND`/`ASSET_MIN_SIZE` registries (BTC/ETH/HYPE/SOL). Runs at load after `01b-asset-meta.js` |
@@ -348,6 +349,18 @@ CSS vars so adding themes later remains cheap.
   no separate viewer
 
 ---
+
+## Recently added (Aug 2026)
+
+- **P&L Calendar (Wheeler)** (`07b-render-pnl-calendar.js`, #123): monthly
+  heatmap of realised P&L per day + `N closed · N new` activity, weekly-total
+  column, month total and prev/next nav (`sCalMonth`). Realised is dated on the
+  close date for buy-to-close (new `closeDate` trade field) else expiry, via
+  `computePnl.realisedByDay`. Wheeler-only (crypto section CSS-hidden).
+- **`closeDate` trade field** (#123): realisation date for CLOSED (buy-to-close);
+  entered in the Wheeler form + shared edit modal, empty otherwise.
+- **Wheeler UI trims**: Total Notional tile + Expiring This Week section are
+  gated off on Wheeler (kept on HyperWheel).
 
 ## Recently added (May 2026)
 
