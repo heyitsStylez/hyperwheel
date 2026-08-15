@@ -18,7 +18,7 @@ function addTrade() {
 }
 
 function clearForm() {
-  ['f-strike','f-dte','f-closecost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['f-strike','f-dte','f-closecost','f-closedate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('f-size').value = minSize(sAsset);
   document.getElementById('ferr').style.display = 'none';
 }

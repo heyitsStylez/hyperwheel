@@ -216,6 +216,31 @@ test('realisedByMonth: empty when no settled events', () => {
   assert.deepStrictEqual(realisedByMonth, {});
 });
 
+test('closeDate: CLOSED trade buckets realised on closeDate, not expiry', () => {
+  // Opened Jan, expiry March, but bought to close early on 2026-02-10.
+  // netPrem = 120 − 20 = 100, realised on the close date's month (Feb), not expiry (Mar).
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-03-15',
+      strike: 50000, size: 0.1, premium: 120, outcome: 'CLOSED', closeCost: 20,
+      closeDate: '2026-02-10' },
+  ];
+  const { realised, realisedByMonth, realisedSeries } = computePnl(trades);
+  assert.strictEqual(realised, 100);
+  assert.strictEqual(realisedByMonth['2026-02'], 100);
+  assert.strictEqual(realisedByMonth['2026-03'], undefined);
+  assert.strictEqual(realisedSeries[realisedSeries.length - 1].date, '2026-02-10');
+});
+
+test('closeDate: CLOSED trade with no closeDate falls back to expiry', () => {
+  const trades = [
+    { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-03-15',
+      strike: 50000, size: 0.1, premium: 120, outcome: 'CLOSED', closeCost: 20,
+      closeDate: '' },
+  ];
+  const { realisedByMonth } = computePnl(trades);
+  assert.strictEqual(realisedByMonth['2026-03'], 100);
+});
+
 test('realisedByMonth: respects asset filter', () => {
   const trades = [
     { id: 1, asset: 'BTC', type: 'PUT', date: '2026-01-01', expiry: '2026-01-15',
