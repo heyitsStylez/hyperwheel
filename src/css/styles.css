@@ -315,6 +315,7 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
   .holdings-grid--wide .hcard-hd{border-bottom:none;border-right:1px solid var(--bd);flex-direction:column;align-items:flex-start;gap:8px;justify-content:center}
   .holdings-grid--wide .hcard-hero{border-right:1px solid var(--bd);display:flex;flex-direction:column;justify-content:center;padding:13px}
   .holdings-grid--wide .hcard-spot{border-top:none;border-right:1px solid var(--bd);padding:13px;display:flex;flex-direction:column;justify-content:center}
+  .holdings-grid--wide .hcard-pnl{margin-left:0}
   .holdings-grid--wide .hcard-stats{border-top:none;grid-template-columns:1fr 1fr 1fr;align-items:center}
 }
 
