@@ -434,7 +434,8 @@ function rTable(displayRows, streams, lots) {
     return;
   }
 
-  cntEl.textContent = displayRows.length + ' trade' + (displayRows.length !== 1 ? 's' : '');
+  const logCount = displayRows.filter(r => r.type !== 'HOLDING').length; // open + history; holdings render as cards
+  cntEl.textContent = logCount + ' trade' + (logCount !== 1 ? 's' : '');
 
   // Holdings cards — one card per open lot
   const sym = { BTC:'&#9654;', ETH:'&#9670;', HYPE:'&#9632;', SOL:'&#9679;' };
