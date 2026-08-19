@@ -70,7 +70,7 @@ test('market-open indicator reflects Twelve Data is_market_open', async (t) => {
   ]);
   await window.wheelerFetchPrices();
   assert.strictEqual(window.sMarketOpen, true);
-  assert.match(window.document.getElementById('footer-market').textContent, /OPEN/i);
+  assert.match(window.document.getElementById('market-badge').textContent, /OPEN/i);
 
   // Closed
   window.fetch = routedFetch([
@@ -79,7 +79,7 @@ test('market-open indicator reflects Twelve Data is_market_open', async (t) => {
   ]);
   await window.wheelerFetchPrices();
   assert.strictEqual(window.sMarketOpen, false);
-  assert.match(window.document.getElementById('footer-market').textContent, /CLOSED/i);
+  assert.match(window.document.getElementById('market-badge').textContent, /CLOSED/i);
 });
 
 test('both providers down leaves existing prices intact', async (t) => {

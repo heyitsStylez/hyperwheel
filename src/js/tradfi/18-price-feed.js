@@ -90,11 +90,11 @@ async function wheelerFetchPrices() {
   render();
 }
 
-// Paint the footer market-open indicator from sMarketOpen.
+// Paint the header market-open badge from sMarketOpen.
 function wheelerUpdateStatus() {
-  const el = document.getElementById('footer-market');
+  const el = document.getElementById('market-badge');
   if (!el) return;
-  if (sMarketOpen === true)  { el.textContent = 'MARKET OPEN';   el.className = 'footer-market open'; }
-  else if (sMarketOpen === false) { el.textContent = 'MARKET CLOSED'; el.className = 'footer-market closed'; }
-  else { el.textContent = ''; el.className = 'footer-market'; }
+  if (sMarketOpen === true)  { el.textContent = 'MARKET OPEN';   el.className = 'market-badge open'; }
+  else if (sMarketOpen === false) { el.textContent = 'MARKET CLOSED'; el.className = 'market-badge closed'; }
+  else { el.textContent = ''; el.className = 'market-badge'; }
 }
