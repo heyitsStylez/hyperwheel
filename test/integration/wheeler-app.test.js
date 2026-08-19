@@ -190,6 +190,22 @@ test('Wheeler open option row shows a Close button; HyperWheel does not', async 
     'HyperWheel closes come from chain-sync — no manual Close button');
 });
 
+test('open positions expose an Edit button (both apps)', async (t) => {
+  const seed = [
+    { id: 7, asset: 'PURR', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,
+      strike: 65, size: 100, premium: 100, outcome: 'OPEN', closeCost: 0, platform: 'MANUAL' },
+  ];
+  const wheeler = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(wheeler.teardown);
+  const openBody = wheeler.window.document.getElementById('ttbody-open').innerHTML;
+  assert.match(openBody, /btn-qa-edit/, 'open row should offer an Edit button');
+  assert.match(openBody, /openEditModal\(7\)/, 'Edit opens the modal with no preset outcome');
+
+  const crypto = await setupJsdom({ app: 'crypto', trades: [{ ...seed[0], id: 8, asset: 'BTC', strike: 90000, size: 0.05, platform: 'RYSK' }] });
+  t.after(crypto.teardown);
+  assert.match(crypto.window.document.getElementById('ttbody-open').innerHTML, /openEditModal\(8\)/);
+});
+
 test('edit modal closes an open option: sets CLOSED + closeCost, nets premium', async (t) => {
   const seed = [
     { id: 7, asset: 'PURR', type: 'CALL', date: '2026-01-05', expiry: '2026-02-05', dte: 31,

@@ -145,6 +145,7 @@ function _openRow(r) {
     + '<td class="' + (isHolding ? 'mu' : 'cr') + '">' + (isHolding ? '&mdash;' : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td class="td-act"><div class="row-actions">' + actions
+      + '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
@@ -234,6 +235,7 @@ function _openCard(r) {
     +   '<div><span class="exp-card-lbl">APR</span> ' + aprStr + '</div>'
     + '</div>'
     + '<div class="exp-card-row3"><div class="row-actions">' + actions
+    +   '<button class="btn-qa btn-qa-edit" onclick="openEditModal(' + r.id + ')" title="Edit">Edit</button>'
     +   '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button></div></div>'
     + '</div>';
 }
