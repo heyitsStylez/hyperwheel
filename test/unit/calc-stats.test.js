@@ -50,6 +50,19 @@ describe('calcPremiumStats', () => {
     assert.equal(s.settled, 2);
   });
 
+  it('counts CLOSED (buy-to-close) as a settled outcome, net of closeCost', () => {
+    const rows = [
+      makeRow({ outcome: 'CLOSED', premium: 45, closeCost: 37 }),
+      makeRow({ outcome: 'CLOSED', premium: 65, closeCost: 12 }),
+    ];
+    const s = calcPremiumStats(rows);
+    assert.equal(s.closedCount, 2);
+    assert.equal(s.settled, 2);
+    assert.equal(s.totalPrem, (45 - 37) + (65 - 12));
+    // closed-early with no assignment counts as premium kept
+    assert.equal(s.returnRate, 100);
+  });
+
   it('computes portfolioAPR as notional-weighted average of annual', () => {
     // notional = strike * size
     // row1: notional=1000, annual=40  → weight contrib = 40000
@@ -65,7 +78,7 @@ describe('calcPremiumStats', () => {
 
   it('returns correct shape with expected keys', () => {
     const s = calcPremiumStats([]);
-    const expected = ['totalPrem', 'totalNotional', 'totalCount', 'otmCount', 'itmCount', 'openCount', 'settled', 'returnRate', 'portfolioAPR'];
+    const expected = ['totalPrem', 'totalNotional', 'totalCount', 'otmCount', 'itmCount', 'closedCount', 'openCount', 'settled', 'returnRate', 'portfolioAPR'];
     for (const k of expected) {
       assert.ok(Object.prototype.hasOwnProperty.call(s, k), `missing key: ${k}`);
     }
