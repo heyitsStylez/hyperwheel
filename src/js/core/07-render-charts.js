@@ -398,7 +398,7 @@ function rCharts(displayRows, lots) {
         'Total Premium Collected',
         s.totalCount > 0 ? '$' + fmt(s.totalPrem) : dash,
         s.totalCount > 0 ? pos(s.settled) + ' settled' + (s.openCount > 0 ? ' · ' + s.openCount + ' open' : '') : '',
-        'Sum of every option premium collected (gross of buy-to-close costs). Includes settled and open positions.') +
+        'Sum of every option premium collected, net of buy-to-close costs. Includes settled and open positions.') +
       '<div class="ppnl-trio">' +
         (_isTradfi() ? '' : tile('', 'Total Notional',
           s.totalNotional > 0 ? '$' + fmt(s.totalNotional) : dash,
@@ -411,7 +411,7 @@ function rCharts(displayRows, lots) {
         tile('', 'Return Rate',
           s.returnRate !== null ? s.returnRate.toFixed(1) + '%' : dash,
           s.settled > 0 ? s.otmCount + ' / ' + s.settled + ' exp OTM' : '',
-          'Share of settled options that expired OTM (premium kept, no assignment/call-away). Open options excluded.') +
+          'Share of settled options that kept their premium with no assignment/call-away (expired OTM or bought back early). Open options excluded.') +
       '</div>';
 
   } else {

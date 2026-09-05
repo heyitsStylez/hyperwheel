@@ -1,6 +1,6 @@
 function calcPremiumStats(rows) {
   let totalPrem = 0, totalNotional = 0, totalCount = 0;
-  let otmCount = 0, itmCount = 0, openCount = 0;
+  let otmCount = 0, itmCount = 0, closedCount = 0, openCount = 0;
   let aprWeightedSum = 0, aprWeightTotal = 0;
 
   rows.forEach(r => {
@@ -13,17 +13,19 @@ function calcPremiumStats(rows) {
     if (r.outcome === 'OPEN') { openCount++; }
     else if (r.outcome === 'EXPIRED') { otmCount++; }
     else if (r.outcome === 'ASSIGNED' || r.outcome === 'CALLED') { itmCount++; }
+    else if (r.outcome === 'CLOSED') { closedCount++; }
     if (r.annual != null) {
       aprWeightedSum += r.annual * notional;
       aprWeightTotal += notional;
     }
   });
 
-  const settled = otmCount + itmCount;
-  const returnRate = settled > 0 ? otmCount / settled * 100 : null;
+  // CLOSED (buy-to-close) is a settled outcome: premium kept, no assignment/call-away.
+  const settled = otmCount + itmCount + closedCount;
+  const returnRate = settled > 0 ? (otmCount + closedCount) / settled * 100 : null;
   const portfolioAPR = aprWeightTotal > 0 ? aprWeightedSum / aprWeightTotal : null;
 
-  return { totalPrem, totalNotional, totalCount, otmCount, itmCount, openCount, settled, returnRate, portfolioAPR };
+  return { totalPrem, totalNotional, totalCount, otmCount, itmCount, closedCount, openCount, settled, returnRate, portfolioAPR };
 }
 
 if (typeof module !== 'undefined' && module.exports) {
