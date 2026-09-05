@@ -35,12 +35,32 @@ module.exports = async function handler(req, res) {
 
   // ── TWELVE DATA (fallback + market-open state) — batched ─────
   if (provider === 'twelvedata') {
+    const key = process.env.TWELVEDATA_KEY;
+    if (!key) return res.status(500).json({ error: 'TWELVEDATA_KEY not configured' });
+
+    // Daily close history for one symbol (benchmark comparison — #145).
+    if (req.query.type === 'timeseries') {
+      const symbol = req.query.symbol || '';
+      const start = req.query.start_date || '';
+      const end = req.query.end_date || '';
+      if (!/^[A-Za-z0-9.\-]{1,12}$/.test(symbol)) return res.status(400).json({ error: 'Invalid symbol' });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return res.status(400).json({ error: 'Invalid start_date' });
+      if (end && !/^\d{4}-\d{2}-\d{2}$/.test(end)) return res.status(400).json({ error: 'Invalid end_date' });
+      try {
+        let url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&start_date=${start}&order=ASC&apikey=${key}`;
+        if (end) url += `&end_date=${end}`;
+        const upstream = await fetch(url);
+        const data = await upstream.json();
+        return res.status(upstream.status).json(data);
+      } catch (e) {
+        return res.status(502).json({ error: 'Twelve Data upstream failed: ' + e.message });
+      }
+    }
+
     const symbols = req.query.symbols || '';
     if (!/^[A-Za-z0-9.,\-]{1,120}$/.test(symbols)) {
       return res.status(400).json({ error: 'Invalid symbols' });
     }
-    const key = process.env.TWELVEDATA_KEY;
-    if (!key) return res.status(500).json({ error: 'TWELVEDATA_KEY not configured' });
     try {
       const upstream = await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols)}&apikey=${key}`);
       const data = await upstream.json();

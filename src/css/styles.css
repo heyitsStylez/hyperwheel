@@ -104,6 +104,24 @@ body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:15
 .expiry-section{background:var(--surface);border-left:2px solid var(--green);padding:14px 16px 0;margin-bottom:0}
 body[data-app="tradfi"] .expiry-section{display:none}
 
+/* ── Monthly Summary (Wheeler only) ──────────────────────── */
+body[data-app="crypto"] .msum-sec{display:none}
+.msum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.msum-tile{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px}
+.msum-lbl{font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);margin-bottom:6px;font-family:var(--mono)}
+.msum-val{font-size:1.5rem;font-weight:700;font-family:var(--mono);line-height:1.1}
+.msum-val.pos{color:var(--green)}
+.msum-val.neg{color:var(--red)}
+.msum-val.zero{color:var(--text)}
+.msum-sub{font-size:.6rem;color:var(--text2);margin-top:5px;font-family:var(--mono)}
+.msum-brow{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:.72rem;padding:3px 0}
+.msum-blbl{color:var(--text2)}
+.msum-bval{font-weight:700}
+.msum-bval.pos{color:var(--green)}
+.msum-bval.neg{color:var(--red)}
+.msum-bval.zero{color:var(--mu)}
+@media(max-width:600px){.msum-grid{grid-template-columns:1fr}}
+
 /* ── P&L Calendar (Wheeler only) ─────────────────────────── */
 body[data-app="crypto"] .pnl-cal-sec{display:none}
 .cal-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
