@@ -73,14 +73,25 @@ function rFilterTabs() {
   bar.innerHTML = html;
 }
 
+// Native held-quantity label for a stored share count. Equity-style contracts
+// (×100) deliver shares → "N sh"; futures (e.g. MES ×5) have no share concept,
+// so the meaningful unit is contracts → "N ct". Used for the "shares" toggle
+// view and the holdings card.
+function nativeSize(shares, asset) {
+  return contractMultiplier(asset) === 100
+    ? fmt(shares) + ' sh'
+    : fmt(sharesToContracts(shares, asset)) + ' ct';
+}
+
 // Display boundary for `size` (always stored in shares). Wheeler shows either
-// contracts (shares ÷ 100) or shares per the sSizeDisplay toggle; crypto is
-// unaffected — pass `asset` to append the token symbol as before.
+// contracts (shares ÷ multiplier) or the native unit per the sSizeDisplay
+// toggle; crypto is unaffected — pass `asset` to append the token symbol as
+// before. Futures render as contracts in both toggle states (no shares).
 function fmtSize(shares, asset) {
   if (_isTradfi()) {
     return sSizeDisplay === 'shares'
-      ? fmt(shares) + ' sh'
-      : fmt(sharesToContracts(shares)) + ' ct';
+      ? nativeSize(shares, asset)
+      : fmt(sharesToContracts(shares, asset)) + ' ct';
   }
   return asset != null ? fmt(shares) + ' ' + asset : fmt(shares);
 }
@@ -354,7 +365,7 @@ function renderExpiryTable(allRows) {
       + _platCol('<td>' + e.platBadge + '</td>')
       + '<td><span class="badge b' + t.type.toLowerCase() + '">' + t.type + '</span></td>'
       + '<td>$' + fmt(t.strike) + '</td>'
-      + '<td>' + fmtSize(t.size) + '</td>'
+      + '<td>' + fmtSize(t.size, t.asset) + '</td>'
       + '<td>' + e.dteLabel + '</td>'
       + '<td>$' + fmt(t.premium) + '</td>'
       + '<td>' + e.aprHtml + '</td>'
@@ -374,7 +385,7 @@ function renderExpiryTable(allRows) {
       + '</div>'
       + '<div class="exp-card-row2">'
       +   '<div><span class="exp-card-lbl">Strike</span> $' + fmt(t.strike) + '</div>'
-      +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(t.size) + '</div>'
+      +   '<div><span class="exp-card-lbl">Size</span> ' + fmtSize(t.size, t.asset) + '</div>'
       +   '<div><span class="exp-card-lbl">Prem</span> $' + fmt(t.premium) + '</div>'
       +   '<div><span class="exp-card-lbl">APR</span> ' + e.aprHtml + '</div>'
       +   '<div class="exp-card-status">' + e.statusHtml + '</div>'
@@ -503,7 +514,7 @@ function rTable(displayRows, streams, lots) {
         + '<div class="hcard-hd">'
         +   '<div class="hcard-asset">'
         +     '<span class="' + tickClass + '"' + tickStyle + '>' + glyph + ' ' + a + '</span>'
-        +     '<span class="hcard-size">' + (_isTradfi() ? fmt(lot.size) + ' sh' : fmtSize(lot.size)) + '</span>'
+        +     '<span class="hcard-size">' + (_isTradfi() ? nativeSize(lot.size, a) : fmtSize(lot.size)) + '</span>'
         +     lotBadge
         +   '</div>'
         +   '<div style="display:flex;align-items:center;gap:8px">'

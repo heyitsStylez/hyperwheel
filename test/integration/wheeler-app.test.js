@@ -342,6 +342,89 @@ test('display toggle: size renders as contracts or shares across tables + cards'
   assert.doesNotMatch(doc.getElementById('sd-contracts').className, /active/);
 });
 
+test('MES uses the $5 futures multiplier: size stored ×5, P&L scales, shows contracts', async (t) => {
+  const { window, teardown } = await setupJsdom({ app: 'tradfi' });
+  t.after(teardown);
+  const setVal = (id, v) => { window.document.getElementById(id).value = v; };
+
+  // Sell 1 MES put @ 5600, assigned → opens a futures lot. 1 contract stores 5
+  // shares (the $5/point multiplier), not 100.
+  window.setTicker('MES');
+  window.setType('PUT');
+  window.setOut('ASSIGNED');
+  setVal('f-date', '2026-01-05');
+  setVal('f-expiry', '2026-02-05');
+  setVal('f-strike', '5600');
+  setVal('f-size', '1');
+  setVal('f-prem', '100');
+  window.wheelerAddTrade();
+
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored[0].size, 5, '1 MES contract must store 5 (×$5 multiplier)');
+
+  // Unrealised P&L scales by the stored size: (spot − costBasis) × 5.
+  // 5700 vs 5600 cost basis → 100 points × $5 = $500.
+  const { unrealised } = window.computePnl(stored, 'ALL', { MES: 5700 });
+  assert.strictEqual(unrealised, 500, 'unrealised must scale by the $5 multiplier');
+
+  // Holdings card shows the futures position in contracts, never "5 sh".
+  const holdings = window.document.getElementById('ncbwrap').innerHTML;
+  assert.match(holdings, /1 ct/, 'MES holding renders as contracts');
+  assert.doesNotMatch(holdings, /5 sh/, 'no meaningless share count for futures');
+});
+
+test('futures HOLDING is entered in contracts (×5), equity holding stays raw shares', async (t) => {
+  const { window, teardown } = await setupJsdom({ app: 'tradfi' });
+  t.after(teardown);
+  const doc = window.document;
+  const setVal = (id, v) => { doc.getElementById(id).value = v; };
+
+  // MES holding: 2 contracts → stored 10; size label reads Contracts.
+  window.setTicker('MES');
+  window.setType('HOLDING');
+  assert.strictEqual(doc.getElementById('f-size-lbl').textContent, 'Contracts',
+    'futures holding size field is labelled Contracts');
+  setVal('f-date', '2026-01-02');
+  setVal('f-strike', '5600');
+  setVal('f-size', '2');
+  window.wheelerAddTrade();
+
+  // IBIT holding: 100 → stored 100 (raw shares); label reads Shares.
+  window.setTicker('IBIT');
+  window.setType('HOLDING');
+  assert.strictEqual(doc.getElementById('f-size-lbl').textContent, 'Shares',
+    'equity holding size field is labelled Shares');
+  setVal('f-date', '2026-01-03');
+  setVal('f-strike', '60');
+  setVal('f-size', '100');
+  window.wheelerAddTrade();
+
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored.find(s => s.asset === 'MES').size, 10, '2 MES contracts store 10');
+  assert.strictEqual(stored.find(s => s.asset === 'IBIT').size, 100, 'equity holding stays raw shares');
+});
+
+test('edit modal shows a futures HOLDING as contracts and stores shares on save', async (t) => {
+  const seed = [
+    { id: 1, asset: 'MES', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,
+      strike: 5600, size: 10, premium: 0, outcome: 'OPEN', closeCost: 0, closeDate: '', platform: 'MANUAL' },
+  ];
+  const { window, teardown } = await setupJsdom({ app: 'tradfi', trades: seed });
+  t.after(teardown);
+  const doc = window.document;
+
+  window.openEditModal(1);
+  // 10 shares / ×5 = 2 contracts, labelled Contracts (not "Size (MES)").
+  assert.match(doc.getElementById('edit-fields').innerHTML, /Contracts/);
+  assert.strictEqual(doc.getElementById('ef-size').value, '2');
+
+  // Editing to 3 contracts stores 15.
+  doc.getElementById('ef-size').value = '3';
+  window.saveEdit();
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored[0].size, 15, '3 MES contracts must persist as 15');
+});
+
 test('seeded wheeler_trades load on boot and survive a reload', async (t) => {
   const seed = [
     { id: 1, asset: 'IBIT', type: 'HOLDING', date: '2026-01-02', expiry: '', dte: null,

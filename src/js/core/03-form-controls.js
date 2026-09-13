@@ -24,6 +24,14 @@ function setAsset(a) {
   refreshLotPicker();
 }
 
+// Label the Wheeler size field per the current entry unit: "Shares" only for
+// equity/ETF holdings, "Contracts" for options and futures holdings. Re-run when
+// the type OR the ticker changes (a futures ticker flips a holding to contracts).
+function refreshSizeLabel(isHolding) {
+  const sizeLbl = document.getElementById('f-size-lbl');
+  if (sizeLbl) sizeLbl.textContent = entryMultiplier(sAsset, isHolding) === 1 ? 'Shares' : 'Contracts';
+}
+
 function setType(t) {
   sType = t;
   ['PUT','CALL','HOLDING'].forEach(x => {
@@ -67,10 +75,10 @@ function setType(t) {
     }
     document.getElementById('f-size').value = minSize(sAsset) || '';
   }
-  // Wheeler enters options in contracts and holdings in raw shares — label the
-  // size field to match (crypto's form has no f-size-lbl, so this is a no-op).
-  const sizeLbl = document.getElementById('f-size-lbl');
-  if (sizeLbl && _isTradfi()) sizeLbl.textContent = isHolding ? 'Shares' : 'Contracts';
+  // Wheeler enters options in contracts; equity holdings in raw shares; futures
+  // holdings in contracts (no share concept). Label the size field to match
+  // (crypto's form has no f-size-lbl, so this is a no-op).
+  if (_isTradfi()) refreshSizeLabel(isHolding);
   refreshLotPicker();
   refreshSizeUnitToggle();
   if (t !== 'PUT') setSizeUnit('contracts');
@@ -173,7 +181,7 @@ function autoFillFromLot() {
   if (strikeEl) strikeEl.value = prev.strike;
   // Wheeler's size field is contracts; prev.size is stored shares — convert back
   // so the round-trip through wheelerAddTrade's ×100 doesn't overstate size.
-  if (sizeEl)   sizeEl.value   = _isTradfi() ? sharesToContracts(prev.size) : prev.size;
+  if (sizeEl)   sizeEl.value   = _isTradfi() ? sharesToContracts(prev.size, prev.asset) : prev.size;
   // EXPIRED / CALLED = closing event; premium was already collected at OPEN, set to 0
   if (premEl && !premEl.readOnly) premEl.value = '0';
 }

@@ -5,6 +5,9 @@
 // the same save()/render() path HyperWheel uses.
 function setTicker(v) {
   sAsset = (v || '').trim().toUpperCase();
+  // A futures ticker (e.g. MES) flips a holding's size unit to contracts, so the
+  // label must track the ticker, not just the type toggle.
+  refreshSizeLabel(sType === 'HOLDING');
   refreshLotPicker();
 }
 
@@ -42,7 +45,10 @@ function wheelerAddTrade() {
 
   let tradeObj;
   if (sType === 'HOLDING') {
-    tradeObj = { id, asset, type: 'HOLDING', date, expiry: '', dte: null, strike, size, premium: 0, outcome: 'OPEN', closeCost: 0, closeDate: '', platform: 'MANUAL' };
+    // Equity holdings are entered in raw shares; futures holdings in contracts
+    // (×multiplier) so they line up with assigned-put lots.
+    const storedSize = size * entryMultiplier(asset, true);
+    tradeObj = { id, asset, type: 'HOLDING', date, expiry: '', dte: null, strike, size: storedSize, premium: 0, outcome: 'OPEN', closeCost: 0, closeDate: '', platform: 'MANUAL' };
   } else {
     const expiry  = g('f-expiry');
     const dte     = parseInt(g('f-dte')) || null;
@@ -55,7 +61,7 @@ function wheelerAddTrade() {
     if (!expiry) return err('Expiry required.');
     // Options are entered in contracts; store shares so the lot engine (shares)
     // lines up with holdings entered as raw share counts.
-    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size: contractsToShares(size), premium, outcome: sOut, closeCost, closeDate, platform: 'MANUAL' };
+    tradeObj = { id, asset, type: sType, date, expiry, dte, strike, size: contractsToShares(size, asset), premium, outcome: sOut, closeCost, closeDate, platform: 'MANUAL' };
   }
 
   trades.push(tradeObj);

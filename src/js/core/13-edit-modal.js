@@ -30,7 +30,11 @@ function openEditModal(id, presetOutcome) {
   if (isHolding) {
     html += f('date',   'Date Acquired', 'date',   t.date,   '');
     html += f('strike', 'Cost Basis ($)', 'number', t.strike, 'step="0.01" min="0"');
-    html += f('size',   'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
+    // Equity holdings edit in raw shares; futures holdings edit in contracts.
+    const holdMult = _isTradfi() ? entryMultiplier(t.asset, true) : 1;
+    html += holdMult !== 1
+      ? f('size', 'Contracts', 'number', t.size / holdMult, 'step="0.01" min="0"')
+      : f('size', 'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += '<div class="field" style="grid-column:1/-1"><label>Notes</label><input id="ef-notes" type="text" value="' + (t.notes || '') + '"></div>';
   } else {
     html += f('date',    'Date',         'date',   t.date,   '');
@@ -40,7 +44,7 @@ function openEditModal(id, presetOutcome) {
     // Wheeler options are entered in contracts (×100 shares); show the stored
     // share count as contracts and convert back on save. Crypto stays in tokens.
     html += _isTradfi()
-      ? f('size', 'Contracts', 'number', sharesToContracts(t.size), 'step="0.01" min="0"')
+      ? f('size', 'Contracts', 'number', sharesToContracts(t.size, t.asset), 'step="0.01" min="0"')
       : f('size', 'Size (' + t.asset + ')', 'number', t.size, 'step="0.01" min="0"');
     html += f('premium', 'Premium ($)',  'number', t.premium,'step="0.01" min="0"');
     const outcome = presetOutcome || t.outcome;
@@ -101,8 +105,9 @@ function saveEdit() {
 
   t.date   = date;
   t.strike = strike;
-  // Wheeler options edit in contracts; store shares. Holdings/crypto are raw.
-  t.size   = (_isTradfi() && !isHolding) ? contractsToShares(size) : size;
+  // Wheeler entry units → stored shares: options and futures holdings ×multiplier,
+  // equity holdings ×1. Crypto is always raw.
+  t.size   = _isTradfi() ? size * entryMultiplier(t.asset, isHolding) : size;
   t.notes  = get('notes').value.trim();
 
   if (!isHolding) {
