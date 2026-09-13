@@ -213,6 +213,9 @@ body[data-app="crypto"] .pnl-cal-sec{display:none}
 .field label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--mu);font-family:var(--mono)}
 .field input,.field select{background:var(--s2);border:1px solid var(--bd2);color:var(--text);border-radius:7px;padding:8px 11px;font-family:var(--mono);font-size:.82rem;transition:border-color .15s;width:100%}
 .field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,229,160,.07)}
+.recents{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.ticker-chip{padding:3px 9px;border-radius:999px;border:1px solid var(--bd2);background:var(--s2);color:var(--mu2);font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .15s}
+.ticker-chip:hover{border-color:var(--green);color:var(--text)}
 .date-wrap{position:relative;display:flex;align-items:center}
 .date-wrap input{padding-right:34px;flex:1}
 .cal-btn{position:absolute;right:6px;background:none;border:none;cursor:pointer;font-size:.85rem;padding:2px 3px;line-height:1;opacity:.6;transition:opacity .15s}
