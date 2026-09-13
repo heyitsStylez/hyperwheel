@@ -3,6 +3,7 @@ function openTradeDrawer() {
   document.getElementById('trade-drawer').classList.add('open');
   document.getElementById('trade-drawer-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  if (typeof renderRecentTickers === 'function') renderRecentTickers();
   setTimeout(() => document.getElementById('f-expiry').focus(), 350);
 }
 

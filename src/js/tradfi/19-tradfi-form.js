@@ -11,6 +11,36 @@ function setTicker(v) {
   refreshLotPicker();
 }
 
+// Recently-traded tickers, most-recent-first, deduped. Backs the quick-pick
+// chips above the ticker input so the common case is one tap.
+function recentTickers(n) {
+  const seen = new Set();
+  const out = [];
+  [...trades].sort((a, b) => b.id - a.id).forEach(t => {
+    const a = (t.asset || '').toUpperCase();
+    if (a && !seen.has(a)) { seen.add(a); out.push(a); }
+  });
+  return out.slice(0, n || 5);
+}
+
+// Populate the quick-pick chip row in the add-trade drawer. Hidden when empty.
+function renderRecentTickers() {
+  const box = document.getElementById('recent-tickers');
+  if (!box) return;
+  const tk = recentTickers(5);
+  box.innerHTML = tk.map(a =>
+    '<button type="button" class="ticker-chip" onclick="pickTicker(\'' + a + '\')">' + a + '</button>'
+  ).join('');
+  box.style.display = tk.length ? 'flex' : 'none';
+}
+
+// Chip click: fill the ticker input and mirror it into sAsset via setTicker.
+function pickTicker(a) {
+  const inp = document.getElementById('f-ticker');
+  if (inp) inp.value = a;
+  setTicker(a);
+}
+
 // Contracts↔shares display toggle (Wheeler). Flips how stored `size` (always
 // shares) is rendered across tables and cards; no effect on stored data.
 function setSizeDisplay(unit) {
