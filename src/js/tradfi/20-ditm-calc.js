@@ -4,34 +4,12 @@
 // ditm_call_tracker.xlsx. Pure scratchpad — nothing is saved to trades.
 
 function openDitmCalc() {
-  const sel = document.getElementById('dc-expiry');
-  if (sel && !sel.options.length) sel.innerHTML = ditmExpiryOptions();
   document.getElementById('ditm-overlay').classList.add('open');
   ditmRecalc();
 }
 
 function closeDitmCalc() {
   document.getElementById('ditm-overlay').classList.remove('open');
-}
-
-// Build the expiry dropdown: the standard monthly option expiry (3rd Friday)
-// for the next 36 months, so LEAPS-style horizons are one click away.
-function ditmExpiryOptions() {
-  const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const now = new Date();
-  const out = ['<option value="">— pick expiry —</option>'];
-  for (let i = 0; i < 36; i++) {
-    const m = now.getMonth() + i;
-    const y = now.getFullYear() + Math.floor(m / 12);
-    const mm = ((m % 12) + 12) % 12;
-    const firstDow = new Date(y, mm, 1).getDay();          // 0=Sun … 6=Sat
-    const thirdFri = 1 + ((5 - firstDow + 7) % 7) + 14;    // 3rd Friday of month
-    const d = new Date(y, mm, thirdFri);
-    if (d <= now) continue;                                // skip this month if already past
-    const iso = y + '-' + String(mm + 1).padStart(2, '0') + '-' + String(thirdFri).padStart(2, '0');
-    out.push('<option value="' + iso + '">' + mon[mm] + ' ' + y + '</option>');
-  }
-  return out.join('');
 }
 
 // Auto-generate a sorted, deduped set of price levels: total loss (0),

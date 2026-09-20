@@ -355,6 +355,8 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .merge-preview .mp-row{display:flex;justify-content:space-between;padding:3px 0}
 .merge-preview .mp-lbl{color:var(--mu2)}.merge-preview .mp-val{color:var(--text);font-weight:600}
 /* DITM call calculator */
+.dc-modal{overflow:hidden}
+.dc-modal #dc-matrix{overflow-x:auto}
 .dc-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .dc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
 .dc-tiles:empty{display:none}
