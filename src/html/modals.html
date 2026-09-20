@@ -27,7 +27,7 @@
 
 <!-- DITM CALL CALCULATOR (Wheeler) -->
 <div class="merge-overlay" id="ditm-overlay">
-  <div class="merge-modal" style="max-width:min(660px, calc(100vw - 24px))">
+  <div class="merge-modal dc-modal" style="width:min(720px, calc(100vw - 24px));max-width:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <h3 style="font-size:.95rem">DITM Call vs 100 Shares</h3>
       <button onclick="closeDitmCalc()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
@@ -39,7 +39,7 @@
       <div class="field"><label>Stock Price</label><input id="dc-price" type="number" step="0.01" min="0" placeholder="107.09" oninput="ditmRecalc()"></div>
       <div class="field"><label>Strike</label><input id="dc-strike" type="number" step="0.01" min="0" placeholder="75" oninput="ditmRecalc()"></div>
       <div class="field"><label>Premium /sh</label><input id="dc-prem" type="number" step="0.01" min="0" placeholder="40.50" oninput="ditmRecalc()"></div>
-      <div class="field"><label>Expiration</label><select id="dc-expiry" onchange="ditmRecalc()"></select></div>
+      <div class="field"><label>Expiration</label><input id="dc-expiry" type="date" oninput="ditmRecalc()"></div>
     </div>
     <div id="dc-tiles" class="dc-tiles"></div>
     <div id="dc-matrix"></div>
