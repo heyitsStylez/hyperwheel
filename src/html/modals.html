@@ -39,7 +39,7 @@
       <div class="field"><label>Stock Price</label><input id="dc-price" type="number" step="0.01" min="0" placeholder="107.09" oninput="ditmRecalc()"></div>
       <div class="field"><label>Strike</label><input id="dc-strike" type="number" step="0.01" min="0" placeholder="75" oninput="ditmRecalc()"></div>
       <div class="field"><label>Premium /sh</label><input id="dc-prem" type="number" step="0.01" min="0" placeholder="40.50" oninput="ditmRecalc()"></div>
-      <div class="field"><label>Expiration</label><input id="dc-expiry" type="date" oninput="ditmRecalc()"></div>
+      <div class="field"><label>Expiration</label><select id="dc-expiry" onchange="ditmRecalc()"></select></div>
     </div>
     <div id="dc-tiles" class="dc-tiles"></div>
     <div id="dc-matrix"></div>
