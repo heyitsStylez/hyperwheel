@@ -354,6 +354,20 @@ tr.lot-child.la-sol:hover > td{background:rgba(153,69,255,.08)}
 .merge-preview{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:14px;margin:12px 0;font-family:var(--mono);font-size:.78rem}
 .merge-preview .mp-row{display:flex;justify-content:space-between;padding:3px 0}
 .merge-preview .mp-lbl{color:var(--mu2)}.merge-preview .mp-val{color:var(--text);font-weight:600}
+/* DITM call calculator */
+.dc-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.dc-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.dc-tile{background:var(--s2);border:1px solid var(--bd2);border-radius:8px;padding:10px 12px}
+.dc-tile .k{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);font-family:var(--mono)}
+.dc-tile .v{font-size:1rem;font-weight:700;margin-top:4px;font-family:var(--mono)}
+.dc-matrix{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.74rem}
+.dc-matrix th{text-align:right;padding:6px 8px;color:var(--mu);font-weight:600;font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd2)}
+.dc-matrix th:first-child{text-align:left}
+.dc-matrix td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--bd)}
+.dc-matrix td:first-child{text-align:left;font-weight:600}
+.dc-matrix tr.dc-special td{background:var(--s2)}
+.dc-matrix .dc-lbl{color:var(--mu2);font-size:.66rem;text-align:left}
+@media(max-width:600px){.dc-inputs,.dc-tiles{grid-template-columns:1fr 1fr}}
 .merge-preview .mp-val.green{color:var(--green)}.merge-preview .mp-val.orange{color:var(--orange)}
 
 
