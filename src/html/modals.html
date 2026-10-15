@@ -25,6 +25,31 @@
   </div>
 </div>
 
+<!-- ROLL OPTION MODAL (Wheeler) -->
+<div class="merge-overlay" id="roll-overlay">
+  <div class="merge-modal" style="max-width:min(480px, calc(100vw - 24px))">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3 id="roll-title" style="font-size:.95rem">Roll Option</h3>
+      <button onclick="closeRollModal()" style="background:transparent;border:none;color:var(--mu2);font-size:1.2rem;cursor:pointer;padding:2px 6px">&#10005;</button>
+    </div>
+    <p id="roll-cur" style="font-size:.7rem;color:var(--mu2);margin-bottom:14px"></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Buy-back Cost ($)</label><input id="rf-closecost" type="number" step="0.01" min="0" oninput="rollRecalc()"></div>
+      <div class="field"><label>Roll Date</label><input id="rf-date" type="date"></div>
+      <div class="field"><label>New Expiry</label><input id="rf-expiry" type="date"></div>
+      <div class="field"><label>New Strike ($)</label><input id="rf-strike" type="number" step="0.01" min="0"></div>
+      <div class="field"><label>Contracts</label><input id="rf-size" type="number" step="1" min="0"></div>
+      <div class="field"><label>New Premium ($)</label><input id="rf-premium" type="number" step="0.01" min="0" oninput="rollRecalc()"></div>
+    </div>
+    <div id="roll-net" style="font-size:.8rem;font-weight:700;font-family:var(--mono);margin-top:12px"></div>
+    <div id="roll-err" style="font-size:.72rem;color:var(--red);margin-top:10px;min-height:1.2em"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-g" onclick="closeRollModal()">Cancel</button>
+      <button class="btn" style="background:var(--green);color:var(--bg);border:none;font-weight:700" onclick="confirmRoll()">Roll</button>
+    </div>
+  </div>
+</div>
+
 <!-- DITM CALL CALCULATOR (Wheeler) -->
 <div class="merge-overlay" id="ditm-overlay">
   <div class="merge-modal dc-modal" style="width:min(720px, calc(100vw - 24px));max-width:none">

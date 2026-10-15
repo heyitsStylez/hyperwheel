@@ -138,6 +138,7 @@ function _openRow(r) {
   // preset to CLOSED so the user can enter the buy-back cost.
   const closeBtn = (!isHolding && _isTradfi())
     ? '<button class="btn-qa btn-qa-cls" onclick="openEditModal(' + r.id + ',\'CLOSED\')" title="Buy to close">Close \u2297</button>'
+      + '<button class="btn-qa btn-qa-roll" onclick="openRollModal(' + r.id + ')" title="Roll to a new strike/expiry">Roll \u21bb</button>'
     : '';
   const actions = (isHolding ? '' : (r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')" title="Mark expired">Exp \u2713</button>'
@@ -160,6 +161,14 @@ function _openRow(r) {
       + '<button class="btn-d" onclick="deleteTrade(' + r.id + ')" title="Delete">&#10005;</button>'
       + '</div></td>'
     + '</tr>';
+}
+
+// "↻ rolled" tag on a CLOSED leg that was rolled into a new option (Wheeler
+// roll: the replacement carries rolledFrom = this id). Derived, so deleting the
+// replacement drops the tag.
+function _rolledTag(r) {
+  if (r.outcome !== 'CLOSED' || !trades.some(t => t.rolledFrom === r.id)) return '';
+  return '<span class="rolled-tag" title="Rolled into a new position">\u21bb rolled</span>';
 }
 
 // "% of premium captured" badge for buy-to-close (CLOSED) rows — how much of the
@@ -207,6 +216,7 @@ function _histRow(r) {
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>'
       + _captureBadge(r)
+      + _rolledTag(r)
       + (r.outcome === 'CLOSED' && r.closeDate
           ? '<div class="mu" style="font-size:.6rem;margin-top:2px">closed ' + r.closeDate + _daysEarlyTag(r) + '</div>' : '')
       + '</td>'
@@ -226,6 +236,7 @@ function _openCard(r) {
     + (r.annual !== null ? r.annual.toFixed(1) + '%' : '&mdash;') + '</span>';
   const closeBtn = _isTradfi()
     ? '<button class="btn-qa btn-qa-cls" onclick="openEditModal(' + r.id + ',\'CLOSED\')" title="Buy to close">Close ⊗</button>'
+      + '<button class="btn-qa btn-qa-roll" onclick="openRollModal(' + r.id + ')" title="Roll to a new strike/expiry">Roll ↻</button>'
     : '';
   const actions = (r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-exp" onclick="quickOutcome(' + r.id + ',\'EXPIRED\')">Exp ✓</button>'
@@ -254,7 +265,7 @@ function _openCard(r) {
 function _histCard(r) {
   const typeBadge = '<span class="badge b' + r.type.toLowerCase() + '">' + r.type + '</span>';
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
-  const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>' + _captureBadge(r);
+  const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>' + _captureBadge(r) + _rolledTag(r);
   const premHtml = r.outcome === 'CLOSED'
     ? '+$' + fmt(r.premium - (r.closeCost || 0))
     : '+$' + fmt(r.premium);

@@ -469,3 +469,51 @@ test('filter tabs are derived from traded tickers and scope the view', async (t)
   assert.match(doc.getElementById('fb-ALL').className, /active/, 'filter falls back to ALL');
   assert.match(doc.getElementById('ncbwrap').innerHTML, /IBIT/, 'remaining ticker still shows');
 });
+
+test('Roll button rolls an open PUT: old CLOSED, new OPEN linked', async (t) => {
+  const { window, teardown } = await setupJsdom({ app: 'tradfi' });
+  t.after(teardown);
+  const doc = window.document;
+  const setVal = (id, v) => { doc.getElementById(id).value = v; };
+
+  window.setTicker('AAPL');
+  window.setType('PUT');
+  window.setOut('OPEN');
+  setVal('f-date', '2026-10-01');
+  setVal('f-expiry', '2026-10-17');
+  setVal('f-strike', '200');
+  setVal('f-size', '1');
+  setVal('f-prem', '150');
+  window.wheelerAddTrade();
+
+  const btn = doc.querySelector('#ttbody-open .btn-qa-roll');
+  assert.ok(btn, 'open option row should have a Roll button');
+  btn.click();
+  assert.ok(doc.getElementById('roll-overlay').classList.contains('open'));
+  assert.strictEqual(doc.getElementById('rf-strike').value, '200');
+  assert.strictEqual(doc.getElementById('rf-size').value, '1');
+
+  setVal('rf-closecost', '220');
+  setVal('rf-date', '2026-10-15');
+  setVal('rf-expiry', '2026-11-21');
+  setVal('rf-strike', '195');
+  setVal('rf-premium', '310');
+  window.rollRecalc();
+  assert.match(doc.getElementById('roll-net').textContent, /Net credit \+\$90/);
+  window.confirmRoll();
+
+  assert.ok(!doc.getElementById('roll-overlay').classList.contains('open'));
+  const stored = JSON.parse(window.localStorage.getItem('wheeler_trades'));
+  assert.strictEqual(stored.length, 2);
+  const [old, next] = stored;
+  assert.strictEqual(old.outcome, 'CLOSED');
+  assert.strictEqual(old.closeCost, 220);
+  assert.strictEqual(next.outcome, 'OPEN');
+  assert.strictEqual(next.strike, 195);
+  assert.strictEqual(next.size, 100);
+  assert.strictEqual(next.rolledFrom, old.id);
+
+  // History shows the closed leg tagged as rolled; the open table has the new leg.
+  assert.match(doc.getElementById('ttbody-hist').innerHTML, /↻ rolled/);
+  assert.match(doc.getElementById('ttbody-open').innerHTML, /195/);
+});
