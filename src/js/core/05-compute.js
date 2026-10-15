@@ -13,6 +13,9 @@ function compute(assetFilter) {
   const assets = [...new Set(trades.map(t => t.asset))];
   const streams = {};
   const lots = {};
+  // Legs that were rolled into a new option (Wheeler roll). Their buy-back is
+  // part of the roll, so a standalone APR would be misleading — left null.
+  const rolled = new Set(trades.filter(t => t.rolledFrom != null).map(t => t.rolledFrom));
 
   assets.forEach(a => {
     const assetTrades = trades.filter(t => t.asset === a)
@@ -38,7 +41,11 @@ function compute(assetFilter) {
 
       const collateral = t.strike * t.size;
       const returnPct  = collateral > 0 ? (netPrem / collateral) * 100 : null;
-      const dte        = t.dte && t.dte > 0 ? t.dte : null;
+      // A buy-to-close is annualised over the days actually held (open → close
+      // date, min 1), not the full term; rolled legs get no APR at all.
+      const held       = t.outcome === 'CLOSED' && t.closeDate
+        ? Math.max(1, Math.round((new Date(t.closeDate) - new Date(t.date)) / 86400000)) : null;
+      const dte        = rolled.has(t.id) ? null : held || (t.dte && t.dte > 0 ? t.dte : null);
       const monthly    = (returnPct !== null && dte) ? returnPct / dte * 30  : null;
       const annual     = (returnPct !== null && dte) ? returnPct / dte * 365 : null;
 
