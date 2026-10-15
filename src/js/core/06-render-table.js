@@ -166,8 +166,12 @@ function _openRow(r) {
 // "↻ rolled" tag on a CLOSED leg that was rolled into a new option (Wheeler
 // roll: the replacement carries rolledFrom = this id). Derived, so deleting the
 // replacement drops the tag.
+function _isRolled(r) {
+  return r.outcome === 'CLOSED' && trades.some(t => t.rolledFrom === r.id);
+}
+
 function _rolledTag(r) {
-  if (r.outcome !== 'CLOSED' || !trades.some(t => t.rolledFrom === r.id)) return '';
+  if (!_isRolled(r)) return '';
   return '<span class="rolled-tag" title="Rolled into a new position">\u21bb rolled</span>';
 }
 
@@ -175,11 +179,20 @@ function _rolledTag(r) {
 // collected premium you kept by closing early. Hidden when there is no premium
 // to capture. Graded green/orange/red by how much was kept.
 function _captureBadge(r) {
-  if (r.outcome !== 'CLOSED') return '';
+  if (r.outcome !== 'CLOSED' || _isRolled(r)) return '';
   const pct = capturePct(r.premium, r.closeCost);
   if (pct === null) return '';
   const col = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
   return '<span class="cap-badge" style="color:' + col + '">' + Math.round(pct) + '% kept</span>';
+}
+
+// Net premium of a CLOSED leg (premium − closeCost). A buy-back above the
+// premium (common on a roll) goes negative: show "−$X" in red, not "+$-X".
+function _netPremHtml(r) {
+  const net = r.premium - (r.closeCost || 0);
+  return net < 0
+    ? '<span style="color:var(--red)">\u2212$' + fmt(-net) + '</span>'
+    : '+$' + fmt(net);
 }
 
 // "days early" tag for a buy-to-close — days still on the clock at close
@@ -211,7 +224,7 @@ function _histRow(r) {
     + '<td>$' + fmt(r.strike) + '</td>'
     + '<td class="mu">' + fmtSize(r.size, r.asset) + '</td>'
     + '<td class="cr">' + (r.outcome === 'CLOSED'
-        ? '+$' + fmt(r.premium - (r.closeCost || 0)) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
+        ? _netPremHtml(r) + '<br><span style="font-size:.6rem;color:var(--mu)">-$' + fmt(r.closeCost || 0) + ' to close</span>'
         : '+$' + fmt(r.premium)) + '</td>'
     + '<td>' + aprStr + '</td>'
     + '<td><span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>'
@@ -267,7 +280,7 @@ function _histCard(r) {
   const platBadge = r.platform === 'HSFC' ? '<span class="bplat bplat-hsfc">HSFC</span>' : '<span class="bplat bplat-rysk">RYSK</span>';
   const outBadge = '<span class="badge ' + outcomeBadge(r.outcome) + '">' + outcomeLabel(r) + '</span>' + _captureBadge(r) + _rolledTag(r);
   const premHtml = r.outcome === 'CLOSED'
-    ? '+$' + fmt(r.premium - (r.closeCost || 0))
+    ? _netPremHtml(r)
     : '+$' + fmt(r.premium);
   const corrBtn = r.outcome === 'EXPIRED' && r.type === 'CALL'
     ? '<button class="btn-qa btn-qa-cal" onclick="quickOutcome(' + r.id + ',\'CALLED\')">Called ↑</button>'

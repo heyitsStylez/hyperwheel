@@ -515,5 +515,10 @@ test('Roll button rolls an open PUT: old CLOSED, new OPEN linked', async (t) => 
 
   // History shows the closed leg tagged as rolled; the open table has the new leg.
   assert.match(doc.getElementById('ttbody-hist').innerHTML, /↻ rolled/);
+  // Buy-back > premium: net shows as −$70 (not "+$-70"), and no "% kept" badge on a rolled leg.
+  const hist = doc.getElementById('ttbody-hist').innerHTML;
+  assert.match(hist, /\u2212\$70/);
+  assert.doesNotMatch(hist, /\+\$-/);
+  assert.doesNotMatch(hist, /% kept/);
   assert.match(doc.getElementById('ttbody-open').innerHTML, /195/);
 });
