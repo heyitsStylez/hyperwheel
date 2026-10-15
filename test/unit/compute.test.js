@@ -41,3 +41,23 @@ test('compute derives the roster from trades[] — arbitrary tickers work', () =
   // TSLA lot: costBasis 200, lotPremiums 50 (call), size 10 → 200 - 50/10 = 195
   assert.strictEqual(lots.TSLA[0].netCost, 195);
 });
+
+test('CLOSED APR annualises over days held; rolled legs get no APR', () => {
+  global.trades = [
+    // Closed early: held 6 of 11 days. net 51 / 7550 collateral → annualised over 6d.
+    { id: 1, asset: 'MES', type: 'PUT', date: '2026-09-28', expiry: '2026-10-09', dte: 11, strike: 7550, size: 1, premium: 68.5, closeCost: 17.5, closeDate: '2026-10-04', outcome: 'CLOSED' },
+    // Closed with no closeDate: falls back to the full term.
+    { id: 2, asset: 'MES', type: 'PUT', date: '2026-09-01', expiry: '2026-09-11', dte: 10, strike: 7000, size: 1, premium: 50, closeCost: 10, closeDate: '', outcome: 'CLOSED' },
+    // Rolled leg (id 3 → 4): APR suppressed.
+    { id: 3, asset: 'PURR', type: 'PUT', date: '2026-10-06', expiry: '2026-11-20', dte: 45, strike: 11, size: 200, premium: 160, closeCost: 448, closeDate: '2026-10-15', outcome: 'CLOSED' },
+    { id: 4, asset: 'PURR', type: 'PUT', date: '2026-10-15', expiry: '2027-03-19', dte: 155, strike: 10, size: 200, premium: 502, closeCost: 0, closeDate: '', outcome: 'OPEN', rolledFrom: 3 },
+  ];
+  const { compute } = require('../../src/js/core/05-compute.js');
+  const row = id => compute('ALL').allRows.find(r => r.id === id);
+
+  assert.strictEqual(row(1).annual.toFixed(1), (51 / 7550 * 100 / 6 * 365).toFixed(1));
+  assert.strictEqual(row(2).annual.toFixed(1), (40 / 7000 * 100 / 10 * 365).toFixed(1));
+  assert.strictEqual(row(3).annual, null);
+  assert.strictEqual(row(3).monthly, null);
+  assert.strictEqual(row(4).annual.toFixed(1), (502 / 2000 * 100 / 155 * 365).toFixed(1));
+});
